@@ -149,9 +149,11 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: {
                 <SelectValue placeholder="Select workspace" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={currentWorkspace?.id || ''}>
-                  {currentWorkspace?.name || 'Select workspace'}
-                </SelectItem>
+                {currentWorkspace && (
+                  <SelectItem value={currentWorkspace.id}>
+                    {currentWorkspace.name}
+                  </SelectItem>
+                )}
                 <SelectItem value="create">+ Create New Workspace</SelectItem>
               </SelectContent>
             </Select>
@@ -161,43 +163,42 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: {
           <nav className="space-y-1">
             {navItems.map((item) => (
               <div key={item.href}>
-                <Link href={item.href}>
-                  <a
-                    className={cn(
-                      "flex items-center px-2 py-2 text-sm font-medium rounded-md group",
-                      isActive(item.href) 
-                        ? "bg-primary-50 text-primary-700" 
-                        : "text-gray-700 hover:bg-gray-100"
-                    )}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                    {item.badge && (
-                      <Badge variant="default" className="ml-auto px-2 py-0.5 text-xs">
-                        {item.badge}
-                      </Badge>
-                    )}
-                    {item.submenu && (
-                      <ChevronDownIcon className="ml-auto h-5 w-5" />
-                    )}
-                  </a>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-2 py-2 text-sm font-medium rounded-md group",
+                    isActive(item.href) 
+                      ? "bg-primary-50 text-primary-700" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  )}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <Badge variant="default" className="ml-auto px-2 py-0.5 text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
+                  {item.submenu && (
+                    <ChevronDownIcon className="ml-auto h-5 w-5" />
+                  )}
                 </Link>
                 
                 {/* Submenu */}
                 {item.submenu && (
                   <div className="ml-6 mt-1 space-y-1">
                     {item.submenu.map((subitem) => (
-                      <Link key={subitem.href} href={subitem.href}>
-                        <a
-                          className={cn(
-                            "flex items-center px-2 py-1.5 text-sm font-medium rounded-md",
-                            isActive(subitem.href)
-                              ? "text-primary-700"
-                              : "text-gray-600 hover:bg-gray-100"
-                          )}
-                        >
-                          {subitem.label}
-                        </a>
+                      <Link 
+                        key={subitem.href} 
+                        href={subitem.href}
+                        className={cn(
+                          "flex items-center px-2 py-1.5 text-sm font-medium rounded-md",
+                          isActive(subitem.href)
+                            ? "text-primary-700"
+                            : "text-gray-600 hover:bg-gray-100"
+                        )}
+                      >
+                        {subitem.label}
                       </Link>
                     ))}
                   </div>
