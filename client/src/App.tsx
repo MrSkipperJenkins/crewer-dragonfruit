@@ -14,6 +14,7 @@ import CrewSchedule from "@/pages/crew-schedule";
 import Jobs from "@/pages/jobs";
 import Resources from "@/pages/resources";
 import Settings from "@/pages/settings";
+import Notifications from "@/pages/notifications";
 import { WorkspaceProvider } from "@/hooks/use-workspace.tsx";
 
 function Router() {
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/crew-schedule" component={CrewSchedule} />
         <Route path="/jobs" component={Jobs} />
         <Route path="/resources" component={Resources} />
+        <Route path="/notifications" component={Notifications} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>

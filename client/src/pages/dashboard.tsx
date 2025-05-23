@@ -3,7 +3,7 @@ import { useWorkspace } from "@/hooks/use-workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Activity, Users, Calendar, Building, 
-  BarChart2, Clock, AlertTriangle 
+  BarChart2, Clock, AlertTriangle, Bell, Link
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -137,34 +137,63 @@ export default function Dashboard() {
         </Card>
 
         <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Recent Activity</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base">Notifications</CardTitle>
+            <Link href="/notifications" className="text-xs text-primary hover:underline">
+              View All
+            </Link>
           </CardHeader>
           <CardContent className="space-y-4">
-            {notifications.slice(0, 4).map((notification: any) => (
-              <div key={notification.id} className="flex items-start space-x-3">
-                <div className={`mt-0.5 rounded-full p-1.5 ${
-                  notification.type === 'success' ? 'bg-green-100 text-green-600' :
-                  notification.type === 'warning' ? 'bg-amber-100 text-amber-600' :
-                  notification.type === 'error' ? 'bg-red-100 text-red-600' :
-                  'bg-blue-100 text-blue-600'
-                }`}>
-                  {notification.type === 'success' ? (
-                    <Clock className="h-3 w-3" />
-                  ) : notification.type === 'warning' ? (
-                    <AlertTriangle className="h-3 w-3" />
-                  ) : notification.type === 'error' ? (
-                    <AlertTriangle className="h-3 w-3" />
-                  ) : (
-                    <Calendar className="h-3 w-3" />
-                  )}
+            {notifications.length === 0 ? (
+              <div className="text-center py-4">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 mb-3">
+                  <Bell className="h-6 w-6 text-gray-500" />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">{notification.title}</p>
-                  <p className="text-xs text-gray-500">{notification.message}</p>
-                </div>
+                <p className="text-sm font-medium text-gray-600">No notifications</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  You're all caught up!
+                </p>
               </div>
-            ))}
+            ) : (
+              <>
+                {notifications.slice(0, 4).map((notification: any) => (
+                  <div key={notification.id} className="flex items-start space-x-3">
+                    <div className={`mt-0.5 rounded-full p-1.5 ${
+                      notification.type === 'success' ? 'bg-green-100 text-green-600' :
+                      notification.type === 'warning' ? 'bg-amber-100 text-amber-600' :
+                      notification.type === 'error' ? 'bg-red-100 text-red-600' :
+                      'bg-blue-100 text-blue-600'
+                    }`}>
+                      {notification.type === 'success' ? (
+                        <Clock className="h-3 w-3" />
+                      ) : notification.type === 'warning' ? (
+                        <AlertTriangle className="h-3 w-3" />
+                      ) : notification.type === 'error' ? (
+                        <AlertTriangle className="h-3 w-3" />
+                      ) : (
+                        <Calendar className="h-3 w-3" />
+                      )}
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <div className="flex justify-between">
+                        <p className="text-sm font-medium">{notification.title}</p>
+                        {!notification.read && (
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                            New
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">{notification.message}</p>
+                      {notification.relatedEntityType && (
+                        <p className="text-xs text-gray-400">
+                          Related to: {notification.relatedEntityType.replace('_', ' ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
