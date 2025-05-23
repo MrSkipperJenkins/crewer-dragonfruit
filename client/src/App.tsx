@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Layout from "@/components/layout/layout";
 import Dashboard from "@/pages/dashboard";
+import Shows from "@/pages/shows";
 import ShowsCalendarView from "@/pages/shows/calendar-view";
 import ShowsListView from "@/pages/shows/list-view";
 import ShowBuilder from "@/pages/shows/show-builder";
@@ -23,6 +24,7 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/shows" component={Shows} />
         <Route path="/shows/calendar" component={ShowsCalendarView} />
         <Route path="/shows/list" component={ShowsListView} />
         <Route path="/shows/builder" component={ShowBuilder} />
