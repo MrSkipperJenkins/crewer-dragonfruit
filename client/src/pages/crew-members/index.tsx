@@ -81,13 +81,13 @@ export default function CrewMembers() {
   
   // Fetch crew members
   const { data: crewMembers = [], isLoading } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'crew-members'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
     enabled: !!currentWorkspace?.id,
   });
   
   // Fetch jobs for selection
   const { data: jobs = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'jobs'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
     enabled: !!currentWorkspace?.id,
   });
   

@@ -84,7 +84,7 @@ export default function Resources() {
   
   // Fetch resources
   const { data: resources = [], isLoading } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'resources'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/resources`],
     enabled: !!currentWorkspace?.id,
   });
   

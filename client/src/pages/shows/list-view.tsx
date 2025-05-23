@@ -37,19 +37,19 @@ export default function ShowsListView() {
 
   // Fetch shows data
   const { data: shows = [], isLoading } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'shows'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
   });
 
   // Fetch show categories for each show
   const { data: categories = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-categories'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
     enabled: !!currentWorkspace?.id,
   });
 
   // Fetch show category assignments
   const { data: categoryAssignments = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-category-assignments'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
     enabled: !!currentWorkspace?.id,
   });
 
