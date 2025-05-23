@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
 import { 
   Activity, Users, Calendar, Building, 
-  BarChart2, Clock, AlertTriangle, Bell, Link
+  BarChart2, Clock, AlertTriangle, Bell
 } from "lucide-react";
 
 export default function Dashboard() {
