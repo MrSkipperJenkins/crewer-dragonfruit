@@ -96,10 +96,8 @@ export function TopNavBar({
                 )}
                 
                 {item.href ? (
-                  <Link href={item.href}>
-                    <a className="text-gray-700 hover:text-primary text-sm font-medium">
-                      {item.label}
-                    </a>
+                  <Link href={item.href} className="text-gray-700 hover:text-primary text-sm font-medium">
+                    {item.label}
                   </Link>
                 ) : (
                   <span className="text-gray-500 text-sm font-medium">
