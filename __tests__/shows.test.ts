@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from './setup';
+import { app } from './setup.js';
 
 describe('Shows API Endpoints', () => {
   // Variables for test data

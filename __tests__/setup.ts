@@ -1,7 +1,7 @@
 import { Express } from 'express';
 import { Server } from 'http';
 import express from 'express';
-import { registerRoutes } from '../server/routes';
+import { registerRoutes } from '../server/routes.js';
 
 let app: Express;
 let server: Server;
