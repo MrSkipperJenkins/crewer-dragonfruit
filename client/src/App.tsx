@@ -14,7 +14,7 @@ import CrewSchedule from "@/pages/crew-schedule";
 import Jobs from "@/pages/jobs";
 import Resources from "@/pages/resources";
 import Settings from "@/pages/settings";
-import { WorkspaceProvider } from "@/hooks/use-workspace";
+import { WorkspaceProvider } from "@/hooks/use-workspace.tsx";
 
 function Router() {
   return (

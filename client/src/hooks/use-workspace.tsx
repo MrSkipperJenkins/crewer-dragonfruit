@@ -1,6 +1,7 @@
+import * as React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "./use-toast";
 
 export type Workspace = {
   id: string;
@@ -22,7 +23,11 @@ const WorkspaceContext = createContext<WorkspaceContextType>({
   isLoading: true,
 });
 
-export function WorkspaceProvider({ children }) {
+interface WorkspaceProviderProps {
+  children: React.ReactNode;
+}
+
+export const WorkspaceProvider = ({ children }: WorkspaceProviderProps) => {
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(
     localStorage.getItem("currentWorkspaceId")
   );
@@ -32,7 +37,7 @@ export function WorkspaceProvider({ children }) {
     queryKey: ["/api/workspaces"]
   });
   
-  const workspaces = Array.isArray(data) ? data : [];
+  const workspaces = Array.isArray(data) ? data as Workspace[] : [];
 
   // Set default workspace if none is selected
   useEffect(() => {
@@ -51,18 +56,18 @@ export function WorkspaceProvider({ children }) {
   // Find the current workspace
   const currentWorkspace = workspaces.find(w => w.id === currentWorkspaceId) || null;
 
-  return (
-    <WorkspaceContext.Provider
-      value={{
-        workspaces,
-        currentWorkspace,
-        setCurrentWorkspaceId,
-        isLoading
-      }}
-    >
-      {children}
-    </WorkspaceContext.Provider>
+  const contextValue = {
+    workspaces,
+    currentWorkspace,
+    setCurrentWorkspaceId,
+    isLoading
+  };
+
+  return React.createElement(
+    WorkspaceContext.Provider,
+    { value: contextValue },
+    children
   );
-}
+};
 
 export const useWorkspace = () => useContext(WorkspaceContext);
