@@ -177,8 +177,8 @@ export default function ShowsListView() {
                         {formatTime(show.startTime)} - {formatTime(show.endTime)}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(show.status)}>
-                          {show.status.charAt(0).toUpperCase() + show.status.slice(1)}
+                        <Badge className={getStatusColor(show.status || 'scheduled')}>
+                          {(show.status || 'scheduled').charAt(0).toUpperCase() + (show.status || 'scheduled').slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
