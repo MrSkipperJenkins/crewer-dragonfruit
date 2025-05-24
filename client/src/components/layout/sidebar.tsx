@@ -63,11 +63,6 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: {
       badge: unreadNotifications > 0 ? unreadNotifications : undefined
     },
     { 
-      href: "/calendar", 
-      icon: <CalendarIcon className="text-lg mr-3" />, 
-      label: "Calendar" 
-    },
-    { 
       href: "/shows", 
       icon: <TvIcon className="text-lg mr-3" />, 
       label: "Shows",

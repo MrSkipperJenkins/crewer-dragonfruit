@@ -185,11 +185,6 @@ export default function CrewMembers() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Crew Members</h1>
-        <p className="text-gray-500 mt-1">Manage your production crew members and their qualifications</p>
-      </div>
-
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-4">
           <CardTitle className="text-xl">Crew Members</CardTitle>

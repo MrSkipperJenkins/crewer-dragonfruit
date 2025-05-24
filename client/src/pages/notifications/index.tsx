@@ -104,7 +104,6 @@ export default function Notifications() {
   return (
     <div className="space-y-4 p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Notifications</h1>
         {notifications.length > 0 && (
           <Badge variant="outline" className="ml-2">
             {notifications.filter((n: any) => !n.read).length} Unread

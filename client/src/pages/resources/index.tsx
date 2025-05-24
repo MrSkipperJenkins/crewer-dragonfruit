@@ -182,7 +182,6 @@ export default function Resources() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Resources</h1>
         <p className="text-gray-500 mt-1">Manage studios, control rooms, and equipment for your productions</p>
       </div>
 

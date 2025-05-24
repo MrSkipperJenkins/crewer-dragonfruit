@@ -33,12 +33,12 @@ export function TopNavBar({
     const breadcrumbs: BreadcrumbItem[] = [];
     
     // Add Dashboard as first item with link unless we're on dashboard
-    if (location !== '/') {
-      breadcrumbs.push({ label: 'Dashboard', href: '/' });
-    } else {
-      breadcrumbs.push({ label: 'Dashboard' });
-      return breadcrumbs;
-    }
+    // if (location !== '/') {
+    //   breadcrumbs.push({ label: 'Dashboard', href: '/' });
+    // } else {
+    //   breadcrumbs.push({ label: 'Dashboard' });
+    //   return breadcrumbs;
+    // }
     
     // Special case for shows section
     if (paths[0] === 'shows') {
@@ -57,10 +57,12 @@ export function TopNavBar({
     
     // Handle other sections
     const sectionMap: Record<string, string> = {
+      'notifications': 'Notifications',
       'crew-members': 'Crew Members',
       'crew-schedule': 'Crew Schedule',
       'jobs': 'Jobs',
       'resources': 'Resources',
+      'reports': 'Reports & Analytics',
       'settings': 'Settings',
     };
     
@@ -96,11 +98,11 @@ export function TopNavBar({
                 )}
                 
                 {item.href ? (
-                  <Link href={item.href} className="text-gray-700 hover:text-primary text-sm font-medium">
+                  <Link href={item.href} className="text-gray-700 hover:text-primary text-md font-medium">
                     {item.label}
                   </Link>
                 ) : (
-                  <span className="text-gray-500 text-sm font-medium">
+                  <span className="text-gray-900 text-md font-medium">
                     {item.label}
                   </span>
                 )}

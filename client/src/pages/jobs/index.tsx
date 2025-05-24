@@ -63,7 +63,7 @@ export default function Jobs() {
   
   // Fetch jobs
   const { data: jobs = [], isLoading } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'jobs'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
     enabled: !!currentWorkspace?.id,
   });
   
@@ -130,11 +130,6 @@ export default function Jobs() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Jobs</h1>
-        <p className="text-gray-500 mt-1">Manage job roles and positions for your productions</p>
-      </div>
-
       <Card>
         <CardHeader className="flex flex-row items-center justify-between py-4">
           <CardTitle className="text-xl">Job Roles</CardTitle>
