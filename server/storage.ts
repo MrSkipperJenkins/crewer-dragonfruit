@@ -360,6 +360,7 @@ export class MemStorage implements IStorage {
       recurringPattern: "WEEKLY:1,2,3,4,5", // Monday through Friday
       notes: "Morning anchors: Sarah Johnson and Michael Torres. Include traffic report at 7:45 AM. Weather updates every 30 minutes.",
       status: "scheduled",
+      color: "#22c55e", // Green for news
       workspaceId,
       createdAt: new Date()
     });
@@ -374,6 +375,7 @@ export class MemStorage implements IStorage {
       recurringPattern: "WEEKLY:2",  // Tuesday
       notes: "Guest chef each week. Kitchen needs to be set up 90 minutes before show.",
       status: "scheduled",
+      color: "#3b82f6", // Blue for cooking
       workspaceId,
       createdAt: new Date()
     });
