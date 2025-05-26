@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { format, addDays, startOfWeek, addWeeks, subWeeks, isSameDay, startOfMonth, endOfMonth } from "date-fns";
+import { format, addDays, startOfWeek, addWeeks, subWeeks, isSameDay, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { cn, formatTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -96,31 +96,31 @@ export function CalendarView() {
 
   // Query shows data
   const { data: shows = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'shows'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
   });
   
   // Query resources data
   const { data: resources = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'resources'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/resources`],
     enabled: !!currentWorkspace?.id,
   });
   
   // Query show resources data
   const { data: showResources = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-resources'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-resources`],
     enabled: !!currentWorkspace?.id,
   });
 
   // Query show categories data
   const { data: categories = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-categories'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
     enabled: !!currentWorkspace?.id,
   });
 
   // Query show category assignments data
   const { data: categoryAssignments = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-category-assignments'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
     enabled: !!currentWorkspace?.id,
   });
 
@@ -134,7 +134,7 @@ export function CalendarView() {
     if (viewMode === 'today' || viewMode === 'week') {
       setCurrentDate(subWeeks(currentDate, 1));
     } else {
-      setCurrentDate(subWeeks(currentDate, 4)); // Go back one month
+      setCurrentDate(subMonths(currentDate, 1));
     }
   };
   
@@ -142,7 +142,7 @@ export function CalendarView() {
     if (viewMode === 'today' || viewMode === 'week') {
       setCurrentDate(addWeeks(currentDate, 1));
     } else {
-      setCurrentDate(addWeeks(currentDate, 4)); // Go forward one month
+      setCurrentDate(addMonths(currentDate, 1));
     }
   };
   
@@ -257,7 +257,7 @@ export function CalendarView() {
           >
             <ChevronRightIcon className="h-4 w-4" />
           </Button>
-          <h2 className="text-lg font-medium text-gray-900 ml-2">{weekRangeText}</h2>
+          <h2 className="text-lg font-medium text-gray-900 ml-2">{displayText}</h2>
         </div>
         
         <div className="flex bg-white rounded-md shadow-sm border border-gray-300">
@@ -266,29 +266,29 @@ export function CalendarView() {
             size="sm" 
             className={cn(
               "px-3 py-1.5 text-sm font-medium border-r border-gray-300 rounded-none",
-              "hover:bg-gray-100 hover:text-gray-900"
+              viewMode === 'today' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100 hover:text-gray-900"
             )}
             onClick={goToToday}
           >
             Today
           </Button>
           <Button 
-            variant={viewMode === 'week' ? 'ghost' : 'ghost'}
+            variant="ghost"
             size="sm" 
             className={cn(
               "px-3 py-1.5 text-sm font-medium rounded-none",
-              viewMode === 'week' && "bg-primary-50 text-primary-700"
+              viewMode === 'week' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100 hover:text-gray-900"
             )}
             onClick={() => setViewMode('week')}
           >
             Week
           </Button>
           <Button 
-            variant={viewMode === 'month' ? 'ghost' : 'ghost'}
+            variant="ghost"
             size="sm" 
             className={cn(
               "px-3 py-1.5 text-sm font-medium border-l border-gray-300 rounded-none",
-              viewMode === 'month' && "bg-primary-50 text-primary-700"
+              viewMode === 'month' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100 hover:text-gray-900"
             )}
             onClick={() => setViewMode('month')}
           >
@@ -312,8 +312,12 @@ export function CalendarView() {
       <div className="overflow-x-auto">
         <div className="calendar-grid min-w-[800px]">
           {/* Calendar Header */}
-          <div className="calendar-header h-14 bg-gray-50 border-b border-gray-200">
-            {weekDates.map((date, index) => {
+          <div className={cn(
+            "calendar-header bg-gray-50 border-b border-gray-200 grid",
+            viewMode === 'today' ? "grid-cols-1" :
+            viewMode === 'week' ? "grid-cols-7" : "grid-cols-7"
+          )}>
+            {displayDates.slice(0, viewMode === 'today' ? 1 : 7).map((date, index) => {
               const isToday = isSameDay(date, new Date());
               const dayLabel = format(date, 'EEE');
               const dateLabel = format(date, 'MMM d');
@@ -322,11 +326,12 @@ export function CalendarView() {
                 <div 
                   key={index}
                   className={cn(
-                    "flex items-center justify-center py-2 border-r border-gray-200 font-medium",
+                    "flex flex-col items-center justify-center py-3 border-r border-gray-200 font-medium text-center min-h-[60px]",
                     isToday ? "text-primary-600 bg-primary-50" : "text-gray-500"
                   )}
                 >
-                  {dayLabel}<br/>{dateLabel}
+                  <div className="text-xs uppercase tracking-wide">{dayLabel}</div>
+                  <div className="text-lg font-semibold mt-1">{format(date, 'd')}</div>
                 </div>
               );
             })}
@@ -336,8 +341,8 @@ export function CalendarView() {
           {Object.entries(resourcesByType).map(([type, typeResources]) => (
             <div key={type}>
               {/* Resource Type Header */}
-              <div className="calendar-time bg-gray-50 border-r border-b border-gray-200 p-2">
-                <h3 className="font-medium text-gray-700">
+              <div className="bg-gray-100 border-b border-gray-200 p-3">
+                <h3 className="font-medium text-gray-700 text-sm">
                   {type === 'studio' ? 'Studios' : 
                    type === 'control_room' ? 'Control Rooms' : 
                    'Equipment'}
@@ -346,13 +351,17 @@ export function CalendarView() {
               
               {/* Resources of this type */}
               {typeResources.map((resource) => (
-                <div key={resource.id}>
-                  <div className="calendar-time bg-gray-50 border-r border-b border-gray-200 p-2 text-xs text-gray-500">
-                    <span className="block">{resource.name}</span>
+                <div key={resource.id} className="flex">
+                  <div className="w-48 bg-gray-50 border-r border-b border-gray-200 p-3 flex-shrink-0">
+                    <span className="text-sm font-medium text-gray-700">{resource.name}</span>
                   </div>
                   
-                  <div className="calendar-content grid grid-cols-7 border-b border-gray-200">
-                    {weekDates.map((date, index) => {
+                  <div className={cn(
+                    "flex-1 border-b border-gray-200 grid",
+                    viewMode === 'today' ? "grid-cols-1" :
+                    viewMode === 'week' ? "grid-cols-7" : "grid-cols-7"
+                  )}>
+                    {displayDates.slice(0, viewMode === 'today' ? 1 : 7).map((date, index) => {
                       const isToday = isSameDay(date, new Date());
                       const dayShows = filteredShows.filter((show: Show) => {
                         // Filter shows for this resource and date
@@ -368,7 +377,7 @@ export function CalendarView() {
                         <div 
                           key={index}
                           className={cn(
-                            "min-h-[100px] border-r border-gray-200 relative",
+                            "min-h-[100px] border-r border-gray-200 relative p-2",
                             isToday && "bg-primary-50"
                           )}
                         >
@@ -381,15 +390,16 @@ export function CalendarView() {
                             return (
                               <div 
                                 key={show.id}
-                                className="absolute top-1 left-1 right-1 h-20 bg-green-100 border-l-4 rounded-sm p-2 text-xs cursor-pointer hover:opacity-90"
+                                className="mb-2 bg-blue-100 border-l-4 border-blue-500 rounded-sm p-2 text-xs cursor-pointer hover:bg-blue-200 transition-colors"
                                 style={colorStyle}
                                 onClick={() => handleShowClick(show.id)}
                               >
-                                <div className="font-medium">{show.title}</div>
-                                <div>{formatTime(show.startTime)} - {formatTime(show.endTime)}</div>
-                                <div className="mt-1 flex items-center">
-                                  <span className="inline-block w-2 h-2 bg-success rounded-full mr-1"></span>
-                                  <span>{resource.name}</span>
+                                <div className="font-medium text-gray-900">{show.title}</div>
+                                <div className="text-gray-600 mt-1">
+                                  {formatTime(show.startTime)} - {formatTime(show.endTime)}
+                                </div>
+                                <div className="mt-1 text-gray-500 text-xs">
+                                  {show.status}
                                 </div>
                               </div>
                             );
