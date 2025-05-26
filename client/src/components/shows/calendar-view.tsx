@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { format, addDays, startOfWeek, addWeeks, subWeeks, isSameDay } from "date-fns";
+import { format, addDays, startOfWeek, addWeeks, subWeeks, isSameDay, startOfMonth, endOfMonth } from "date-fns";
 import { cn, formatTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -57,20 +57,42 @@ type ShowCategoryAssignment = {
 export function CalendarView() {
   const { currentWorkspace } = useWorkspace();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month'>('week');
   const [selectedShow, setSelectedShow] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   
-  // Get dates for the current week
-  const weekDates = useMemo(() => {
-    const sunday = startOfWeek(currentDate, { weekStartsOn: 0 });
-    return Array.from({ length: 7 }, (_, i) => addDays(sunday, i));
-  }, [currentDate]);
+  // Get dates based on view mode
+  const displayDates = useMemo(() => {
+    if (viewMode === 'today') {
+      return [currentDate];
+    } else if (viewMode === 'week') {
+      const sunday = startOfWeek(currentDate, { weekStartsOn: 0 });
+      return Array.from({ length: 7 }, (_, i) => addDays(sunday, i));
+    } else {
+      // Month view - get all days in the month
+      const start = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 0 });
+      const end = endOfMonth(currentDate);
+      const days = [];
+      let day = start;
+      while (day <= end || days.length < 35) {
+        days.push(day);
+        day = addDays(day, 1);
+        if (days.length >= 35) break;
+      }
+      return days;
+    }
+  }, [currentDate, viewMode]);
   
-  // Format week range for display (e.g., "May 2023")
-  const weekRangeText = useMemo(() => {
-    return format(weekDates[0], 'MMMM yyyy');
-  }, [weekDates]);
+  // Format display text based on view mode
+  const displayText = useMemo(() => {
+    if (viewMode === 'today') {
+      return format(currentDate, 'MMMM d, yyyy');
+    } else if (viewMode === 'week') {
+      return format(displayDates[0], 'MMMM yyyy');
+    } else {
+      return format(currentDate, 'MMMM yyyy');
+    }
+  }, [displayDates, currentDate, viewMode]);
 
   // Query shows data
   const { data: shows = [] } = useQuery({
@@ -103,9 +125,26 @@ export function CalendarView() {
   });
 
   // Navigation functions
-  const goToToday = () => setCurrentDate(new Date());
-  const goToPreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
-  const goToNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
+  const goToToday = () => {
+    setCurrentDate(new Date());
+    setViewMode('today');
+  };
+  
+  const goToPrevious = () => {
+    if (viewMode === 'today' || viewMode === 'week') {
+      setCurrentDate(subWeeks(currentDate, 1));
+    } else {
+      setCurrentDate(subWeeks(currentDate, 4)); // Go back one month
+    }
+  };
+  
+  const goToNext = () => {
+    if (viewMode === 'today' || viewMode === 'week') {
+      setCurrentDate(addWeeks(currentDate, 1));
+    } else {
+      setCurrentDate(addWeeks(currentDate, 4)); // Go forward one month
+    }
+  };
   
   // Group resources by type for display
   const resourcesByType = useMemo(() => {
@@ -206,7 +245,7 @@ export function CalendarView() {
             variant="ghost" 
             size="icon" 
             className="h-8 w-8" 
-            onClick={goToPreviousWeek}
+            onClick={goToPrevious}
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </Button>
@@ -214,7 +253,7 @@ export function CalendarView() {
             variant="ghost" 
             size="icon" 
             className="h-8 w-8" 
-            onClick={goToNextWeek}
+            onClick={goToNext}
           >
             <ChevronRightIcon className="h-4 w-4" />
           </Button>
