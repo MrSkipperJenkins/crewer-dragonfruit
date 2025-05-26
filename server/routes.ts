@@ -169,6 +169,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/jobs/:id", async (req, res) => {
+    try {
+      const validation = insertJobSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid job data", errors: validation.error.errors });
+      }
+      const job = await storage.updateJob(req.params.id, validation.data);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+      res.json(job);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update job" });
+    }
+  });
+
   // Crew Member Jobs
   app.get("/api/crew-members/:crewMemberId/jobs", async (req, res) => {
     const crewMemberJobs = await storage.getCrewMemberJobsByCrewMember(req.params.crewMemberId);
