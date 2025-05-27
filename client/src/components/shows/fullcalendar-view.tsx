@@ -9,6 +9,7 @@ import { useWorkspace } from "@/hooks/use-workspace";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import { getContrastTextColor } from "@/lib/colors";
 import { Button } from "@/components/ui/button";
 import { 
   Select, 
@@ -161,33 +162,9 @@ export function FullCalendarView() {
       const category = getShowCategory(show.id);
       const showResourceList = getShowResources(show.id);
       
-      // Generate color based on status or category
-      let backgroundColor = '#3b82f6'; // Default blue
-      let borderColor = '#2563eb';
-      
-      if (category) {
-        backgroundColor = '#10b981'; // Green for categorized shows
-        borderColor = '#059669';
-      }
-      
-      switch (show.status) {
-        case 'scheduled':
-          backgroundColor = '#3b82f6';
-          borderColor = '#2563eb';
-          break;
-        case 'in_progress':
-          backgroundColor = '#f59e0b';
-          borderColor = '#d97706';
-          break;
-        case 'completed':
-          backgroundColor = '#10b981';
-          borderColor = '#059669';
-          break;
-        case 'cancelled':
-          backgroundColor = '#ef4444';
-          borderColor = '#dc2626';
-          break;
-      }
+      // Use show's color field or fallback to default
+      const backgroundColor = show.color || '#3b82f6';
+      const textColor = getContrastTextColor(backgroundColor);
 
       return {
         id: show.id,
@@ -195,7 +172,8 @@ export function FullCalendarView() {
         start: show.startTime,
         end: show.endTime,
         backgroundColor,
-        borderColor,
+        borderColor: backgroundColor,
+        textColor,
         extendedProps: {
           status: show.status,
           description: show.description,

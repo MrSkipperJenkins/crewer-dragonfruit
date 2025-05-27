@@ -44,6 +44,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 // Extend the insertShowSchema with validation rules
 const formSchema = insertShowSchema.extend({
@@ -74,6 +75,7 @@ export default function ShowBuilder() {
     title: "",
     description: "",
     status: "draft",
+    color: "#3b82f6",
     workspaceId: currentWorkspace?.id || "",
     selectedResources: [],
     selectedJobs: [],
