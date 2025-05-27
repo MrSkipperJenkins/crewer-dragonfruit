@@ -286,84 +286,14 @@ export function FullCalendarView() {
         </div>
       </div>
 
-      {/* Calendar Controls */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 bg-gray-50">
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={goToToday}
-            className="h-9"
-          >
-            Today
-          </Button>
-        </div>
-        
-        <div className="flex bg-white rounded-md shadow-sm border border-gray-300">
-          <Button 
-            variant="ghost"
-            size="sm" 
-            className={cn(
-              "px-3 py-1.5 text-sm font-medium border-r border-gray-300 rounded-none",
-              viewMode === 'dayGridMonth' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100 hover:text-gray-900"
-            )}
-            onClick={() => changeView('dayGridMonth')}
-          >
-            Month
-          </Button>
-          <Button 
-            variant="ghost"
-            size="sm" 
-            className={cn(
-              "px-3 py-1.5 text-sm font-medium border-r border-gray-300 rounded-none",
-              viewMode === 'timeGridWeek' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100 hover:text-gray-900"
-            )}
-            onClick={() => changeView('timeGridWeek')}
-          >
-            Week
-          </Button>
-          <Button 
-            variant="ghost"
-            size="sm" 
-            className={cn(
-              "px-3 py-1.5 text-sm font-medium border-r border-gray-300 rounded-none",
-              viewMode === 'timeGridDay' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100 hover:text-gray-900"
-            )}
-            onClick={() => changeView('timeGridDay')}
-          >
-            Day
-          </Button>
-          <Button 
-            variant="ghost"
-            size="sm" 
-            className={cn(
-              "px-3 py-1.5 text-sm font-medium rounded-none",
-              viewMode === 'listWeek' ? "bg-primary-50 text-primary-700" : "hover:bg-gray-100 hover:text-gray-900"
-            )}
-            onClick={() => changeView('listWeek')}
-          >
-            List
-          </Button>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" className="h-9">
-            <CalendarIcon className="mr-1 h-4 w-4" />
-            Resources
-          </Button>
-          <Button variant="outline" size="sm" className="h-9">
-            <UsersIcon className="mr-1 h-4 w-4" />
-            Crew
-          </Button>
-        </div>
-      </div>
+
 
       {/* FullCalendar Component */}
       <div className="p-4">
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
+          initialView="timeGridWeek"
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
