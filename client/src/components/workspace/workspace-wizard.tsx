@@ -166,10 +166,10 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
     }
   };
 
-  const isStep1Valid = workspaceForm.formState.isValid && 
-    slugCheck?.available !== false && 
-    watchedName.length >= 3 && 
-    watchedSlug.length >= 3;
+  const isStep1Valid = watchedName.length >= 3 && 
+    watchedSlug.length >= 3 && 
+    isValidSlug(watchedSlug) && 
+    slugCheck?.available !== false;
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">

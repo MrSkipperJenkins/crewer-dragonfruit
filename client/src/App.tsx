@@ -22,24 +22,28 @@ import { WorkspaceProvider } from "@/hooks/use-workspace.tsx";
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/shows" component={Shows} />
-        <Route path="/shows/calendar" component={ShowsCalendarView} />
-        <Route path="/shows/list" component={ShowsListView} />
-        <Route path="/shows/builder" component={ShowBuilder} />
-        <Route path="/crew-members" component={CrewMembers} />
-        <Route path="/crew-schedule" component={CrewSchedule} />
-        <Route path="/jobs" component={Jobs} />
-        <Route path="/resources" component={Resources} />
-        <Route path="/reports" component={Reports} />
-        <Route path="/notifications" component={Notifications} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/workspaces/new" component={NewWorkspacePage} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/workspaces/new" component={NewWorkspacePage} />
+      <Route>
+        <Layout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/shows" component={Shows} />
+            <Route path="/shows/calendar" component={ShowsCalendarView} />
+            <Route path="/shows/list" component={ShowsListView} />
+            <Route path="/shows/builder" component={ShowBuilder} />
+            <Route path="/crew-members" component={CrewMembers} />
+            <Route path="/crew-schedule" component={CrewSchedule} />
+            <Route path="/jobs" component={Jobs} />
+            <Route path="/resources" component={Resources} />
+            <Route path="/reports" component={Reports} />
+            <Route path="/notifications" component={Notifications} />
+            <Route path="/settings" component={Settings} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 
