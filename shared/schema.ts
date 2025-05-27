@@ -118,7 +118,6 @@ export const shows = pgTable("shows", {
   recurringPattern: text("recurring_pattern"), // Optional pattern for recurring shows
   notes: text("notes"),
   status: text("status").notNull().default("draft"), // draft, scheduled, in_progress, completed, cancelled
-  color: text("color").default("#3b82f6"), // Event color for calendar display
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
