@@ -98,23 +98,17 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
   
   // Get resource by id
   const getResource = (resourceId: string) => {
-    const resource = (allResources as any[]).find((r: any) => r.id === resourceId);
-    console.log('Looking for resource:', resourceId, 'Found:', resource, 'All resources:', allResources);
-    return resource;
+    return (allResources as any[]).find((r: any) => r.id === resourceId);
   };
   
   // Get crew member by id
   const getCrewMember = (crewMemberId: string) => {
-    const member = (crewMembers as any[]).find((c: any) => c.id === crewMemberId);
-    console.log('Looking for crew member:', crewMemberId, 'Found:', member, 'All crew:', crewMembers);
-    return member;
+    return (crewMembers as any[]).find((c: any) => c.id === crewMemberId);
   };
   
   // Get job by id
   const getJob = (jobId: string) => {
-    const job = (jobs as any[]).find((j: any) => j.id === jobId);
-    console.log('Looking for job:', jobId, 'Found:', job, 'All jobs:', jobs);
-    return job;
+    return (jobs as any[]).find((j: any) => j.id === jobId);
   };
   
   // Handle save changes
@@ -136,14 +130,14 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
   
   return (
     <Dialog open={!!showId} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
           <>
-            <DialogHeader className="p-4 sm:p-6 border-b border-gray-200">
+            <DialogHeader className="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <Badge 
@@ -155,18 +149,10 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                   <h2 className="text-xl font-semibold text-gray-900 mt-2">{(show as any)?.title}</h2>
                   <p className="text-sm text-gray-500 mt-1">{(show as any)?.description}</p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={onClose} 
-                  className="text-gray-400 hover:text-gray-500 ml-4 flex-shrink-0"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
               </div>
             </DialogHeader>
             
-            <div className="p-4 sm:p-6 overflow-y-auto">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-gray-50 p-3 rounded-md">
                   <div className="text-sm text-gray-500">Schedule</div>
@@ -188,8 +174,8 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
               
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-3">Resources</h3>
-                <div className="bg-gray-50 rounded-md divide-y divide-gray-200">
-                  {showResources.length > 0 ? showResources.map((sr: any) => {
+                <div className="bg-gray-50 rounded-md divide-y divide-gray-200 max-h-48 overflow-y-auto">
+                  {(showResources as any[]).length > 0 ? (showResources as any[]).map((sr: any) => {
                     const resource = getResource(sr.resourceId);
                     return (
                       <div key={sr.id} className="p-3 flex items-center justify-between">
@@ -218,8 +204,8 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                   </Button>
                 </div>
                 
-                <div className="bg-gray-50 rounded-md divide-y divide-gray-200">
-                  {crewAssignments.length > 0 ? crewAssignments.map((assignment: any) => {
+                <div className="bg-gray-50 rounded-md divide-y divide-gray-200 max-h-60 overflow-y-auto">
+                  {(crewAssignments as any[]).length > 0 ? (crewAssignments as any[]).map((assignment: any) => {
                     const crewMember = getCrewMember(assignment.crewMemberId);
                     const job = getJob(assignment.jobId);
                     return (
@@ -295,7 +281,7 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
               </div>
             </div>
             
-            <DialogFooter className="p-4 sm:p-6 border-t border-gray-200">
+            <DialogFooter className="p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
               <Button variant="outline" onClick={onClose}>
                 Cancel
               </Button>
