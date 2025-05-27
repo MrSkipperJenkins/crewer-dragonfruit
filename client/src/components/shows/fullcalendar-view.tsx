@@ -146,6 +146,20 @@ export function FullCalendarView() {
     return resources.filter((r: Resource) => showResourceIds.includes(r.id));
   };
 
+  // Function to get show crew assignments
+  const getShowCrewAssignments = (showId: string) => {
+    // For now, return empty array since we don't have crew assignments loaded in this component
+    // This would need to be fetched from the API
+    return [];
+  };
+
+  // Function to get show required jobs
+  const getShowRequiredJobs = (showId: string) => {
+    // For now, return empty array since we don't have required jobs loaded in this component
+    // This would need to be fetched from the API
+    return [];
+  };
+
   // Convert shows to FullCalendar events
   const calendarEvents = useMemo(() => {
     let filteredShows = shows;
@@ -161,6 +175,14 @@ export function FullCalendarView() {
     return filteredShows.map((show: Show) => {
       const category = getShowCategory(show.id);
       const showResourceList = getShowResources(show.id);
+      // For now, we'll use simple placeholders for crew data since we don't have it loaded
+      // This would be enhanced when crew assignments and required jobs are loaded in this component
+      const crewStatus = 'Crew TBD';
+      
+      // Format resources
+      const resourcesText = showResourceList.length > 0 
+        ? showResourceList.map((r: Resource) => r.name).join(', ')
+        : 'No resources';
       
       // Use show's color field or fallback to default
       const backgroundColor = show.color || '#3b82f6';
@@ -178,7 +200,8 @@ export function FullCalendarView() {
           status: show.status,
           description: show.description,
           category: category?.title || 'Uncategorized',
-          resources: showResourceList.map((r: Resource) => r.name).join(', ') || 'No resources assigned',
+          resources: resourcesText,
+          crewStatus: crewStatus,
         },
       };
     });
@@ -222,8 +245,13 @@ export function FullCalendarView() {
             {event.title}
           </div>
         </div>
-        <div className="text-xs opacity-75 mt-1">
-          {extendedProps.resources}
+        <div className="text-xs opacity-75 mt-1 space-y-1">
+          <div className="truncate">
+            📦 {extendedProps.resources}
+          </div>
+          <div className="truncate">
+            👥 {extendedProps.crewStatus}
+          </div>
         </div>
       </div>
     );
@@ -297,13 +325,14 @@ export function FullCalendarView() {
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'timeGridDay,timeGridWeek,dayGridMonth'
           }}
           buttonText={{
             today: 'Today',
-            month: 'Month',
             week: 'Week',
-            day: 'Day'
+            day: 'Day',
+            month: 'Month'
+            
           }}
           events={calendarEvents}
           eventClick={handleEventClick}
