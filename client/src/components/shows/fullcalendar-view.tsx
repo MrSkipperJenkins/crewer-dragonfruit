@@ -103,12 +103,6 @@ export function FullCalendarView() {
     enabled: !!currentWorkspace?.id,
   });
   
-  // Query show resources data
-  const { data: showResources = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-resources`],
-    enabled: !!currentWorkspace?.id,
-  });
-
   // Query show categories data
   const { data: categories = [] } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
@@ -118,18 +112,6 @@ export function FullCalendarView() {
   // Query show category assignments data
   const { data: categoryAssignments = [] } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
-    enabled: !!currentWorkspace?.id,
-  });
-
-  // Query crew assignments data
-  const { data: crewAssignments = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-assignments`],
-    enabled: !!currentWorkspace?.id,
-  });
-
-  // Query required jobs data
-  const { data: requiredJobs = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/required-jobs`],
     enabled: !!currentWorkspace?.id,
   });
 
@@ -167,19 +149,88 @@ export function FullCalendarView() {
     );
   };
 
-  // Function to get show resources using show-specific relationships
+  // Query all show-specific data for the shows we have
+  const showIds = (shows as any[]).map((show: any) => show.id);
+  
+  // Query show resources for all shows
+  const showResourceQueries = useQuery({
+    queryKey: [`/api/show-resources-batch`, showIds],
+    queryFn: async () => {
+      const results: Record<string, any[]> = {};
+      for (const showId of showIds) {
+        try {
+          const response = await fetch(`/api/shows/${showId}/resources`);
+          if (response.ok) {
+            results[showId] = await response.json();
+          } else {
+            results[showId] = [];
+          }
+        } catch {
+          results[showId] = [];
+        }
+      }
+      return results;
+    },
+    enabled: showIds.length > 0,
+  });
+
+  // Query crew assignments for all shows
+  const crewAssignmentQueries = useQuery({
+    queryKey: [`/api/crew-assignments-batch`, showIds],
+    queryFn: async () => {
+      const results: Record<string, any[]> = {};
+      for (const showId of showIds) {
+        try {
+          const response = await fetch(`/api/shows/${showId}/crew-assignments`);
+          if (response.ok) {
+            results[showId] = await response.json();
+          } else {
+            results[showId] = [];
+          }
+        } catch {
+          results[showId] = [];
+        }
+      }
+      return results;
+    },
+    enabled: showIds.length > 0,
+  });
+
+  // Query required jobs for all shows
+  const requiredJobQueries = useQuery({
+    queryKey: [`/api/required-jobs-batch`, showIds],
+    queryFn: async () => {
+      const results: Record<string, any[]> = {};
+      for (const showId of showIds) {
+        try {
+          const response = await fetch(`/api/shows/${showId}/required-jobs`);
+          if (response.ok) {
+            results[showId] = await response.json();
+          } else {
+            results[showId] = [];
+          }
+        } catch {
+          results[showId] = [];
+        }
+      }
+      return results;
+    },
+    enabled: showIds.length > 0,
+  });
+
+  // Function to get show resources using show-specific data
   const getShowResources = (showId: string) => {
-    const assignedShowResources = (showResources as any[]).filter((sr: any) => sr.showId === showId);
-    return assignedShowResources.map((sr: any) => {
+    const showResources = showResourceQueries.data?.[showId] || [];
+    return showResources.map((sr: any) => {
       const resource = (resources as any[]).find((r: any) => r.id === sr.resourceId);
       return resource;
     }).filter(Boolean);
   };
 
-  // Function to get crew staffing status for a show using show-specific relationships
+  // Function to get crew staffing status for a show
   const getCrewStaffingStatus = (showId: string) => {
-    const showRequiredJobs = (requiredJobs as any[]).filter((rj: any) => rj.showId === showId);
-    const showCrewAssignments = (crewAssignments as any[]).filter((ca: any) => ca.showId === showId);
+    const showRequiredJobs = requiredJobQueries.data?.[showId] || [];
+    const showCrewAssignments = crewAssignmentQueries.data?.[showId] || [];
     
     const totalRequired = showRequiredJobs.reduce((sum: number, job: any) => sum + (job.quantity || 0), 0);
     const totalAssigned = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
@@ -229,7 +280,7 @@ export function FullCalendarView() {
         },
       };
     });
-  }, [shows, categoryFilter, categoryAssignments, categories, showResources, resources, crewAssignments, requiredJobs]);
+  }, [shows, categoryFilter, categoryAssignments, categories, resources, showResourceQueries.data, crewAssignmentQueries.data, requiredJobQueries.data]);
 
   // Handle event click
   const handleEventClick = (info: any) => {
