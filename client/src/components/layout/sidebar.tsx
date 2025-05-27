@@ -203,22 +203,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: {
           </nav>
         </div>
 
-        {/* User Profile */}
-        <div className="border-t border-gray-200 p-4">
-          <div className="flex items-center">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&h=256" alt="User profile" />
-              <AvatarFallback>SJ</AvatarFallback>
-            </Avatar>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-700">Sarah Johnson</p>
-              <p className="text-xs text-gray-500">Production Manager</p>
-            </div>
-            <button className="ml-auto text-gray-500 hover:text-gray-700">
-              <LogOutIcon className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
+
       </aside>
     </>
   );

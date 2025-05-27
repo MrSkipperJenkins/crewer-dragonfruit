@@ -5,10 +5,25 @@ import {
   SearchIcon, 
   BellIcon, 
   HelpCircleIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ChevronDownIcon,
+  UserIcon,
+  SettingsIcon,
+  LogOutIcon,
+  UsersIcon,
+  GiftIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type BreadcrumbItem = {
   label: string;
@@ -129,9 +144,49 @@ export function TopNavBar({
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </Button>
         
-        <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
-          <HelpCircleIcon className="h-5 w-5" />
-        </Button>
+        {/* User Avatar Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=256&h=256" alt="User profile" />
+                <AvatarFallback>SJ</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">Sarah Johnson</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  Production Manager
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              <span>Account</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <GiftIcon className="mr-2 h-4 w-4" />
+              <span>Refer and earn</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <UsersIcon className="mr-2 h-4 w-4" />
+              <span>Create Team</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <LogOutIcon className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
