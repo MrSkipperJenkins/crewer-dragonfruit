@@ -210,6 +210,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(resources);
   });
 
+  // Show Resources (workspace-level)
+  app.get("/api/workspaces/:workspaceId/show-resources", async (req, res) => {
+    const showResources = await storage.getShowResources(req.params.workspaceId);
+    res.json(showResources);
+  });
+
   app.get("/api/resources/:id", async (req, res) => {
     const resource = await storage.getResource(req.params.id);
     if (!resource) {
