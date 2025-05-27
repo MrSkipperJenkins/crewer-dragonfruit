@@ -35,6 +35,7 @@ type Show = {
   status: string;
   description?: string;
   workspaceId: string;
+  color?: string;
 };
 
 type Resource = {
@@ -61,6 +62,23 @@ type ShowCategoryAssignment = {
   id: string;
   showId: string;
   categoryId: string;
+};
+
+type CrewAssignment = {
+  id: string;
+  showId: string;
+  crewMemberId: string;
+  jobId: string;
+  status: string;
+  workspaceId: string;
+};
+
+type RequiredJob = {
+  id: string;
+  showId: string;
+  jobId: string;
+  quantity: number;
+  workspaceId: string;
 };
 
 export function FullCalendarView() {
@@ -100,6 +118,18 @@ export function FullCalendarView() {
   // Query show category assignments data
   const { data: categoryAssignments = [] } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
+    enabled: !!currentWorkspace?.id,
+  });
+
+  // Query crew assignments data
+  const { data: crewAssignments = [] } = useQuery({
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-assignments`],
+    enabled: !!currentWorkspace?.id,
+  });
+
+  // Query required jobs data
+  const { data: requiredJobs = [] } = useQuery({
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/required-jobs`],
     enabled: !!currentWorkspace?.id,
   });
 
@@ -146,6 +176,21 @@ export function FullCalendarView() {
     return resources.filter((r: Resource) => showResourceIds.includes(r.id));
   };
 
+  // Function to get crew staffing status for a show
+  const getCrewStaffingStatus = (showId: string) => {
+    const showRequiredJobs = requiredJobs.filter((rj: RequiredJob) => rj.showId === showId);
+    const showCrewAssignments = crewAssignments.filter((ca: CrewAssignment) => ca.showId === showId);
+    
+    const totalRequired = showRequiredJobs.reduce((sum: number, job: RequiredJob) => sum + job.quantity, 0);
+    const totalAssigned = showCrewAssignments.filter((ca: CrewAssignment) => ca.status === 'confirmed').length;
+    
+    return {
+      assigned: totalAssigned,
+      required: totalRequired,
+      isFullyStaffed: totalAssigned >= totalRequired
+    };
+  };
+
   // Convert shows to FullCalendar events
   const calendarEvents = useMemo(() => {
     let filteredShows = shows;
@@ -161,6 +206,7 @@ export function FullCalendarView() {
     return filteredShows.map((show: Show) => {
       const category = getShowCategory(show.id);
       const showResourceList = getShowResources(show.id);
+      const crewStatus = getCrewStaffingStatus(show.id);
       
       // Use show's color field or fallback to default
       const backgroundColor = show.color || '#3b82f6';
@@ -179,10 +225,11 @@ export function FullCalendarView() {
           description: show.description,
           category: category?.title || 'Uncategorized',
           resources: showResourceList.map((r: Resource) => r.name).join(', ') || 'No resources assigned',
+          crewStatus: crewStatus,
         },
       };
     });
-  }, [shows, categoryFilter, categoryAssignments, categories, showResources, resources]);
+  }, [shows, categoryFilter, categoryAssignments, categories, showResources, resources, crewAssignments, requiredJobs]);
 
   // Handle event click
   const handleEventClick = (info: any) => {
@@ -214,16 +261,37 @@ export function FullCalendarView() {
   const renderEventContent = (eventInfo: any) => {
     const { event } = eventInfo;
     const { extendedProps } = event;
+    const { crewStatus } = extendedProps;
+    
+    // Format resources display
+    const resourcesText = extendedProps.resources && extendedProps.resources !== 'No resources assigned' 
+      ? extendedProps.resources.length > 30 
+        ? `${extendedProps.resources.substring(0, 30)}...`
+        : extendedProps.resources
+      : 'No resources';
+    
+    // Format crew status display
+    const crewText = crewStatus.required > 0 
+      ? `${crewStatus.assigned}/${crewStatus.required} crew`
+      : 'No crew needed';
+    
+    const isFullyStaffed = crewStatus.isFullyStaffed && crewStatus.required > 0;
+    const crewStatusColor = isFullyStaffed ? 'text-green-200' : crewStatus.required > 0 ? 'text-yellow-200' : 'text-gray-300';
     
     return (
       <div className="fc-event-main-frame">
         <div className="fc-event-title-container">
-          <div className="fc-event-title fc-sticky font-medium text-xs">
+          <div className="fc-event-title fc-sticky font-medium text-xs leading-tight">
             {event.title}
           </div>
         </div>
-        <div className="text-xs opacity-75 mt-1">
-          {extendedProps.resources}
+        <div className="text-xs opacity-90 mt-1 space-y-0.5">
+          <div className="truncate">
+            {resourcesText}
+          </div>
+          <div className={`${crewStatusColor} font-medium`}>
+            {crewText}
+          </div>
         </div>
       </div>
     );
