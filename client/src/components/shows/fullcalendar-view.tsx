@@ -167,22 +167,22 @@ export function FullCalendarView() {
     );
   };
 
-  // Function to get show resources
+  // Function to get show resources using show-specific relationships
   const getShowResources = (showId: string) => {
-    const showResourceIds = showResources
-      .filter((sr: ShowResource) => sr.showId === showId)
-      .map((sr: ShowResource) => sr.resourceId);
-    
-    return resources.filter((r: Resource) => showResourceIds.includes(r.id));
+    const assignedShowResources = (showResources as any[]).filter((sr: any) => sr.showId === showId);
+    return assignedShowResources.map((sr: any) => {
+      const resource = (resources as any[]).find((r: any) => r.id === sr.resourceId);
+      return resource;
+    }).filter(Boolean);
   };
 
-  // Function to get crew staffing status for a show
+  // Function to get crew staffing status for a show using show-specific relationships
   const getCrewStaffingStatus = (showId: string) => {
-    const showRequiredJobs = requiredJobs.filter((rj: RequiredJob) => rj.showId === showId);
-    const showCrewAssignments = crewAssignments.filter((ca: CrewAssignment) => ca.showId === showId);
+    const showRequiredJobs = (requiredJobs as any[]).filter((rj: any) => rj.showId === showId);
+    const showCrewAssignments = (crewAssignments as any[]).filter((ca: any) => ca.showId === showId);
     
-    const totalRequired = showRequiredJobs.reduce((sum: number, job: RequiredJob) => sum + job.quantity, 0);
-    const totalAssigned = showCrewAssignments.filter((ca: CrewAssignment) => ca.status === 'confirmed').length;
+    const totalRequired = showRequiredJobs.reduce((sum: number, job: any) => sum + (job.quantity || 0), 0);
+    const totalAssigned = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
     
     return {
       assigned: totalAssigned,
