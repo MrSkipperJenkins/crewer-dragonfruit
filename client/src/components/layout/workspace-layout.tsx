@@ -40,14 +40,14 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Top Navbar */}
       <WorkspaceNavbar 
         currentWorkspace={currentWorkspace || undefined}
         pageTitle={getPageTitle()}
       />
       
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <WorkspaceSidebar 
           currentWorkspace={currentWorkspace || undefined}

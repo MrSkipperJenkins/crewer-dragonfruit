@@ -76,9 +76,19 @@ export function WorkspaceSidebar({ currentWorkspace, className }: WorkspaceSideb
 
   const isActiveRoute = (href: string) => {
     if (href === "/") {
-      return location === "/" || location === "" || location === "/dashboard";
+      return location === "/" || location === "" || 
+             location === "/dashboard" ||
+             (currentWorkspace && location === `/workspaces/${currentWorkspace.slug}`) ||
+             (currentWorkspace && location === `/workspaces/${currentWorkspace.slug}/dashboard`);
     }
-    return location.startsWith(href);
+    
+    // For workspace-specific routes, check both legacy and workspace URLs
+    if (currentWorkspace) {
+      const workspaceHref = `/workspaces/${currentWorkspace.slug}${href}`;
+      return location === href || location === workspaceHref || location.startsWith(workspaceHref);
+    }
+    
+    return location === href || location.startsWith(href);
   };
 
   const getWorkspaceBasePath = () => {

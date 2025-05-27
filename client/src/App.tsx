@@ -47,6 +47,7 @@ function Router() {
               <Route path="/settings" component={Settings} />
               
               {/* Workspace-specific routes */}
+              <Route path="/workspaces/:slug" component={Dashboard} />
               <Route path="/workspaces/:slug/dashboard" component={Dashboard} />
               <Route path="/workspaces/:slug/shows" component={Shows} />
               <Route path="/workspaces/:slug/shows/calendar" component={ShowsCalendarView} />
