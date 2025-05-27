@@ -51,20 +51,20 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
   
   // Fetch all resources to get their details
   const { data: allResources = [] } = useQuery({
-    queryKey: ['/api/workspaces', show?.workspaceId, 'resources'],
-    enabled: !!show?.workspaceId,
+    queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/resources`],
+    enabled: !!(show as any)?.workspaceId,
   });
 
   // Fetch all crew members to get their details
   const { data: crewMembers = [] } = useQuery({
-    queryKey: ['/api/workspaces', show?.workspaceId, 'crew-members'],
-    enabled: !!show?.workspaceId,
+    queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/crew-members`],
+    enabled: !!(show as any)?.workspaceId,
   });
   
   // Fetch all jobs to get their details
   const { data: jobs = [] } = useQuery({
-    queryKey: ['/api/workspaces', show?.workspaceId, 'jobs'],
-    enabled: !!show?.workspaceId,
+    queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/jobs`],
+    enabled: !!(show as any)?.workspaceId,
   });
   
   // Set initial notes from show data
@@ -98,17 +98,23 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
   
   // Get resource by id
   const getResource = (resourceId: string) => {
-    return allResources.find((r: any) => r.id === resourceId);
+    const resource = (allResources as any[]).find((r: any) => r.id === resourceId);
+    console.log('Looking for resource:', resourceId, 'Found:', resource, 'All resources:', allResources);
+    return resource;
   };
   
   // Get crew member by id
   const getCrewMember = (crewMemberId: string) => {
-    return crewMembers.find((c: any) => c.id === crewMemberId);
+    const member = (crewMembers as any[]).find((c: any) => c.id === crewMemberId);
+    console.log('Looking for crew member:', crewMemberId, 'Found:', member, 'All crew:', crewMembers);
+    return member;
   };
   
   // Get job by id
   const getJob = (jobId: string) => {
-    return jobs.find((j: any) => j.id === jobId);
+    const job = (jobs as any[]).find((j: any) => j.id === jobId);
+    console.log('Looking for job:', jobId, 'Found:', job, 'All jobs:', jobs);
+    return job;
   };
   
   // Handle save changes
@@ -137,25 +143,27 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
           </div>
         ) : (
           <>
-            <DialogHeader className="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
-              <div>
-                <Badge 
-                  className={getStatusColor(show?.status)}
-                  variant="secondary"
+            <DialogHeader className="p-4 sm:p-6 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <Badge 
+                    className={getStatusColor((show as any)?.status)}
+                    variant="secondary"
+                  >
+                    {(show as any)?.status === 'scheduled' ? 'Active' : (show as any)?.status}
+                  </Badge>
+                  <h2 className="text-xl font-semibold text-gray-900 mt-2">{(show as any)?.title}</h2>
+                  <p className="text-sm text-gray-500 mt-1">{(show as any)?.description}</p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={onClose} 
+                  className="text-gray-400 hover:text-gray-500 ml-4 flex-shrink-0"
                 >
-                  {show?.status === 'scheduled' ? 'Active' : show?.status}
-                </Badge>
-                <h2 className="text-xl font-semibold text-gray-900 mt-1">{show?.title}</h2>
-                <p className="text-sm text-gray-500">{show?.description}</p>
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={onClose} 
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <X className="h-5 w-5" />
-              </Button>
             </DialogHeader>
             
             <div className="p-4 sm:p-6 overflow-y-auto">
