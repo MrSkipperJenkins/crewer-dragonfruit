@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useState } from "react";
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -7,7 +8,6 @@ import {
   Briefcase, 
   Package, 
   BarChart3, 
-  Settings,
   Plus,
   ChevronRight
 } from "lucide-react";
@@ -72,16 +72,25 @@ const navigationItems = [
 
 export function WorkspaceSidebar({ currentWorkspace, className }: WorkspaceSidebarProps) {
   const [location] = useLocation();
+  const [expandedSections, setExpandedSections] = useState<string[]>(['Shows']);
 
   const isActiveRoute = (href: string) => {
     if (href === "/") {
-      return location === "/" || location === "";
+      return location === "/" || location === "" || location === "/dashboard";
     }
     return location.startsWith(href);
   };
 
   const getWorkspaceBasePath = () => {
     return currentWorkspace ? `/workspaces/${currentWorkspace.slug}` : "";
+  };
+
+  const toggleSection = (sectionTitle: string) => {
+    setExpandedSections(prev => 
+      prev.includes(sectionTitle) 
+        ? prev.filter(s => s !== sectionTitle)
+        : [...prev, sectionTitle]
+    );
   };
 
   return (
@@ -95,11 +104,15 @@ export function WorkspaceSidebar({ currentWorkspace, className }: WorkspaceSideb
           {navigationItems.map((item) => {
             if (item.items) {
               // Expandable section
-              const isExpanded = item.items.some(subItem => isActiveRoute(subItem.href));
+              const isExpanded = expandedSections.includes(item.title) || item.items.some(subItem => isActiveRoute(subItem.href));
               
               return (
                 <div key={item.title} className="space-y-1">
-                  <div className="flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <Button
+                    variant="ghost"
+                    onClick={() => toggleSection(item.title)}
+                    className="w-full justify-between px-3 py-2 h-9 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  >
                     <div className="flex items-center space-x-2">
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -110,7 +123,7 @@ export function WorkspaceSidebar({ currentWorkspace, className }: WorkspaceSideb
                         isExpanded && "rotate-90"
                       )} 
                     />
-                  </div>
+                  </Button>
                   {isExpanded && (
                     <div className="space-y-1 ml-6">
                       {item.items.map((subItem) => (
@@ -185,18 +198,7 @@ export function WorkspaceSidebar({ currentWorkspace, className }: WorkspaceSideb
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-3">
-        <Link href={currentWorkspace ? `/workspaces/${currentWorkspace.slug}/settings` : "/settings"}>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start h-9 px-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            <Settings className="h-4 w-4 mr-3" />
-            Settings
-          </Button>
-        </Link>
-      </div>
+
     </div>
   );
 }
