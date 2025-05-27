@@ -326,6 +326,26 @@ export default function ShowBuilder() {
                   
                   <FormField
                     control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event Color</FormLabel>
+                        <FormControl>
+                          <ColorPicker
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Choose a color to help identify this event in the calendar
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
                     name="categoryId"
                     render={({ field }) => (
                       <FormItem>
