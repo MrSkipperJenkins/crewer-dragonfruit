@@ -360,6 +360,7 @@ export class MemStorage implements IStorage {
       recurringPattern: "WEEKLY:1,2,3,4,5", // Monday through Friday
       notes: "Morning anchors: Sarah Johnson and Michael Torres. Include traffic report at 7:45 AM. Weather updates every 30 minutes.",
       status: "scheduled",
+      color: "#3b82f6", // Blue for news
       workspaceId,
       createdAt: new Date()
     });
@@ -374,6 +375,7 @@ export class MemStorage implements IStorage {
       recurringPattern: "WEEKLY:2",  // Tuesday
       notes: "Guest chef each week. Kitchen needs to be set up 90 minutes before show.",
       status: "scheduled",
+      color: "#f59e0b", // Amber for cooking
       workspaceId,
       createdAt: new Date()
     });
@@ -388,6 +390,7 @@ export class MemStorage implements IStorage {
       recurringPattern: "WEEKLY:4,5", // Thursday and Friday
       notes: "Live audience. Pre-show meeting at 1:30 PM.",
       status: "scheduled",
+      color: "#8b5cf6", // Violet for talk shows
       workspaceId,
       createdAt: new Date()
     });
@@ -402,6 +405,7 @@ export class MemStorage implements IStorage {
       recurringPattern: "WEEKLY:0",  // Sunday
       notes: "Include highlights from weekend games.",
       status: "scheduled",
+      color: "#10b981", // Emerald for sports
       workspaceId,
       createdAt: new Date()
     });
