@@ -24,6 +24,14 @@ export function formatTime(date: string | Date) {
   }).format(new Date(date));
 }
 
+export function formatDate(date: string | Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(new Date(date));
+}
+
 export function getStatusColor(status: string) {
   switch (status?.toLowerCase()) {
     case 'active':
@@ -56,4 +64,20 @@ export function generateSlug(name: string): string {
 export function isValidSlug(slug: string): boolean {
   const slugRegex = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
   return slugRegex.test(slug) && slug.length >= 3 && slug.length <= 50;
+}
+
+// Get resource type label
+export function getResourceTypeLabel(type: string): string {
+  switch (type?.toLowerCase()) {
+    case 'equipment':
+      return 'Equipment';
+    case 'venue':
+      return 'Venue';
+    case 'vehicle':
+      return 'Vehicle';
+    case 'prop':
+      return 'Prop';
+    default:
+      return type || 'Resource';
+  }
 }

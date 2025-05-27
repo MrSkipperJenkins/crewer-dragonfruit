@@ -85,7 +85,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
     mutationFn: async (data: WorkspaceInfo) => {
       return apiRequest("POST", "/api/workspaces", data);
     },
-    onSuccess: (workspace) => {
+    onSuccess: (workspace: Workspace) => {
       setWorkspaceData(workspace);
       setCurrentStep(2);
       toast({
