@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import Layout from "@/components/layout/layout";
+import { WorkspaceLayout } from "@/components/layout/workspace-layout";
 import Dashboard from "@/pages/dashboard";
 import Shows from "@/pages/shows";
 import ShowsCalendarView from "@/pages/shows/calendar-view";
@@ -19,29 +19,51 @@ import Settings from "@/pages/settings";
 import Notifications from "@/pages/notifications";
 import NewWorkspacePage from "@/pages/workspaces/new";
 import { WorkspaceProvider } from "@/hooks/use-workspace.tsx";
+import { CurrentWorkspaceProvider } from "@/hooks/use-current-workspace";
 
 function Router() {
   return (
     <Switch>
+      {/* Standalone routes (outside workspace layout) */}
       <Route path="/workspaces/new" component={NewWorkspacePage} />
+      
+      {/* Workspace-aware routes */}
       <Route>
-        <Layout>
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/shows" component={Shows} />
-            <Route path="/shows/calendar" component={ShowsCalendarView} />
-            <Route path="/shows/list" component={ShowsListView} />
-            <Route path="/shows/builder" component={ShowBuilder} />
-            <Route path="/crew-members" component={CrewMembers} />
-            <Route path="/crew-schedule" component={CrewSchedule} />
-            <Route path="/jobs" component={Jobs} />
-            <Route path="/resources" component={Resources} />
-            <Route path="/reports" component={Reports} />
-            <Route path="/notifications" component={Notifications} />
-            <Route path="/settings" component={Settings} />
-            <Route component={NotFound} />
-          </Switch>
-        </Layout>
+        <CurrentWorkspaceProvider>
+          <WorkspaceLayout>
+            <Switch>
+              {/* Legacy routes (for backwards compatibility) */}
+              <Route path="/" component={Dashboard} />
+              <Route path="/shows" component={Shows} />
+              <Route path="/shows/calendar" component={ShowsCalendarView} />
+              <Route path="/shows/list" component={ShowsListView} />
+              <Route path="/shows/builder" component={ShowBuilder} />
+              <Route path="/crew-members" component={CrewMembers} />
+              <Route path="/crew-schedule" component={CrewSchedule} />
+              <Route path="/jobs" component={Jobs} />
+              <Route path="/resources" component={Resources} />
+              <Route path="/reports" component={Reports} />
+              <Route path="/notifications" component={Notifications} />
+              <Route path="/settings" component={Settings} />
+              
+              {/* Workspace-specific routes */}
+              <Route path="/workspaces/:slug/dashboard" component={Dashboard} />
+              <Route path="/workspaces/:slug/shows" component={Shows} />
+              <Route path="/workspaces/:slug/shows/calendar" component={ShowsCalendarView} />
+              <Route path="/workspaces/:slug/shows/list" component={ShowsListView} />
+              <Route path="/workspaces/:slug/shows/builder" component={ShowBuilder} />
+              <Route path="/workspaces/:slug/crew-members" component={CrewMembers} />
+              <Route path="/workspaces/:slug/crew-schedule" component={CrewSchedule} />
+              <Route path="/workspaces/:slug/jobs" component={Jobs} />
+              <Route path="/workspaces/:slug/resources" component={Resources} />
+              <Route path="/workspaces/:slug/reports" component={Reports} />
+              <Route path="/workspaces/:slug/notifications" component={Notifications} />
+              <Route path="/workspaces/:slug/settings" component={Settings} />
+              
+              <Route component={NotFound} />
+            </Switch>
+          </WorkspaceLayout>
+        </CurrentWorkspaceProvider>
       </Route>
     </Switch>
   );

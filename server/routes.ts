@@ -49,6 +49,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/workspaces/switch", async (req, res) => {
+    try {
+      const { workspaceSlug } = req.body;
+      if (!workspaceSlug) {
+        return res.status(400).json({ message: "Workspace slug is required" });
+      }
+      
+      const workspace = await storage.getWorkspaceBySlug(workspaceSlug);
+      if (!workspace) {
+        return res.status(404).json({ message: "Workspace not found" });
+      }
+      
+      res.json({ success: true, workspace });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to switch workspace" });
+    }
+  });
+
   // Workspace slug validation
   app.get("/api/workspaces/slug-check", async (req, res) => {
     const slug = req.query.slug as string;
