@@ -250,10 +250,6 @@ export function FullCalendarView() {
       {/* Page Header */}
       <div className="p-4 sm:p-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Shows Calendar</h1>
-            <p className="mt-1 text-sm text-gray-500">View and manage upcoming shows with drag & drop functionality</p>
-          </div>
           <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -368,7 +364,17 @@ export function FullCalendarView() {
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
           initialView="dayGridMonth"
-          headerToolbar={false} // We use our custom header
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          }}
+          buttonText={{
+            today: 'Today',
+            month: 'Month',
+            week: 'Week',
+            day: 'Day'
+          }}
           events={calendarEvents}
           eventClick={handleEventClick}
           eventDrop={handleEventDrop}
