@@ -17,6 +17,7 @@ import Resources from "@/pages/resources";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Notifications from "@/pages/notifications";
+import NewWorkspacePage from "@/pages/workspaces/new";
 import { WorkspaceProvider } from "@/hooks/use-workspace.tsx";
 
 function Router() {
@@ -35,6 +36,7 @@ function Router() {
         <Route path="/reports" component={Reports} />
         <Route path="/notifications" component={Notifications} />
         <Route path="/settings" component={Settings} />
+        <Route path="/workspaces/new" component={NewWorkspacePage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

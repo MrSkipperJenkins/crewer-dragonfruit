@@ -1,109 +1,59 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { format, parseISO } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(dateString: string): string {
-  if (!dateString) return '';
-  try {
-    return format(parseISO(dateString), 'MMM d, yyyy');
-  } catch {
-    return dateString;
-  }
+export function formatDateTime(date: string | Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(new Date(date));
 }
 
-export function formatTime(dateString: string): string {
-  if (!dateString) return '';
-  try {
-    return format(parseISO(dateString), 'h:mm a');
-  } catch {
-    return dateString;
-  }
-}
-
-export function formatDateTime(dateString: string): string {
-  if (!dateString) return '';
-  try {
-    return format(parseISO(dateString), 'MMM d, yyyy h:mm a');
-  } catch {
-    return dateString;
-  }
-}
-
-export function getDayOfWeek(dateString: string): string {
-  if (!dateString) return '';
-  try {
-    return format(parseISO(dateString), 'EEEE');
-  } catch {
-    return dateString;
-  }
-}
-
-export function getDatesBetween(startDate: Date, endDate: Date): Date[] {
-  const dates: Date[] = [];
-  let currentDate = new Date(startDate);
-
-  while (currentDate <= endDate) {
-    dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return dates;
-}
-
-export function getWeekDates(date = new Date()): Date[] {
-  const day = date.getDay();
-  const diff = date.getDate() - day;
-  
-  const weekStart = new Date(date);
-  weekStart.setDate(diff);
-  weekStart.setHours(0, 0, 0, 0);
-  
-  const dates = [];
-  for (let i = 0; i < 7; i++) {
-    const currentDate = new Date(weekStart);
-    currentDate.setDate(weekStart.getDate() + i);
-    dates.push(currentDate);
-  }
-  
-  return dates;
-}
-
-export function getResourceTypeLabel(type: string) {
-  switch (type) {
-    case 'studio':
-      return 'Studio';
-    case 'control_room':
-      return 'Control Room';
-    case 'equipment':
-      return 'Equipment';
-    default:
-      return type;
-  }
+export function formatTime(date: string | Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(new Date(date));
 }
 
 export function getStatusColor(status: string) {
-  switch (status) {
-    case 'draft':
-      return 'bg-gray-100 text-gray-800';
+  switch (status?.toLowerCase()) {
+    case 'active':
     case 'scheduled':
-      return 'bg-blue-100 text-blue-800';
-    case 'in_progress':
-      return 'bg-amber-100 text-amber-800';
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'cancelled':
-      return 'bg-red-100 text-red-800';
     case 'confirmed':
-      return 'bg-green-100 text-green-800';
+      return 'bg-green-100 text-green-800 border-green-200';
     case 'pending':
-      return 'bg-amber-100 text-amber-800';
-    case 'declined':
-      return 'bg-red-100 text-red-800';
+    case 'draft':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'cancelled':
+    case 'rejected':
+      return 'bg-red-100 text-red-800 border-red-200';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-gray-800 border-gray-200';
   }
+}
+
+// Generate URL-friendly slug from workspace name
+export function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Validate slug format
+export function isValidSlug(slug: string): boolean {
+  const slugRegex = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+  return slugRegex.test(slug) && slug.length >= 3 && slug.length <= 50;
 }
