@@ -6,12 +6,20 @@ import { z } from "zod";
 export const workspaces = pgTable("workspaces", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  region: text("region").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertWorkspaceSchema = createInsertSchema(workspaces).omit({
   id: true,
   createdAt: true,
+});
+
+// Workspace invite schema for the multi-step flow
+export const workspaceInviteSchema = z.object({
+  emails: z.array(z.string().email()).min(0),
+  workspaceId: z.string().uuid(),
 });
 
 // User - A user in the system

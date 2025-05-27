@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { 
   insertWorkspaceSchema,
+  workspaceInviteSchema,
   insertUserSchema,
   insertCrewMemberSchema,
   insertJobSchema,
@@ -45,6 +46,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(workspace);
     } catch (error) {
       res.status(500).json({ message: "Failed to create workspace" });
+    }
+  });
+
+  // Workspace slug validation
+  app.get("/api/workspaces/slug-check", async (req, res) => {
+    const slug = req.query.slug as string;
+    if (!slug) {
+      return res.status(400).json({ message: "Slug parameter is required" });
+    }
+    
+    try {
+      const isAvailable = await storage.isWorkspaceSlugAvailable(slug);
+      res.json({ available: isAvailable });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check slug availability" });
+    }
+  });
+
+  // Workspace invitations
+  app.post("/api/workspaces/:slug/invites", async (req, res) => {
+    try {
+      const validation = workspaceInviteSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid invite data", errors: validation.error.errors });
+      }
+      
+      const workspace = await storage.getWorkspaceBySlug(req.params.slug);
+      if (!workspace) {
+        return res.status(404).json({ message: "Workspace not found" });
+      }
+
+      // For now, just return success - in a real app you'd send actual emails
+      const invites = validation.data.emails.map(email => ({
+        id: crypto.randomUUID(),
+        email,
+        workspaceId: workspace.id,
+        token: crypto.randomUUID(),
+        invitedAt: new Date().toISOString()
+      }));
+      
+      res.status(201).json({ invites, inviteLink: `${req.get('origin')}/join/${workspace.slug}` });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to send invites" });
     }
   });
 

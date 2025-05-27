@@ -21,6 +21,8 @@ export interface IStorage {
   // Workspace CRUD
   getWorkspaces(): Promise<Workspace[]>;
   getWorkspace(id: string): Promise<Workspace | undefined>;
+  getWorkspaceBySlug(slug: string): Promise<Workspace | undefined>;
+  isWorkspaceSlugAvailable(slug: string): Promise<boolean>;
   createWorkspace(workspace: InsertWorkspace): Promise<Workspace>;
   updateWorkspace(id: string, workspace: Partial<InsertWorkspace>): Promise<Workspace | undefined>;
   deleteWorkspace(id: string): Promise<boolean>;
@@ -167,6 +169,8 @@ export class MemStorage implements IStorage {
     this.workspaces.set(workspaceId, {
       id: workspaceId,
       name: "ABC Productions",
+      slug: "abc-productions",
+      region: "US",
       createdAt: new Date(),
     });
 
@@ -687,6 +691,15 @@ export class MemStorage implements IStorage {
 
   async deleteWorkspace(id: string): Promise<boolean> {
     return this.workspaces.delete(id);
+  }
+
+  async getWorkspaceBySlug(slug: string): Promise<Workspace | undefined> {
+    return Array.from(this.workspaces.values()).find(workspace => workspace.slug === slug);
+  }
+
+  async isWorkspaceSlugAvailable(slug: string): Promise<boolean> {
+    const existing = await this.getWorkspaceBySlug(slug);
+    return !existing;
   }
 
   // User CRUD

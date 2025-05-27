@@ -323,7 +323,7 @@ export function FullCalendarView() {
     
     // Format crew status display
     const crewText = crewStatus.required > 0 
-      ? `${crewStatus.assigned}/${crewStatus.required} crew`
+      ? `${crewStatus.assigned} of ${crewStatus.required} crew assigned`
       : 'No crew needed';
     
     const isFullyStaffed = crewStatus.isFullyStaffed && crewStatus.required > 0;
