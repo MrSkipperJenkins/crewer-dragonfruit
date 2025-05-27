@@ -333,9 +333,9 @@ export function FullCalendarView() {
           weekNumbers={false}
           dayHeaders={true}
           allDaySlot={false}
-          slotMinTime="06:00:00"
+          slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
-          slotDuration="01:00:00"
+          slotDuration="00:30:00"
           snapDuration="00:15:00"
           businessHours={{
             daysOfWeek: [1, 2, 3, 4, 5, 6, 0],

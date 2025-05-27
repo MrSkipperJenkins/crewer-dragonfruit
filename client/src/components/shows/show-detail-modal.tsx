@@ -180,21 +180,25 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
               
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-3">Resources</h3>
-                <div className="bg-gray-50 rounded-md p-4 space-y-2">
-                  {showResources.map((sr: any) => {
+                <div className="bg-gray-50 rounded-md divide-y divide-gray-200">
+                  {showResources.length > 0 ? showResources.map((sr: any) => {
                     const resource = getResource(sr.resourceId);
                     return (
-                      <div key={sr.id} className="flex items-center justify-between border-b border-gray-200 pb-2">
-                        <div>
-                          <div className="font-medium">{resource?.name}</div>
-                          <div className="text-sm text-gray-500">{resource?.description || resource?.type}</div>
+                      <div key={sr.id} className="p-3 flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{resource?.name || 'Unknown Resource'}</div>
+                          <div className="text-sm text-gray-500">{resource?.type}</div>
                         </div>
-                        <Badge variant="success">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
                           Confirmed
                         </Badge>
                       </div>
                     );
-                  })}
+                  }) : (
+                    <div className="p-4 text-center text-gray-500">
+                      No resources assigned to this show
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -207,30 +211,35 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                 </div>
                 
                 <div className="bg-gray-50 rounded-md divide-y divide-gray-200">
-                  {crewAssignments.map((assignment: any) => {
+                  {crewAssignments.length > 0 ? crewAssignments.map((assignment: any) => {
                     const crewMember = getCrewMember(assignment.crewMemberId);
                     const job = getJob(assignment.jobId);
                     return (
-                      <div key={assignment.id} className="p-3 flex items-center">
-                        <Avatar className="h-10 w-10">
+                      <div key={assignment.id} className="p-4 flex items-center space-x-3">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
                           <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(crewMember?.name || '')}&background=random`} />
-                          <AvatarFallback>{getInitials(crewMember?.name || '')}</AvatarFallback>
+                          <AvatarFallback className="bg-blue-100 text-blue-700">{getInitials(crewMember?.name || 'UN')}</AvatarFallback>
                         </Avatar>
-                        <div className="ml-3">
-                          <div className="font-medium">{crewMember?.name}</div>
-                          <div className="text-sm text-gray-500">{job?.title}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900">{crewMember?.name || 'Unknown Member'}</div>
+                          <div className="text-sm text-gray-500">{job?.title || 'Unknown Role'}</div>
                         </div>
                         <Badge 
-                          className="ml-auto"
-                          variant={assignment.status === 'confirmed' ? 'success' : 
-                                 assignment.status === 'pending' ? 'warning' : 'destructive'}
+                          variant="secondary"
+                          className={
+                            assignment.status === 'confirmed' 
+                              ? 'bg-green-100 text-green-800 border-green-200' 
+                              : assignment.status === 'pending' 
+                              ? 'bg-amber-100 text-amber-800 border-amber-200' 
+                              : 'bg-red-100 text-red-800 border-red-200'
+                          }
                         >
                           {assignment.status === 'confirmed' ? 'Confirmed' : 
                            assignment.status === 'pending' ? 'Unconfirmed' : 'Declined'}
                         </Badge>
                       </div>
                     );
-                  })}
+                  }) : null}
                   
                   {requiredJobs
                     .filter((requiredJob: any) => {
@@ -240,24 +249,30 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                     .map((requiredJob: any) => {
                       const job = getJob(requiredJob.jobId);
                       return (
-                        <div key={requiredJob.id} className="p-3 flex items-center">
-                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-gray-500 text-lg">+</span>
+                        <div key={requiredJob.id} className="p-4 flex items-center space-x-3">
+                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                            <span className="text-gray-500 text-lg font-light">+</span>
                           </div>
-                          <div className="ml-3">
-                            <div className="font-medium text-gray-500">{job?.title}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-red-600">{job?.title || 'Unknown Position'}</div>
                             <div className="text-sm text-red-500">Unfilled Position</div>
                           </div>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="ml-auto bg-primary-100 text-primary-800 border-primary-200 hover:bg-primary-200"
+                            className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                           >
                             Assign
                           </Button>
                         </div>
                       );
                     })}
+                    
+                  {crewAssignments.length === 0 && requiredJobs.length === 0 && (
+                    <div className="p-4 text-center text-gray-500">
+                      No crew assignments for this show
+                    </div>
+                  )}
                 </div>
               </div>
               
