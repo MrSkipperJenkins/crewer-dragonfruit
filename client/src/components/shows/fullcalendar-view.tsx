@@ -139,11 +139,20 @@ export function FullCalendarView() {
 
   // Function to get show resources
   const getShowResources = (showId: string) => {
+    console.log('Getting resources for show:', showId);
+    console.log('Available showResources:', showResources);
+    console.log('Available resources:', resources);
+    
     const showResourceIds = showResources
       .filter((sr: ShowResource) => sr.showId === showId)
       .map((sr: ShowResource) => sr.resourceId);
     
-    return resources.filter((r: Resource) => showResourceIds.includes(r.id));
+    console.log('Filtered showResourceIds:', showResourceIds);
+    
+    const matchedResources = resources.filter((r: Resource) => showResourceIds.includes(r.id));
+    console.log('Matched resources:', matchedResources);
+    
+    return matchedResources;
   };
 
   // Function to get show crew assignments
