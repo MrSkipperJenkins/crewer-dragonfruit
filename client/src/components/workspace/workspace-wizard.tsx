@@ -17,9 +17,8 @@ import { insertWorkspaceSchema, type Workspace } from "@shared/schema";
 // Extend the workspace schema for the wizard
 const workspaceInfoSchema = insertWorkspaceSchema.extend({
   name: z.string().min(3, "Workspace name must be at least 3 characters"),
-  slug: z.string().min(3, "URL slug must be at least 3 characters").refine(isValidSlug, "Invalid URL format"),
-  region: z.enum(["US", "EU", "APAC"], { required_error: "Please select a region" })
-});
+  slug: z.string().min(3, "URL slug must be at least 3 characters").refine(isValidSlug, "Invalid URL format")
+}).omit({ region: true });
 
 const inviteTeammatesSchema = z.object({
   emails: z.array(z.string().email("Invalid email address")).min(0).max(10)
@@ -44,8 +43,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
     resolver: zodResolver(workspaceInfoSchema),
     defaultValues: {
       name: "",
-      slug: "",
-      region: "US"
+      slug: ""
     },
     mode: "onChange"
   });
@@ -265,24 +263,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                   )}
                 </div>
 
-                <div>
-                  <Label className="text-gray-300 text-sm">
-                    Workspace will be hosted in the
-                  </Label>
-                  <Select
-                    value={workspaceForm.watch("region")}
-                    onValueChange={(value) => workspaceForm.setValue("region", value as "US" | "EU" | "APAC")}
-                  >
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="US">United States</SelectItem>
-                      <SelectItem value="EU">Europe</SelectItem>
-                      <SelectItem value="APAC">Asia Pacific</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
 
                 <Button
                   type="submit"
