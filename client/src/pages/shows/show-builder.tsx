@@ -71,7 +71,7 @@ export default function ShowBuilder() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<"details" | "resources" | "crew">("details");
 
-  // Helper function to get next 15-minute interval
+  // Helper function to get next 15-minute interval in local time
   const getNext15MinuteSlot = () => {
     const now = new Date();
     const minutes = now.getMinutes();
@@ -86,13 +86,25 @@ export default function ShowBuilder() {
     now.setSeconds(0);
     now.setMilliseconds(0);
     
-    // Format for datetime-local input (YYYY-MM-DDTHH:MM)
-    return now.toISOString().slice(0, 16);
+    // Format for datetime-local input in local time (YYYY-MM-DDTHH:MM)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${mins}`;
   };
 
-  // Helper function to format date for datetime-local input
+  // Helper function to format date for datetime-local input in local time
   const formatDateTimeLocal = (date: Date) => {
-    return date.toISOString().slice(0, 16);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const mins = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${mins}`;
   };
 
   const defaultStartTime = getNext15MinuteSlot();
@@ -165,6 +177,7 @@ export default function ShowBuilder() {
       const show = await response.json();
       
       const promises = [];
+      const conflictedResources: string[] = [];
       
       // If category is selected, create category assignment
       if (categoryId) {
@@ -177,7 +190,7 @@ export default function ShowBuilder() {
         );
       }
       
-      // Assign selected resources to the show
+      // Assign selected resources to the show with conflict handling
       if (selectedResources && selectedResources.length > 0) {
         for (const resourceId of selectedResources) {
           promises.push(
@@ -185,6 +198,13 @@ export default function ShowBuilder() {
               showId: show.id,
               resourceId,
               workspaceId: currentWorkspace?.id,
+            }).catch(async (error) => {
+              if (error.status === 409) {
+                // Find resource name for better error message
+                const resource = (resources as any[])?.find(r => r.id === resourceId);
+                conflictedResources.push(resource?.name || 'Unknown resource');
+              }
+              throw error;
             })
           );
         }
@@ -204,8 +224,17 @@ export default function ShowBuilder() {
         }
       }
       
-      // Wait for all promises to complete
-      await Promise.all(promises);
+      // Wait for all promises to complete, ignoring 409 conflicts
+      const results = await Promise.allSettled(promises);
+      
+      // Check for any conflicts and show user-friendly message
+      if (conflictedResources.length > 0) {
+        toast({
+          title: "Show Created with Scheduling Conflicts",
+          description: `Some resources couldn't be assigned due to conflicts: ${conflictedResources.join(', ')}. Check the show details to reassign them.`,
+          variant: "destructive",
+        });
+      }
       
       return show;
     },
