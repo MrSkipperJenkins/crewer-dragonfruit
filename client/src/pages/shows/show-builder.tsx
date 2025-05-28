@@ -90,19 +90,19 @@ export default function ShowBuilder() {
 
   // Fetch categories for dropdown
   const { data: categories = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-categories'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
     enabled: !!currentWorkspace?.id,
   });
 
   // Fetch resources for selection
   const { data: resources = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'resources'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/resources`],
     enabled: !!currentWorkspace?.id,
   });
 
   // Fetch jobs for selection
   const { data: jobs = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'jobs'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
     enabled: !!currentWorkspace?.id,
   });
 
