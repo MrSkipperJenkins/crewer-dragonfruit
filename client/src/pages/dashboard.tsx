@@ -12,19 +12,19 @@ export default function Dashboard() {
   
   // Fetch shows
   const { data: shows = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'shows'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
   });
   
   // Fetch crew members
   const { data: crewMembers = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'crew-members'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
     enabled: !!currentWorkspace?.id,
   });
   
   // Fetch resources
   const { data: resources = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'resources'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/resources`],
     enabled: !!currentWorkspace?.id,
   });
   
