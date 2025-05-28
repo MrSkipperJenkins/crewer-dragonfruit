@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ChevronDown, Search, Plus, Bell, Settings, Users, LogOut, UserPlus } from "lucide-react";
+import { ChevronDown, Search, Plus, Bell, Settings, Users, LogOut, UserPlus, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { MobileNavDrawer } from "./mobile-nav-drawer";
 import type { Workspace } from "@shared/schema";
 
 interface WorkspaceNavbarProps {
@@ -25,6 +26,7 @@ interface WorkspaceNavbarProps {
 export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbarProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Get all workspaces for the dropdown
   const { data: workspaces = [] } = useQuery({
@@ -86,27 +88,49 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
   };
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-      <div className="flex items-center justify-between px-4 py-3">
-        {/* Left: Workspace Selector */}
-        <div className="flex items-center space-x-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded flex items-center justify-center text-sm font-medium">
-                    {currentWorkspace ? getWorkspaceInitial(currentWorkspace.name) : 'W'}
-                  </div>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                    {currentWorkspace?.name || 'Select Workspace'}
-                  </span>
-                </div>
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              </Button>
-            </DropdownMenuTrigger>
+    <>
+      <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Left: Mobile Hamburger + Desktop Workspace Selector */}
+          <div className="flex items-center space-x-4">
+            {/* Mobile Hamburger Menu */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden w-11 h-11 p-0"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+
+            {/* Mobile Page Title */}
+            <div className="lg:hidden">
+              <h1 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                {pageTitle || 'Dashboard'}
+              </h1>
+            </div>
+
+            {/* Desktop Workspace Selector */}
+            <div className="hidden lg:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-blue-600 text-white rounded flex items-center justify-center text-sm font-medium">
+                        {currentWorkspace ? getWorkspaceInitial(currentWorkspace.name) : 'W'}
+                      </div>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                        {currentWorkspace?.name || 'Select Workspace'}
+                      </span>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-80">
             <DropdownMenuContent align="start" className="w-80">
               {/* Current Workspace Header */}
               {currentWorkspace && (
