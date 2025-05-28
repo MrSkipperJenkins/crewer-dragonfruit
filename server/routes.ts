@@ -342,7 +342,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/shows", async (req, res) => {
     try {
-      const validation = insertShowSchema.safeParse(req.body);
+      // Convert datetime strings to Date objects before validation
+      const processedBody = {
+        ...req.body,
+        startTime: req.body.startTime ? new Date(req.body.startTime) : undefined,
+        endTime: req.body.endTime ? new Date(req.body.endTime) : undefined,
+      };
+      
+      const validation = insertShowSchema.safeParse(processedBody);
       if (!validation.success) {
         return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
       }

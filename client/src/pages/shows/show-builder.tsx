@@ -205,12 +205,10 @@ export default function ShowBuilder() {
       return;
     }
     
-    // Convert datetime-local strings to ISO timestamps
+    // Prepare data for submission - keep datetime-local format for schema transformation
     const submitData = {
       ...data,
       workspaceId: currentWorkspace.id,
-      startTime: data.startTime ? new Date(data.startTime).toISOString() : undefined,
-      endTime: data.endTime ? new Date(data.endTime).toISOString() : undefined,
     };
     
     // Remove fields not in the database schema
