@@ -30,7 +30,7 @@ export default function Dashboard() {
   
   // Fetch notifications
   const { data: notifications = [] } = useQuery({
-    queryKey: ['/api/users/38ccfc25-287d-4ac1-b832-5a5f3a1b1575/notifications'],
+    queryKey: ['/api/users/e7f21c28-2cad-47c3-858e-e2ba07ac8701/notifications'],
     enabled: !!currentWorkspace?.id,
   });
 
