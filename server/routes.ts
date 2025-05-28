@@ -381,7 +381,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Validation errors:", validation.error.errors);
         return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
       }
+      
+      console.log("About to call storage.updateShow with:", req.params.id, validation.data);
       const show = await storage.updateShow(req.params.id, validation.data);
+      console.log("Storage.updateShow returned:", show);
       if (!show) {
         return res.status(404).json({ message: "Show not found" });
       }
