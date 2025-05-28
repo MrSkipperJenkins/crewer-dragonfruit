@@ -770,11 +770,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined> {
+    console.log("Database update - ID:", id);
+    console.log("Database update - Data:", show);
+    
     const [updatedShow] = await db
       .update(shows)
       .set(show)
       .where(eq(shows.id, id))
       .returning();
+    
+    console.log("Database update - Result:", updatedShow);
     return updatedShow || undefined;
   }
 
