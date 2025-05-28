@@ -363,8 +363,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/shows/:id", async (req, res) => {
     try {
-      const validation = insertShowSchema.partial().safeParse(req.body);
+      console.log("Show update request body:", req.body);
+      
+      // Handle date conversion for calendar drag-and-drop
+      const processedBody = { ...req.body };
+      if (processedBody.startTime && typeof processedBody.startTime === 'string') {
+        processedBody.startTime = new Date(processedBody.startTime);
+      }
+      if (processedBody.endTime && typeof processedBody.endTime === 'string') {
+        processedBody.endTime = new Date(processedBody.endTime);
+      }
+      
+      console.log("Processed update data:", processedBody);
+      
+      const validation = insertShowSchema.partial().safeParse(processedBody);
       if (!validation.success) {
+        console.log("Validation errors:", validation.error.errors);
         return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
       }
       const show = await storage.updateShow(req.params.id, validation.data);
@@ -373,6 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(show);
     } catch (error) {
+      console.error("Show update error:", error);
       res.status(500).json({ message: "Failed to update show" });
     }
   });
