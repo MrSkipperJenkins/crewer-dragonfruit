@@ -342,11 +342,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/shows", async (req, res) => {
     try {
-      // Convert datetime strings to Date objects before validation
+      // Convert datetime-local strings to proper Date objects preserving local time
       const processedBody = {
         ...req.body,
-        startTime: req.body.startTime ? new Date(req.body.startTime) : undefined,
-        endTime: req.body.endTime ? new Date(req.body.endTime) : undefined,
+        startTime: req.body.startTime ? new Date(req.body.startTime + ":00") : undefined,
+        endTime: req.body.endTime ? new Date(req.body.endTime + ":00") : undefined,
       };
       
       const validation = insertShowSchema.safeParse(processedBody);

@@ -71,6 +71,37 @@ export default function ShowBuilder() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<"details" | "resources" | "crew">("details");
 
+  // Helper function to get next 15-minute interval
+  const getNext15MinuteSlot = () => {
+    const now = new Date();
+    const minutes = now.getMinutes();
+    const nextQuarter = Math.ceil(minutes / 15) * 15;
+    
+    if (nextQuarter === 60) {
+      now.setHours(now.getHours() + 1);
+      now.setMinutes(0);
+    } else {
+      now.setMinutes(nextQuarter);
+    }
+    now.setSeconds(0);
+    now.setMilliseconds(0);
+    
+    // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+    return now.toISOString().slice(0, 16);
+  };
+
+  // Helper function to format date for datetime-local input
+  const formatDateTimeLocal = (date: Date) => {
+    return date.toISOString().slice(0, 16);
+  };
+
+  const defaultStartTime = getNext15MinuteSlot();
+  const defaultEndTime = (() => {
+    const start = new Date(defaultStartTime);
+    start.setHours(start.getHours() + 1); // Default to 1 hour duration
+    return formatDateTimeLocal(start);
+  })();
+
   const defaultValues: Partial<FormValues> = {
     title: "",
     description: "",
@@ -80,6 +111,8 @@ export default function ShowBuilder() {
     selectedResources: [],
     selectedJobs: [],
     recurringDays: [],
+    startTime: defaultStartTime,
+    endTime: defaultEndTime,
   };
 
   // Use form hook with schema validation
