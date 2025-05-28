@@ -1,22 +1,37 @@
-import { 
-  type Workspace, type InsertWorkspace,
-  type User, type InsertUser,
-  type CrewMember, type InsertCrewMember,
-  type Job, type InsertJob,
-  type CrewMemberJob, type InsertCrewMemberJob,
-  type Resource, type InsertResource,
-  type ShowCategory, type InsertShowCategory,
-  type Show, type InsertShow,
-  type ShowCategoryAssignment, type InsertShowCategoryAssignment,
-  type RequiredJob, type InsertRequiredJob, 
-  type ShowResource, type InsertShowResource,
-  type CrewAssignment, type InsertCrewAssignment,
-  type CrewSchedule, type InsertCrewSchedule,
-  type CrewTimeOff, type InsertCrewTimeOff,
-  type Notification, type InsertNotification
+import { randomUUID } from "crypto";
+import type { 
+  Workspace, 
+  InsertWorkspace,
+  User,
+  InsertUser,
+  CrewMember,
+  InsertCrewMember,
+  Job,
+  InsertJob,
+  CrewMemberJob,
+  InsertCrewMemberJob,
+  Resource,
+  InsertResource,
+  ShowCategory,
+  InsertShowCategory,
+  Show,
+  InsertShow,
+  ShowCategoryAssignment,
+  InsertShowCategoryAssignment,
+  RequiredJob,
+  InsertRequiredJob,
+  ShowResource,
+  InsertShowResource,
+  CrewAssignment,
+  InsertCrewAssignment,
+  CrewSchedule,
+  InsertCrewSchedule,
+  CrewTimeOff,
+  InsertCrewTimeOff,
+  Notification,
+  InsertNotification
 } from "@shared/schema";
 
-// Storage interface
 export interface IStorage {
   // Workspace CRUD
   getWorkspaces(): Promise<Workspace[]>;
@@ -164,503 +179,375 @@ export class MemStorage implements IStorage {
     this.crewTimeOffs = new Map();
     this.notifications = new Map();
 
-    // Add a demo workspace
-    const workspaceId = "cc7df93a-dfc3-4dda-9832-a7f5f20a3b1e";
-    this.workspaces.set(workspaceId, {
-      id: workspaceId,
-      name: "ABC Productions",
-      slug: "abc-productions",
-      region: "US",
-      createdAt: new Date(),
-    });
+    this.initializeDemoData();
+  }
 
-    // Add a demo user
-    const userId = "38ccfc25-287d-4ac1-b832-5a5f3a1b1575";
-    this.users.set(userId, {
-      id: userId,
-      username: "admin",
-      password: "password", // In a real app, this would be hashed
-      name: "Sarah Johnson",
-      email: "sarah@example.com",
-      role: "Production Manager",
-      workspaceId,
-      createdAt: new Date(),
-    });
-
-    // Add demo jobs
-    const jobIds = {
-      technicalDirector: "24e8b8d0-68a7-4b27-9e1b-d20edc9a2b8a",
-      cameraOperator: "63c7ecef-37fa-4cb9-a673-21a23e2d9975",
-      audioEngineer: "b1c8fa1a-cd68-4f0d-9af1-c82c9a9c2df3",
-      graphicsOperator: "95d06722-f0e5-413c-b38a-5c3c77aceda3"
-    };
-
-    for (const [key, id] of Object.entries(jobIds)) {
-      let title = key.replace(/([A-Z])/g, ' $1').trim();
-      title = title.charAt(0).toUpperCase() + title.slice(1);
-      
-      this.jobs.set(id, {
-        id,
-        title,
-        description: `Responsible for ${title.toLowerCase()} duties`,
-        workspaceId,
-        createdAt: new Date(),
-      });
-    }
-
-    // Add demo resources
-    const resourceIds = {
-      studioA: "8d85d937-1d8a-4dad-b628-52f9e15a8ba6",
-      studioB: "32e7bd6b-a6fc-4dc9-bc34-45c2e4e699ab",
-      controlRoom1: "a4f7e6ce-5c29-41e7-a4cd-5bfaa3c8fb22",
-      controlRoom2: "ea6cbb94-8cbf-4cd3-b510-2e5ffcd79656",
-      cameraSetA: "78ab4e13-fcbf-44c5-9d3a-86b3a0ad8b1b"
-    };
-
-    const resourceTypes = {
-      studioA: "studio",
-      studioB: "studio",
-      controlRoom1: "control_room",
-      controlRoom2: "control_room",
-      cameraSetA: "equipment"
-    };
-
-    for (const [key, id] of Object.entries(resourceIds)) {
-      let name = key.replace(/([A-Z])/g, ' $1').trim();
-      name = name.charAt(0).toUpperCase() + name.slice(1);
-      
-      this.resources.set(id, {
-        id,
-        name,
-        type: resourceTypes[key as keyof typeof resourceTypes],
-        description: `${name} for production`,
-        workspaceId,
-        createdAt: new Date(),
-      });
-    }
-
-    // Add demo show categories
-    const categoryIds = {
-      news: "f7e5bd37-4dba-47ef-9d5b-c520eda3cc9e",
-      sports: "af3ba98c-1e67-45e8-acf8-53c6e475af9b",
-      entertainment: "d5a2c98b-62a7-48c9-ba09-17e4ec7b3f23",
-      cooking: "7ba0e54d-2f9c-40c2-9a97-c8fd65c9014d"
-    };
-
-    const categoryColors = {
-      news: "#22c55e", // green
-      sports: "#f97316", // orange
-      entertainment: "#8b5cf6", // purple
-      cooking: "#3b82f6" // blue
-    };
-
-    for (const [key, id] of Object.entries(categoryIds)) {
-      let name = key.charAt(0).toUpperCase() + key.slice(1);
-      
-      this.showCategories.set(id, {
-        id,
-        name,
-        color: categoryColors[key as keyof typeof categoryColors],
-        workspaceId,
-        createdAt: new Date(),
-      });
-    }
-
-    // Add demo crew members
-    const crewMemberIds = {
-      johnCooper: "c94c12f7-40dc-4cc9-9b2e-92238ade6ca9",
-      lisaRodriguez: "9a3f8e7d-6c5b-4a2d-90e1-83f42a15b8c7",
-      davidChen: "b2e1a0d9-7c6f-4e3d-a5b2-9c0d8e1a7f5b"
-    };
-
-    this.crewMembers.set(crewMemberIds.johnCooper, {
-      id: crewMemberIds.johnCooper,
-      name: "John Cooper",
-      email: "john@example.com",
-      phone: "555-123-4567",
-      title: "Technical Director",
-      workspaceId,
-      createdAt: new Date(),
-    });
-
-    this.crewMembers.set(crewMemberIds.lisaRodriguez, {
-      id: crewMemberIds.lisaRodriguez,
-      name: "Lisa Rodriguez",
-      email: "lisa@example.com",
-      phone: "555-123-4568",
-      title: "Camera Operator",
-      workspaceId,
-      createdAt: new Date(),
-    });
-
-    this.crewMembers.set(crewMemberIds.davidChen, {
-      id: crewMemberIds.davidChen,
-      name: "David Chen",
-      email: "david@example.com",
-      phone: "555-123-4569",
-      title: "Audio Engineer",
-      workspaceId,
-      createdAt: new Date(),
-    });
-
-    // Link crew members to jobs
-    const crewJobId1 = "e1d2c3b4-a5b6-7c8d-9e0f-a1b2c3d4e5f6";
-    this.crewMemberJobs.set(crewJobId1, {
-      id: crewJobId1,
-      crewMemberId: crewMemberIds.johnCooper,
-      jobId: jobIds.technicalDirector,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const crewJobId2 = "f6e5d4c3-b2a1-0f9e-8d7c-6b5a4b3c2d1e";
-    this.crewMemberJobs.set(crewJobId2, {
-      id: crewJobId2,
-      crewMemberId: crewMemberIds.lisaRodriguez,
-      jobId: jobIds.cameraOperator,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const crewJobId3 = "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6";
-    this.crewMemberJobs.set(crewJobId3, {
-      id: crewJobId3,
-      crewMemberId: crewMemberIds.davidChen,
-      jobId: jobIds.audioEngineer,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Add a few demo shows
-    const showIds = {
-      morningNews: "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p7",
-      cookingShow: "b2c3d4e5-f6g7-8h9i-0j1k-l2m3n4o5p6q7",
-      talkShow: "c3d4e5f6-g7h8-9i0j-1k2l-m3n4o5p6q7r8",
-      sportsReview: "d4e5f6g7-h8i9-0j1k-2l3m-n4o5p6q7r8s9"
-    };
-
-    // Helper to set time component of a date
+  private initializeDemoData() {
     const setTime = (date: Date, hours: number, minutes: number = 0) => {
       const newDate = new Date(date);
       newDate.setHours(hours, minutes, 0, 0);
       return newDate;
     };
 
-    // Get current date at midnight
+    // Create multiple workspaces
+    const workspaces = [
+      {
+        id: "cc7df93a-dfc3-4dda-9832-a7f5f20a3b1e",
+        name: "ABC Productions",
+        slug: "abc-productions"
+      },
+      {
+        id: "dd8ef0ab-efc4-5eeb-a943-b6f6f30b4c2f", 
+        name: "TW Channel",
+        slug: "tw-channel"
+      },
+      {
+        id: "ee9f01bc-f0d5-6ffc-ba54-c7f7f40c5d30",
+        name: "CNN Studios", 
+        slug: "cnn-studios"
+      },
+      {
+        id: "ff0a12cd-01e6-7ffd-cb65-d8f8f51d6e41",
+        name: "Holy House Network",
+        slug: "holy-house-network"
+      }
+    ];
+
+    // Initialize workspaces
+    workspaces.forEach(ws => {
+      this.workspaces.set(ws.id, {
+        ...ws,
+        region: "US",
+        createdAt: new Date(),
+      });
+    });
+
+    // Create users for each workspace
+    const users = [
+      {
+        id: "38ccfc25-287d-4ac1-b832-5a5f3a1b1575",
+        username: "admin",
+        name: "Sarah Johnson",
+        email: "sarah@abcproductions.com",
+        role: "Production Manager",
+        workspaceId: workspaces[0].id
+      },
+      {
+        id: "50d2426c-f8c1-4eea-b7b6-2b625a51284a",
+        username: "jeff_m",
+        name: "Jeff Masterson", 
+        email: "jeff@twchannel.com",
+        role: "Camera Operator",
+        workspaceId: workspaces[1].id
+      },
+      {
+        id: "61e3537d-09d2-5ffb-c8c7-3c736b62395b",
+        username: "maria_s",
+        name: "Maria Santos",
+        email: "maria@cnn.com", 
+        role: "News Director",
+        workspaceId: workspaces[2].id
+      },
+      {
+        id: "72f4648e-1ae3-60fc-d9d8-4d847c73406c",
+        username: "david_l",
+        name: "David Lee",
+        email: "david@holyhouse.tv",
+        role: "Technical Director", 
+        workspaceId: workspaces[3].id
+      }
+    ];
+
+    users.forEach(user => {
+      this.users.set(user.id, {
+        ...user,
+        password: "password",
+        createdAt: new Date(),
+      });
+    });
+
+    // Create jobs for each workspace
+    const jobsByWorkspace = {
+      [workspaces[0].id]: [
+        { title: "Director", description: "Oversees creative direction of productions" },
+        { title: "Camera Operator", description: "Operates broadcast cameras" },
+        { title: "Audio Engineer", description: "Manages sound equipment and mixing" },
+        { title: "Production Assistant", description: "Supports production team with various tasks" },
+        { title: "Lighting Technician", description: "Sets up and operates lighting equipment" }
+      ],
+      [workspaces[1].id]: [
+        { title: "News Anchor", description: "Presents news on television" },
+        { title: "Field Reporter", description: "Reports from remote locations" },
+        { title: "Video Editor", description: "Edits video content for broadcast" },
+        { title: "Teleprompter Operator", description: "Operates teleprompter systems" }
+      ],
+      [workspaces[2].id]: [
+        { title: "Breaking News Producer", description: "Produces live breaking news coverage" },
+        { title: "Graphics Operator", description: "Creates and operates on-screen graphics" },
+        { title: "Master Control Operator", description: "Manages broadcast playout systems" },
+        { title: "Weather Producer", description: "Produces weather segments" }
+      ],
+      [workspaces[3].id]: [
+        { title: "Worship Leader", description: "Leads congregation in worship" },
+        { title: "Video Director", description: "Directs live worship broadcasts" },
+        { title: "Sound Engineer", description: "Manages live sound for services" },
+        { title: "Streaming Technician", description: "Manages online streaming platforms" }
+      ]
+    };
+
+    Object.entries(jobsByWorkspace).forEach(([workspaceId, jobs]) => {
+      jobs.forEach(job => {
+        const id = randomUUID();
+        this.jobs.set(id, {
+          id,
+          title: job.title,
+          description: job.description,
+          workspaceId,
+          createdAt: new Date(),
+        });
+      });
+    });
+
+    // Create crew members for each workspace
+    const crewMembersByWorkspace = {
+      [workspaces[0].id]: [
+        { name: "Alex Rodriguez", email: "alex@abcproductions.com", title: "Senior Camera Operator" },
+        { name: "Emily Chen", email: "emily@abcproductions.com", title: "Audio Engineer" },
+        { name: "Marcus Thompson", email: "marcus@abcproductions.com", title: "Lighting Designer" },
+        { name: "Sofia Martinez", email: "sofia@abcproductions.com", title: "Production Assistant" }
+      ],
+      [workspaces[1].id]: [
+        { name: "Jennifer Walsh", email: "jennifer@twchannel.com", title: "News Anchor" },
+        { name: "Robert Kim", email: "robert@twchannel.com", title: "Field Reporter" },
+        { name: "Lisa Anderson", email: "lisa@twchannel.com", title: "Video Editor" }
+      ],
+      [workspaces[2].id]: [
+        { name: "Michael Davis", email: "michael@cnn.com", title: "Breaking News Producer" },
+        { name: "Amanda Foster", email: "amanda@cnn.com", title: "Graphics Specialist" },
+        { name: "Brian Wilson", email: "brian@cnn.com", title: "Master Control" },
+        { name: "Rachel Green", email: "rachel@cnn.com", title: "Weather Producer" }
+      ],
+      [workspaces[3].id]: [
+        { name: "Pastor John Smith", email: "john@holyhouse.tv", title: "Lead Pastor" },
+        { name: "Mark Johnson", email: "mark@holyhouse.tv", title: "Worship Director" },
+        { name: "Sarah Williams", email: "sarah.w@holyhouse.tv", title: "Media Coordinator" }
+      ]
+    };
+
+    Object.entries(crewMembersByWorkspace).forEach(([workspaceId, members]) => {
+      members.forEach(member => {
+        const id = randomUUID();
+        this.crewMembers.set(id, {
+          id,
+          name: member.name,
+          email: member.email,
+          workspaceId,
+          title: member.title,
+          phone: null,
+          createdAt: new Date(),
+        });
+      });
+    });
+
+    // Create resources for each workspace
+    const resourcesByWorkspace = {
+      [workspaces[0].id]: [
+        { name: "Studio A", type: "Location", description: "Main production studio with green screen" },
+        { name: "Camera 1 - Sony FX9", type: "Equipment", description: "Professional cinema camera" },
+        { name: "Lighting Kit", type: "Equipment", description: "Professional LED lighting setup" },
+        { name: "Audio Mixing Board", type: "Equipment", description: "32-channel digital mixer" }
+      ],
+      [workspaces[1].id]: [
+        { name: "News Studio", type: "Location", description: "Live news broadcast studio" },
+        { name: "Mobile Unit 1", type: "Vehicle", description: "Remote broadcast truck" },
+        { name: "Teleprompter System", type: "Equipment", description: "Professional teleprompter setup" }
+      ],
+      [workspaces[2].id]: [
+        { name: "Breaking News Desk", type: "Location", description: "24/7 news coverage area" },
+        { name: "Weather Center", type: "Location", description: "Weather forecasting studio" },
+        { name: "Satellite Uplink", type: "Equipment", description: "Live satellite transmission equipment" }
+      ],
+      [workspaces[3].id]: [
+        { name: "Main Sanctuary", type: "Location", description: "Primary worship space for 500 people" },
+        { name: "Fellowship Hall", type: "Location", description: "Multi-purpose event space" },
+        { name: "Worship Cameras", type: "Equipment", description: "PTZ camera system for live streaming" }
+      ]
+    };
+
+    Object.entries(resourcesByWorkspace).forEach(([workspaceId, resources]) => {
+      resources.forEach(resource => {
+        const id = randomUUID();
+        this.resources.set(id, {
+          id,
+          name: resource.name,
+          type: resource.type,
+          workspaceId,
+          description: resource.description,
+          createdAt: new Date(),
+        });
+      });
+    });
+
+    // Create show categories for each workspace
+    const categoriesByWorkspace = {
+      [workspaces[0].id]: [
+        { name: "Drama Series", description: "Scripted television dramas" },
+        { name: "Documentary", description: "Non-fiction documentary films" },
+        { name: "Commercial", description: "Advertising and promotional content" }
+      ],
+      [workspaces[1].id]: [
+        { name: "Morning News", description: "Early morning news programming" },
+        { name: "Evening News", description: "Prime time news broadcasts" },
+        { name: "Special Reports", description: "In-depth investigative pieces" }
+      ],
+      [workspaces[2].id]: [
+        { name: "Breaking News", description: "Live breaking news coverage" },
+        { name: "Weather", description: "Weather forecasts and updates" },
+        { name: "Political Coverage", description: "Government and political news" }
+      ],
+      [workspaces[3].id]: [
+        { name: "Sunday Service", description: "Weekly worship services" },
+        { name: "Special Events", description: "Holiday and special occasion services" },
+        { name: "Bible Study", description: "Educational programming" }
+      ]
+    };
+
+    Object.entries(categoriesByWorkspace).forEach(([workspaceId, categories]) => {
+      categories.forEach(category => {
+        const id = randomUUID();
+        this.showCategories.set(id, {
+          id,
+          name: category.name,
+          description: category.description,
+          workspaceId,
+          createdAt: new Date(),
+        });
+      });
+    });
+
+    // Create shows for each workspace
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Create date for next week to use in shows
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
-    
-    // Morning News - weekdays 6:00 AM - 9:00 AM
-    this.shows.set(showIds.morningNews, {
-      id: showIds.morningNews,
-      title: "Morning News",
-      description: "Daily News Program",
-      startTime: setTime(today, 6), // 6:00 AM
-      endTime: setTime(today, 9),   // 9:00 AM
-      recurringPattern: "WEEKLY:1,2,3,4,5", // Monday through Friday
-      notes: "Morning anchors: Sarah Johnson and Michael Torres. Include traffic report at 7:45 AM. Weather updates every 30 minutes.",
-      status: "scheduled",
-      color: "#3b82f6", // Blue for news
-      workspaceId,
-      createdAt: new Date()
+    const showsByWorkspace = {
+      [workspaces[0].id]: [
+        {
+          title: "City Lights Drama - Episode 5",
+          description: "Filming the dramatic confrontation scene",
+          startTime: setTime(new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000), 9),
+          endTime: setTime(new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000), 17),
+          status: "scheduled"
+        },
+        {
+          title: "Nature Documentary Shoot",
+          description: "Wildlife filming in local park",
+          startTime: setTime(new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000), 6),
+          endTime: setTime(new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000), 14),
+          status: "scheduled"
+        }
+      ],
+      [workspaces[1].id]: [
+        {
+          title: "Morning News - Live Broadcast", 
+          description: "Daily morning news program",
+          startTime: setTime(today, 6),
+          endTime: setTime(today, 9),
+          status: "live"
+        },
+        {
+          title: "Evening News - Live Broadcast",
+          description: "Prime time evening news",
+          startTime: setTime(today, 18),
+          endTime: setTime(today, 19),
+          status: "scheduled"
+        }
+      ],
+      [workspaces[2].id]: [
+        {
+          title: "Breaking: Election Coverage",
+          description: "Live election results coverage",
+          startTime: setTime(today, 20),
+          endTime: setTime(new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000), 2),
+          status: "live"
+        },
+        {
+          title: "Weather Update Special",
+          description: "Severe weather tracking",
+          startTime: setTime(new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000), 12),
+          endTime: setTime(new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000), 13),
+          status: "scheduled"
+        }
+      ],
+      [workspaces[3].id]: [
+        {
+          title: "Sunday Morning Worship",
+          description: "Weekly worship service with live streaming",
+          startTime: setTime(new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), 10),
+          endTime: setTime(new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), 12),
+          status: "scheduled"
+        },
+        {
+          title: "Christmas Special Service",
+          description: "Holiday celebration service",
+          startTime: setTime(new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), 19),
+          endTime: setTime(new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), 21),
+          status: "scheduled"
+        }
+      ]
+    };
+
+    Object.entries(showsByWorkspace).forEach(([workspaceId, shows]) => {
+      shows.forEach(show => {
+        const id = randomUUID();
+        this.shows.set(id, {
+          id,
+          title: show.title,
+          description: show.description,
+          workspaceId,
+          startTime: show.startTime,
+          endTime: show.endTime,
+          status: show.status,
+          color: "#3B82F6",
+          recurringPattern: null,
+          notes: null,
+          createdAt: new Date(),
+        });
+      });
     });
 
-    // Cooking Show - Tuesday 10:00 AM - 2:00 PM
-    this.shows.set(showIds.cookingShow, {
-      id: showIds.cookingShow,
-      title: "Cooking Show",
-      description: "Weekly cooking program",
-      startTime: setTime(today, 10), // 10:00 AM
-      endTime: setTime(today, 14),   // 2:00 PM
-      recurringPattern: "WEEKLY:2",  // Tuesday
-      notes: "Guest chef each week. Kitchen needs to be set up 90 minutes before show.",
-      status: "scheduled",
-      color: "#f59e0b", // Amber for cooking
-      workspaceId,
-      createdAt: new Date()
-    });
+    // Create notifications for users
+    const notifications = [
+      {
+        userId: "38ccfc25-287d-4ac1-b832-5a5f3a1b1575",
+        workspaceId: workspaces[0].id,
+        title: "Show scheduled",
+        message: "City Lights Drama - Episode 5 has been scheduled for tomorrow",
+        type: "show_scheduled"
+      },
+      {
+        userId: "50d2426c-f8c1-4eea-b7b6-2b625a51284a", 
+        workspaceId: workspaces[1].id,
+        title: "Equipment maintenance",
+        message: "Camera 2 scheduled for maintenance this weekend",
+        type: "maintenance"
+      }
+    ];
 
-    // Talk Show - Thursday/Friday 3:00 PM - 7:00 PM
-    this.shows.set(showIds.talkShow, {
-      id: showIds.talkShow,
-      title: "Talk Show",
-      description: "Afternoon talk show",
-      startTime: setTime(today, 15), // 3:00 PM
-      endTime: setTime(today, 19),   // 7:00 PM
-      recurringPattern: "WEEKLY:4,5", // Thursday and Friday
-      notes: "Live audience. Pre-show meeting at 1:30 PM.",
-      status: "scheduled",
-      color: "#8b5cf6", // Violet for talk shows
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Sports Review - Sunday 4:00 PM - 8:00 PM
-    this.shows.set(showIds.sportsReview, {
-      id: showIds.sportsReview,
-      title: "Sports Review",
-      description: "Weekly sports recap",
-      startTime: setTime(today, 16), // 4:00 PM
-      endTime: setTime(today, 20),   // 8:00 PM
-      recurringPattern: "WEEKLY:0",  // Sunday
-      notes: "Include highlights from weekend games.",
-      status: "scheduled",
-      color: "#10b981", // Emerald for sports
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Add show category assignments
-    const showCatId1 = "e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0";
-    this.showCategoryAssignments.set(showCatId1, {
-      id: showCatId1,
-      showId: showIds.morningNews,
-      categoryId: categoryIds.news,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const showCatId2 = "f6g7h8i9-j0k1-l2m3-n4o5-p6q7r8s9t0u1";
-    this.showCategoryAssignments.set(showCatId2, {
-      id: showCatId2,
-      showId: showIds.cookingShow,
-      categoryId: categoryIds.cooking,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const showCatId3 = "g7h8i9j0-k1l2-m3n4-o5p6-q7r8s9t0u1v2";
-    this.showCategoryAssignments.set(showCatId3, {
-      id: showCatId3,
-      showId: showIds.talkShow,
-      categoryId: categoryIds.entertainment,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const showCatId4 = "h8i9j0k1-l2m3-n4o5-p6q7-r8s9t0u1v2w3";
-    this.showCategoryAssignments.set(showCatId4, {
-      id: showCatId4,
-      showId: showIds.sportsReview,
-      categoryId: categoryIds.sports,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Add show resources
-    // Morning News resources
-    const morningNewsStudioA = "i9j0k1l2-m3n4-o5p6-q7r8-s9t0u1v2w3x4";
-    this.showResources.set(morningNewsStudioA, {
-      id: morningNewsStudioA,
-      showId: showIds.morningNews,
-      resourceId: resourceIds.studioA,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const morningNewsControlRoom = "j0k1l2m3-n4o5-p6q7-r8s9-t0u1v2w3x4y5";
-    this.showResources.set(morningNewsControlRoom, {
-      id: morningNewsControlRoom,
-      showId: showIds.morningNews,
-      resourceId: resourceIds.controlRoom1,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const morningNewsCameras = "k1l2m3n4-o5p6-q7r8-s9t0-u1v2w3x4y5z6";
-    this.showResources.set(morningNewsCameras, {
-      id: morningNewsCameras,
-      showId: showIds.morningNews,
-      resourceId: resourceIds.cameraSetA,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Cooking Show resources
-    const cookingShowStudioB = "l2m3n4o5-p6q7-r8s9-t0u1-v2w3x4y5z6a7";
-    this.showResources.set(cookingShowStudioB, {
-      id: cookingShowStudioB,
-      showId: showIds.cookingShow,
-      resourceId: resourceIds.studioB,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const cookingShowControlRoom = "m3n4o5p6-q7r8-s9t0-u1v2-w3x4y5z6a7b8";
-    this.showResources.set(cookingShowControlRoom, {
-      id: cookingShowControlRoom,
-      showId: showIds.cookingShow,
-      resourceId: resourceIds.controlRoom1,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Talk Show resources
-    const talkShowStudioB = "n4o5p6q7-r8s9-t0u1-v2w3-x4y5z6a7b8c9";
-    this.showResources.set(talkShowStudioB, {
-      id: talkShowStudioB,
-      showId: showIds.talkShow,
-      resourceId: resourceIds.studioB,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const talkShowControlRoom = "o5p6q7r8-s9t0-u1v2-w3x4-y5z6a7b8c9d0";
-    this.showResources.set(talkShowControlRoom, {
-      id: talkShowControlRoom,
-      showId: showIds.talkShow,
-      resourceId: resourceIds.controlRoom1,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Sports Review resources
-    const sportsReviewControlRoom = "p6q7r8s9-t0u1-v2w3-x4y5-z6a7b8c9d0e1";
-    this.showResources.set(sportsReviewControlRoom, {
-      id: sportsReviewControlRoom,
-      showId: showIds.sportsReview,
-      resourceId: resourceIds.controlRoom2,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const sportsReviewCameras = "q7r8s9t0-u1v2-w3x4-y5z6-a7b8c9d0e1f2";
-    this.showResources.set(sportsReviewCameras, {
-      id: sportsReviewCameras,
-      showId: showIds.sportsReview,
-      resourceId: resourceIds.cameraSetA,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Add required jobs
-    const requiredJobId1 = "r8s9t0u1-v2w3-x4y5-z6a7-b8c9d0e1f2g3";
-    this.requiredJobs.set(requiredJobId1, {
-      id: requiredJobId1,
-      showId: showIds.morningNews,
-      jobId: jobIds.technicalDirector,
-      quantity: 1,
-      notes: "Experienced TD needed",
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const requiredJobId2 = "s9t0u1v2-w3x4-y5z6-a7b8-c9d0e1f2g3h4";
-    this.requiredJobs.set(requiredJobId2, {
-      id: requiredJobId2,
-      showId: showIds.morningNews,
-      jobId: jobIds.cameraOperator,
-      quantity: 3,
-      notes: "Need operators for all three cameras",
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const requiredJobId3 = "t0u1v2w3-x4y5-z6a7-b8c9-d0e1f2g3h4i5";
-    this.requiredJobs.set(requiredJobId3, {
-      id: requiredJobId3,
-      showId: showIds.morningNews,
-      jobId: jobIds.audioEngineer,
-      quantity: 1,
-      notes: "",
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const requiredJobId4 = "u1v2w3x4-y5z6-a7b8-c9d0-e1f2g3h4i5j6";
-    this.requiredJobs.set(requiredJobId4, {
-      id: requiredJobId4,
-      showId: showIds.morningNews,
-      jobId: jobIds.graphicsOperator,
-      quantity: 1,
-      notes: "",
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Add crew assignments
-    const crewAssignId1 = "v2w3x4y5-z6a7-b8c9-d0e1-f2g3h4i5j6k7";
-    this.crewAssignments.set(crewAssignId1, {
-      id: crewAssignId1,
-      showId: showIds.morningNews,
-      crewMemberId: crewMemberIds.johnCooper,
-      jobId: jobIds.technicalDirector,
-      status: "confirmed",
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const crewAssignId2 = "w3x4y5z6-a7b8-c9d0-e1f2-g3h4i5j6k7l8";
-    this.crewAssignments.set(crewAssignId2, {
-      id: crewAssignId2,
-      showId: showIds.morningNews,
-      crewMemberId: crewMemberIds.lisaRodriguez,
-      jobId: jobIds.cameraOperator,
-      status: "confirmed",
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const crewAssignId3 = "x4y5z6a7-b8c9-d0e1-f2g3-h4i5j6k7l8m9";
-    this.crewAssignments.set(crewAssignId3, {
-      id: crewAssignId3,
-      showId: showIds.morningNews,
-      crewMemberId: crewMemberIds.davidChen,
-      jobId: jobIds.audioEngineer,
-      status: "pending",
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    // Add notifications
-    const notificationId1 = "y5z6a7b8-c9d0-e1f2-g3h4-i5j6k7l8m9n0";
-    this.notifications.set(notificationId1, {
-      id: notificationId1,
-      userId,
-      title: "Schedule Update",
-      message: "Morning News has been scheduled for next week",
-      type: "info",
-      read: false,
-      relatedEntityType: "show",
-      relatedEntityId: showIds.morningNews,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const notificationId2 = "z6a7b8c9-d0e1-f2g3-h4i5-j6k7l8m9n0o1";
-    this.notifications.set(notificationId2, {
-      id: notificationId2,
-      userId,
-      title: "Crew Conflict",
-      message: "David Chen has a scheduling conflict for Morning News",
-      type: "warning",
-      read: false,
-      relatedEntityType: "crew_member",
-      relatedEntityId: crewMemberIds.davidChen,
-      workspaceId,
-      createdAt: new Date()
-    });
-
-    const notificationId3 = "a7b8c9d0-e1f2-g3h4-i5j6-k7l8m9n0o1p2";
-    this.notifications.set(notificationId3, {
-      id: notificationId3,
-      userId,
-      title: "Resource Added",
-      message: "New camera equipment has been added to inventory",
-      type: "success",
-      read: true,
-      relatedEntityType: "resource",
-      relatedEntityId: resourceIds.cameraSetA,
-      workspaceId,
-      createdAt: new Date()
+    notifications.forEach(notification => {
+      const id = randomUUID();
+      this.notifications.set(id, {
+        id,
+        userId: notification.userId,
+        workspaceId: notification.workspaceId,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        read: false,
+        relatedEntityType: null,
+        relatedEntityId: null,
+        createdAt: new Date(),
+      });
     });
   }
 
-  // Workspace CRUD
   async getWorkspaces(): Promise<Workspace[]> {
     return Array.from(this.workspaces.values());
   }
@@ -670,23 +557,23 @@ export class MemStorage implements IStorage {
   }
 
   async createWorkspace(workspace: InsertWorkspace): Promise<Workspace> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newWorkspace: Workspace = {
       id,
       ...workspace,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.workspaces.set(id, newWorkspace);
     return newWorkspace;
   }
 
   async updateWorkspace(id: string, workspace: Partial<InsertWorkspace>): Promise<Workspace | undefined> {
-    const existingWorkspace = this.workspaces.get(id);
-    if (!existingWorkspace) return undefined;
-
-    const updatedWorkspace = { ...existingWorkspace, ...workspace };
-    this.workspaces.set(id, updatedWorkspace);
-    return updatedWorkspace;
+    const existing = this.workspaces.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...workspace };
+    this.workspaces.set(id, updated);
+    return updated;
   }
 
   async deleteWorkspace(id: string): Promise<boolean> {
@@ -694,17 +581,15 @@ export class MemStorage implements IStorage {
   }
 
   async getWorkspaceBySlug(slug: string): Promise<Workspace | undefined> {
-    return Array.from(this.workspaces.values()).find(workspace => workspace.slug === slug);
+    return Array.from(this.workspaces.values()).find(w => w.slug === slug);
   }
 
   async isWorkspaceSlugAvailable(slug: string): Promise<boolean> {
-    const existing = await this.getWorkspaceBySlug(slug);
-    return !existing;
+    return !Array.from(this.workspaces.values()).some(w => w.slug === slug);
   }
 
-  // User CRUD
   async getUsers(workspaceId: string): Promise<User[]> {
-    return Array.from(this.users.values()).filter(user => user.workspaceId === workspaceId);
+    return Array.from(this.users.values()).filter(u => u.workspaceId === workspaceId);
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -712,36 +597,35 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    return Array.from(this.users.values()).find(u => u.username === username);
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newUser: User = {
       id,
       ...user,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.users.set(id, newUser);
     return newUser;
   }
 
   async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
-    const existingUser = this.users.get(id);
-    if (!existingUser) return undefined;
-
-    const updatedUser = { ...existingUser, ...user };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    const existing = this.users.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...user };
+    this.users.set(id, updated);
+    return updated;
   }
 
   async deleteUser(id: string): Promise<boolean> {
     return this.users.delete(id);
   }
 
-  // Crew Member CRUD
   async getCrewMembers(workspaceId: string): Promise<CrewMember[]> {
-    return Array.from(this.crewMembers.values()).filter(crewMember => crewMember.workspaceId === workspaceId);
+    return Array.from(this.crewMembers.values()).filter(c => c.workspaceId === workspaceId);
   }
 
   async getCrewMember(id: string): Promise<CrewMember | undefined> {
@@ -749,32 +633,31 @@ export class MemStorage implements IStorage {
   }
 
   async createCrewMember(crewMember: InsertCrewMember): Promise<CrewMember> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newCrewMember: CrewMember = {
       id,
       ...crewMember,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.crewMembers.set(id, newCrewMember);
     return newCrewMember;
   }
 
   async updateCrewMember(id: string, crewMember: Partial<InsertCrewMember>): Promise<CrewMember | undefined> {
-    const existingCrewMember = this.crewMembers.get(id);
-    if (!existingCrewMember) return undefined;
-
-    const updatedCrewMember = { ...existingCrewMember, ...crewMember };
-    this.crewMembers.set(id, updatedCrewMember);
-    return updatedCrewMember;
+    const existing = this.crewMembers.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...crewMember };
+    this.crewMembers.set(id, updated);
+    return updated;
   }
 
   async deleteCrewMember(id: string): Promise<boolean> {
     return this.crewMembers.delete(id);
   }
 
-  // Job CRUD
   async getJobs(workspaceId: string): Promise<Job[]> {
-    return Array.from(this.jobs.values()).filter(job => job.workspaceId === workspaceId);
+    return Array.from(this.jobs.values()).filter(j => j.workspaceId === workspaceId);
   }
 
   async getJob(id: string): Promise<Job | undefined> {
@@ -782,44 +665,46 @@ export class MemStorage implements IStorage {
   }
 
   async createJob(job: InsertJob): Promise<Job> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newJob: Job = {
       id,
       ...job,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.jobs.set(id, newJob);
     return newJob;
   }
 
   async updateJob(id: string, job: Partial<InsertJob>): Promise<Job | undefined> {
-    const existingJob = this.jobs.get(id);
-    if (!existingJob) return undefined;
-
-    const updatedJob = { ...existingJob, ...job };
-    this.jobs.set(id, updatedJob);
-    return updatedJob;
+    const existing = this.jobs.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...job };
+    this.jobs.set(id, updated);
+    return updated;
   }
 
   async deleteJob(id: string): Promise<boolean> {
     return this.jobs.delete(id);
   }
 
-  // Crew Member Job CRUD
   async getCrewMemberJobs(workspaceId: string): Promise<CrewMemberJob[]> {
-    return Array.from(this.crewMemberJobs.values()).filter(crewMemberJob => crewMemberJob.workspaceId === workspaceId);
+    return Array.from(this.crewMemberJobs.values()).filter(cmj => {
+      const crewMember = this.crewMembers.get(cmj.crewMemberId);
+      return crewMember?.workspaceId === workspaceId;
+    });
   }
 
   async getCrewMemberJobsByCrewMember(crewMemberId: string): Promise<CrewMemberJob[]> {
-    return Array.from(this.crewMemberJobs.values()).filter(crewMemberJob => crewMemberJob.crewMemberId === crewMemberId);
+    return Array.from(this.crewMemberJobs.values()).filter(cmj => cmj.crewMemberId === crewMemberId);
   }
 
   async createCrewMemberJob(crewMemberJob: InsertCrewMemberJob): Promise<CrewMemberJob> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newCrewMemberJob: CrewMemberJob = {
       id,
       ...crewMemberJob,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.crewMemberJobs.set(id, newCrewMemberJob);
     return newCrewMemberJob;
@@ -829,9 +714,8 @@ export class MemStorage implements IStorage {
     return this.crewMemberJobs.delete(id);
   }
 
-  // Resource CRUD
   async getResources(workspaceId: string): Promise<Resource[]> {
-    return Array.from(this.resources.values()).filter(resource => resource.workspaceId === workspaceId);
+    return Array.from(this.resources.values()).filter(r => r.workspaceId === workspaceId);
   }
 
   async getResource(id: string): Promise<Resource | undefined> {
@@ -839,32 +723,31 @@ export class MemStorage implements IStorage {
   }
 
   async createResource(resource: InsertResource): Promise<Resource> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newResource: Resource = {
       id,
       ...resource,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.resources.set(id, newResource);
     return newResource;
   }
 
   async updateResource(id: string, resource: Partial<InsertResource>): Promise<Resource | undefined> {
-    const existingResource = this.resources.get(id);
-    if (!existingResource) return undefined;
-
-    const updatedResource = { ...existingResource, ...resource };
-    this.resources.set(id, updatedResource);
-    return updatedResource;
+    const existing = this.resources.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...resource };
+    this.resources.set(id, updated);
+    return updated;
   }
 
   async deleteResource(id: string): Promise<boolean> {
     return this.resources.delete(id);
   }
 
-  // Show Category CRUD
   async getShowCategories(workspaceId: string): Promise<ShowCategory[]> {
-    return Array.from(this.showCategories.values()).filter(category => category.workspaceId === workspaceId);
+    return Array.from(this.showCategories.values()).filter(sc => sc.workspaceId === workspaceId);
   }
 
   async getShowCategory(id: string): Promise<ShowCategory | undefined> {
@@ -872,41 +755,39 @@ export class MemStorage implements IStorage {
   }
 
   async createShowCategory(showCategory: InsertShowCategory): Promise<ShowCategory> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newShowCategory: ShowCategory = {
       id,
       ...showCategory,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.showCategories.set(id, newShowCategory);
     return newShowCategory;
   }
 
   async updateShowCategory(id: string, showCategory: Partial<InsertShowCategory>): Promise<ShowCategory | undefined> {
-    const existingShowCategory = this.showCategories.get(id);
-    if (!existingShowCategory) return undefined;
-
-    const updatedShowCategory = { ...existingShowCategory, ...showCategory };
-    this.showCategories.set(id, updatedShowCategory);
-    return updatedShowCategory;
+    const existing = this.showCategories.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...showCategory };
+    this.showCategories.set(id, updated);
+    return updated;
   }
 
   async deleteShowCategory(id: string): Promise<boolean> {
     return this.showCategories.delete(id);
   }
 
-  // Show CRUD
   async getShows(workspaceId: string): Promise<Show[]> {
-    return Array.from(this.shows.values()).filter(show => show.workspaceId === workspaceId);
+    return Array.from(this.shows.values()).filter(s => s.workspaceId === workspaceId);
   }
 
   async getShowsInRange(workspaceId: string, startDate: Date, endDate: Date): Promise<Show[]> {
-    return Array.from(this.shows.values()).filter(show => {
-      return show.workspaceId === workspaceId && 
-        ((show.startTime >= startDate && show.startTime <= endDate) || 
-        (show.endTime >= startDate && show.endTime <= endDate) ||
-        (show.startTime <= startDate && show.endTime >= endDate));
-    });
+    return Array.from(this.shows.values()).filter(s => 
+      s.workspaceId === workspaceId &&
+      s.startTime >= startDate && 
+      s.endTime <= endDate
+    );
   }
 
   async getShow(id: string): Promise<Show | undefined> {
@@ -914,44 +795,46 @@ export class MemStorage implements IStorage {
   }
 
   async createShow(show: InsertShow): Promise<Show> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newShow: Show = {
       id,
       ...show,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.shows.set(id, newShow);
     return newShow;
   }
 
   async updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined> {
-    const existingShow = this.shows.get(id);
-    if (!existingShow) return undefined;
-
-    const updatedShow = { ...existingShow, ...show };
-    this.shows.set(id, updatedShow);
-    return updatedShow;
+    const existing = this.shows.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...show };
+    this.shows.set(id, updated);
+    return updated;
   }
 
   async deleteShow(id: string): Promise<boolean> {
     return this.shows.delete(id);
   }
 
-  // Show Category Assignment CRUD
   async getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]> {
-    return Array.from(this.showCategoryAssignments.values()).filter(assignment => assignment.workspaceId === workspaceId);
+    return Array.from(this.showCategoryAssignments.values()).filter(sca => {
+      const show = this.shows.get(sca.showId);
+      return show?.workspaceId === workspaceId;
+    });
   }
 
   async getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]> {
-    return Array.from(this.showCategoryAssignments.values()).filter(assignment => assignment.showId === showId);
+    return Array.from(this.showCategoryAssignments.values()).filter(sca => sca.showId === showId);
   }
 
   async createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newAssignment: ShowCategoryAssignment = {
       id,
       ...assignment,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.showCategoryAssignments.set(id, newAssignment);
     return newAssignment;
@@ -961,54 +844,58 @@ export class MemStorage implements IStorage {
     return this.showCategoryAssignments.delete(id);
   }
 
-  // Required Job CRUD
   async getRequiredJobs(workspaceId: string): Promise<RequiredJob[]> {
-    return Array.from(this.requiredJobs.values()).filter(requiredJob => requiredJob.workspaceId === workspaceId);
+    return Array.from(this.requiredJobs.values()).filter(rj => {
+      const show = this.shows.get(rj.showId);
+      return show?.workspaceId === workspaceId;
+    });
   }
 
   async getRequiredJobsByShow(showId: string): Promise<RequiredJob[]> {
-    return Array.from(this.requiredJobs.values()).filter(requiredJob => requiredJob.showId === showId);
+    return Array.from(this.requiredJobs.values()).filter(rj => rj.showId === showId);
   }
 
   async createRequiredJob(requiredJob: InsertRequiredJob): Promise<RequiredJob> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newRequiredJob: RequiredJob = {
       id,
       ...requiredJob,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.requiredJobs.set(id, newRequiredJob);
     return newRequiredJob;
   }
 
   async updateRequiredJob(id: string, requiredJob: Partial<InsertRequiredJob>): Promise<RequiredJob | undefined> {
-    const existingRequiredJob = this.requiredJobs.get(id);
-    if (!existingRequiredJob) return undefined;
-
-    const updatedRequiredJob = { ...existingRequiredJob, ...requiredJob };
-    this.requiredJobs.set(id, updatedRequiredJob);
-    return updatedRequiredJob;
+    const existing = this.requiredJobs.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...requiredJob };
+    this.requiredJobs.set(id, updated);
+    return updated;
   }
 
   async deleteRequiredJob(id: string): Promise<boolean> {
     return this.requiredJobs.delete(id);
   }
 
-  // Show Resource CRUD
   async getShowResources(workspaceId: string): Promise<ShowResource[]> {
-    return Array.from(this.showResources.values()).filter(showResource => showResource.workspaceId === workspaceId);
+    return Array.from(this.showResources.values()).filter(sr => {
+      const show = this.shows.get(sr.showId);
+      return show?.workspaceId === workspaceId;
+    });
   }
 
   async getShowResourcesByShow(showId: string): Promise<ShowResource[]> {
-    return Array.from(this.showResources.values()).filter(showResource => showResource.showId === showId);
+    return Array.from(this.showResources.values()).filter(sr => sr.showId === showId);
   }
 
   async createShowResource(showResource: InsertShowResource): Promise<ShowResource> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newShowResource: ShowResource = {
       id,
       ...showResource,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.showResources.set(id, newShowResource);
     return newShowResource;
@@ -1018,194 +905,181 @@ export class MemStorage implements IStorage {
     return this.showResources.delete(id);
   }
 
-  // Crew Assignment CRUD
   async getCrewAssignments(workspaceId: string): Promise<CrewAssignment[]> {
-    return Array.from(this.crewAssignments.values()).filter(assignment => assignment.workspaceId === workspaceId);
+    return Array.from(this.crewAssignments.values()).filter(ca => {
+      const show = this.shows.get(ca.showId);
+      return show?.workspaceId === workspaceId;
+    });
   }
 
   async getCrewAssignmentsByShow(showId: string): Promise<CrewAssignment[]> {
-    return Array.from(this.crewAssignments.values()).filter(assignment => assignment.showId === showId);
+    return Array.from(this.crewAssignments.values()).filter(ca => ca.showId === showId);
   }
 
   async getCrewAssignmentsByCrewMember(crewMemberId: string): Promise<CrewAssignment[]> {
-    return Array.from(this.crewAssignments.values()).filter(assignment => assignment.crewMemberId === crewMemberId);
+    return Array.from(this.crewAssignments.values()).filter(ca => ca.crewMemberId === crewMemberId);
   }
 
   async createCrewAssignment(crewAssignment: InsertCrewAssignment): Promise<CrewAssignment> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newCrewAssignment: CrewAssignment = {
       id,
       ...crewAssignment,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.crewAssignments.set(id, newCrewAssignment);
     return newCrewAssignment;
   }
 
   async updateCrewAssignment(id: string, crewAssignment: Partial<InsertCrewAssignment>): Promise<CrewAssignment | undefined> {
-    const existingCrewAssignment = this.crewAssignments.get(id);
-    if (!existingCrewAssignment) return undefined;
-
-    const updatedCrewAssignment = { ...existingCrewAssignment, ...crewAssignment };
-    this.crewAssignments.set(id, updatedCrewAssignment);
-    return updatedCrewAssignment;
+    const existing = this.crewAssignments.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...crewAssignment };
+    this.crewAssignments.set(id, updated);
+    return updated;
   }
 
   async deleteCrewAssignment(id: string): Promise<boolean> {
     return this.crewAssignments.delete(id);
   }
 
-  // Crew Schedule CRUD
   async getCrewSchedules(workspaceId: string): Promise<CrewSchedule[]> {
-    return Array.from(this.crewSchedules.values()).filter(schedule => schedule.workspaceId === workspaceId);
+    return Array.from(this.crewSchedules.values()).filter(cs => {
+      const crewMember = this.crewMembers.get(cs.crewMemberId);
+      return crewMember?.workspaceId === workspaceId;
+    });
   }
 
   async getCrewSchedulesByCrewMember(crewMemberId: string): Promise<CrewSchedule[]> {
-    return Array.from(this.crewSchedules.values()).filter(schedule => schedule.crewMemberId === crewMemberId);
+    return Array.from(this.crewSchedules.values()).filter(cs => cs.crewMemberId === crewMemberId);
   }
 
   async createCrewSchedule(crewSchedule: InsertCrewSchedule): Promise<CrewSchedule> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newCrewSchedule: CrewSchedule = {
       id,
       ...crewSchedule,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.crewSchedules.set(id, newCrewSchedule);
     return newCrewSchedule;
   }
 
   async updateCrewSchedule(id: string, crewSchedule: Partial<InsertCrewSchedule>): Promise<CrewSchedule | undefined> {
-    const existingCrewSchedule = this.crewSchedules.get(id);
-    if (!existingCrewSchedule) return undefined;
-
-    const updatedCrewSchedule = { ...existingCrewSchedule, ...crewSchedule };
-    this.crewSchedules.set(id, updatedCrewSchedule);
-    return updatedCrewSchedule;
+    const existing = this.crewSchedules.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...crewSchedule };
+    this.crewSchedules.set(id, updated);
+    return updated;
   }
 
   async deleteCrewSchedule(id: string): Promise<boolean> {
     return this.crewSchedules.delete(id);
   }
 
-  // Crew Time Off CRUD
   async getCrewTimeOffs(workspaceId: string): Promise<CrewTimeOff[]> {
-    return Array.from(this.crewTimeOffs.values()).filter(timeOff => timeOff.workspaceId === workspaceId);
+    return Array.from(this.crewTimeOffs.values()).filter(cto => {
+      const crewMember = this.crewMembers.get(cto.crewMemberId);
+      return crewMember?.workspaceId === workspaceId;
+    });
   }
 
   async getCrewTimeOffsByCrewMember(crewMemberId: string): Promise<CrewTimeOff[]> {
-    return Array.from(this.crewTimeOffs.values()).filter(timeOff => timeOff.crewMemberId === crewMemberId);
+    return Array.from(this.crewTimeOffs.values()).filter(cto => cto.crewMemberId === crewMemberId);
   }
 
   async createCrewTimeOff(crewTimeOff: InsertCrewTimeOff): Promise<CrewTimeOff> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newCrewTimeOff: CrewTimeOff = {
       id,
       ...crewTimeOff,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.crewTimeOffs.set(id, newCrewTimeOff);
     return newCrewTimeOff;
   }
 
   async updateCrewTimeOff(id: string, crewTimeOff: Partial<InsertCrewTimeOff>): Promise<CrewTimeOff | undefined> {
-    const existingCrewTimeOff = this.crewTimeOffs.get(id);
-    if (!existingCrewTimeOff) return undefined;
-
-    const updatedCrewTimeOff = { ...existingCrewTimeOff, ...crewTimeOff };
-    this.crewTimeOffs.set(id, updatedCrewTimeOff);
-    return updatedCrewTimeOff;
+    const existing = this.crewTimeOffs.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...crewTimeOff };
+    this.crewTimeOffs.set(id, updated);
+    return updated;
   }
 
   async deleteCrewTimeOff(id: string): Promise<boolean> {
     return this.crewTimeOffs.delete(id);
   }
 
-  // Notification CRUD
   async getNotifications(workspaceId: string): Promise<Notification[]> {
-    return Array.from(this.notifications.values()).filter(notification => notification.workspaceId === workspaceId);
+    return Array.from(this.notifications.values()).filter(n => n.workspaceId === workspaceId);
   }
 
   async getNotificationsByUser(userId: string): Promise<Notification[]> {
-    return Array.from(this.notifications.values()).filter(notification => notification.userId === userId);
+    return Array.from(this.notifications.values()).filter(n => n.userId === userId);
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const newNotification: Notification = {
       id,
       ...notification,
-      read: false,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.notifications.set(id, newNotification);
     return newNotification;
   }
 
   async markNotificationAsRead(id: string): Promise<Notification | undefined> {
-    const existingNotification = this.notifications.get(id);
-    if (!existingNotification) return undefined;
-
-    const updatedNotification = { ...existingNotification, read: true };
-    this.notifications.set(id, updatedNotification);
-    return updatedNotification;
+    const existing = this.notifications.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, read: true };
+    this.notifications.set(id, updated);
+    return updated;
   }
 
   async deleteNotification(id: string): Promise<boolean> {
     return this.notifications.delete(id);
   }
 
-  // Conflict detection
   async detectCrewConflicts(showId: string, crewMemberId: string): Promise<boolean> {
     const show = this.shows.get(showId);
     if (!show) return false;
 
-    // Check other assignments for this crew member during the same time
-    const conflictingAssignments = Array.from(this.crewAssignments.values()).filter(assignment => {
-      if (assignment.crewMemberId !== crewMemberId) return false;
-      if (assignment.showId === showId) return false;
-
-      const assignedShow = this.shows.get(assignment.showId);
-      if (!assignedShow) return false;
-
-      // Check for overlap
+    const existingAssignments = await this.getCrewAssignmentsByCrewMember(crewMemberId);
+    
+    return existingAssignments.some(assignment => {
+      const assignmentShow = this.shows.get(assignment.showId);
+      if (!assignmentShow || assignmentShow.id === showId) return false;
+      
       return (
-        (show.startTime <= assignedShow.endTime && show.endTime >= assignedShow.startTime)
+        (show.startTime >= assignmentShow.startTime && show.startTime < assignmentShow.endTime) ||
+        (show.endTime > assignmentShow.startTime && show.endTime <= assignmentShow.endTime) ||
+        (show.startTime <= assignmentShow.startTime && show.endTime >= assignmentShow.endTime)
       );
     });
-
-    // Check time off
-    const conflictingTimeOff = Array.from(this.crewTimeOffs.values()).filter(timeOff => {
-      if (timeOff.crewMemberId !== crewMemberId) return false;
-
-      // Check for overlap
-      return (
-        (show.startTime <= timeOff.endTime && show.endTime >= timeOff.startTime)
-      );
-    });
-
-    return conflictingAssignments.length > 0 || conflictingTimeOff.length > 0;
   }
 
   async detectResourceConflicts(showId: string, resourceId: string): Promise<boolean> {
     const show = this.shows.get(showId);
     if (!show) return false;
 
-    // Check other resource assignments during the same time
-    const conflictingResourceAssignments = Array.from(this.showResources.values()).filter(sr => {
-      if (sr.resourceId !== resourceId) return false;
-      if (sr.showId === showId) return false;
-
-      const assignedShow = this.shows.get(sr.showId);
-      if (!assignedShow) return false;
-
-      // Check for overlap
+    const existingBookings = await this.getShowResourcesByShow(resourceId);
+    
+    return existingBookings.some(booking => {
+      const bookingShow = this.shows.get(booking.showId);
+      if (!bookingShow || bookingShow.id === showId) return false;
+      
       return (
-        (show.startTime <= assignedShow.endTime && show.endTime >= assignedShow.startTime)
+        (show.startTime >= bookingShow.startTime && show.startTime < bookingShow.endTime) ||
+        (show.endTime > bookingShow.startTime && show.endTime <= bookingShow.endTime) ||
+        (show.startTime <= bookingShow.startTime && show.endTime >= bookingShow.endTime)
       );
     });
-
-    return conflictingResourceAssignments.length > 0;
   }
 }
 

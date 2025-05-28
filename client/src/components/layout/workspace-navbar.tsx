@@ -203,13 +203,8 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
             </div>
           </div>
 
-          {/* Center: Desktop Actions */}
-          <div className="hidden lg:flex items-center space-x-2">
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              New Show
-            </Button>
-          </div>
+          {/* Center: Spacer for layout balance */}
+          <div className="hidden lg:block flex-1"></div>
 
           {/* Right: Actions */}
           <div className="flex items-center space-x-2">
