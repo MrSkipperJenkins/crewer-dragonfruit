@@ -34,6 +34,9 @@ export default function Dashboard() {
     enabled: !!currentWorkspace?.id,
   });
 
+  // Debug logging to see what data we're getting
+  console.log("Dashboard data:", { shows, crewMembers, resources, notifications });
+  
   // Dashboard metrics
   const activeShows = shows.filter((show: any) => show.status === 'scheduled' || show.status === 'in_progress').length;
   const upcomingShows = shows.filter((show: any) => {
