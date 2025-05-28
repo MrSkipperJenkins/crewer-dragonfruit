@@ -342,22 +342,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/shows", async (req, res) => {
     try {
-      console.log("Show creation request body:", req.body);
-      
-      // Skip validation and directly create the show for now
-      const showData = {
+      // Convert datetime strings to Date objects before validation
+      const processedBody = {
         ...req.body,
-        startTime: new Date(req.body.startTime),
-        endTime: new Date(req.body.endTime),
+        startTime: req.body.startTime ? new Date(req.body.startTime) : undefined,
+        endTime: req.body.endTime ? new Date(req.body.endTime) : undefined,
       };
       
-      console.log("Processed show data:", showData);
+      const validation = insertShowSchema.safeParse(processedBody);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
+      }
       
-      const show = await storage.createShow(showData);
+      const show = await storage.createShow(validation.data);
       res.status(201).json(show);
     } catch (error) {
-      console.error("Show creation error:", error);
-      res.status(500).json({ message: "Failed to create show", error: error.message });
+      res.status(500).json({ message: "Failed to create show" });
     }
   });
 
