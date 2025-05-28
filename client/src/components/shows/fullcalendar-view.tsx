@@ -321,13 +321,14 @@ export function FullCalendarView() {
         : extendedProps.resources
       : 'No resources';
     
-    // Format crew status display
-    const crewText = crewStatus.required > 0 
-      ? `${crewStatus.assigned} of ${crewStatus.required} crew assigned`
+    // Format crew status display with null checks
+    const safeCrewStatus = crewStatus || { assigned: 0, required: 0, isFullyStaffed: false };
+    const crewText = safeCrewStatus.required > 0 
+      ? `${safeCrewStatus.assigned} of ${safeCrewStatus.required} crew assigned`
       : 'No crew needed';
     
-    const isFullyStaffed = crewStatus.isFullyStaffed && crewStatus.required > 0;
-    const crewStatusColor = isFullyStaffed ? 'text-green-200' : crewStatus.required > 0 ? 'text-yellow-200' : 'text-gray-300';
+    const isFullyStaffed = safeCrewStatus.isFullyStaffed && safeCrewStatus.required > 0;
+    const crewStatusColor = isFullyStaffed ? 'text-green-200' : safeCrewStatus.required > 0 ? 'text-yellow-200' : 'text-gray-300';
     
     return (
       <div className="fc-event-main-frame">
