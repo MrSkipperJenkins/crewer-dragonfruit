@@ -46,6 +46,16 @@ export const WorkspaceProvider = ({ children }: WorkspaceProviderProps) => {
     }
   }, [workspaces, currentWorkspaceId, isLoading]);
 
+  // Ensure workspace is valid or reset to first available
+  useEffect(() => {
+    if (!isLoading && workspaces.length > 0 && currentWorkspaceId) {
+      const workspaceExists = workspaces.find(w => w.id === currentWorkspaceId);
+      if (!workspaceExists) {
+        setCurrentWorkspaceId(workspaces[0].id);
+      }
+    }
+  }, [workspaces, currentWorkspaceId, isLoading]);
+
   // Persist current workspace to localStorage
   useEffect(() => {
     if (currentWorkspaceId) {

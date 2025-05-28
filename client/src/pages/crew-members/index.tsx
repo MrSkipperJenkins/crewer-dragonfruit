@@ -79,12 +79,8 @@ export default function CrewMembers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Debug workspace
-  console.log("Current workspace:", currentWorkspace);
-  console.log("Workspace ID:", currentWorkspace?.id);
-  
   // Fetch crew members
-  const { data: crewMembers = [], isLoading, error } = useQuery({
+  const { data: crewMembers = [], isLoading } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
     enabled: !!currentWorkspace?.id,
   });
@@ -94,11 +90,6 @@ export default function CrewMembers() {
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
     enabled: !!currentWorkspace?.id,
   });
-  
-  // Debug queries
-  console.log("Crew members query enabled:", !!currentWorkspace?.id);
-  console.log("Crew members data:", crewMembers);
-  console.log("Crew members error:", error);
   
   // Initialize form with default values
   const form = useForm<FormValues>({
