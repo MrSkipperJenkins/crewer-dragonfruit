@@ -31,6 +31,25 @@ import type {
   Notification,
   InsertNotification
 } from "@shared/schema";
+import {
+  workspaces,
+  users,
+  crewMembers,
+  jobs,
+  crewMemberJobs,
+  resources,
+  showCategories,
+  shows,
+  showCategoryAssignments,
+  requiredJobs,
+  showResources,
+  crewAssignments,
+  crewSchedules,
+  crewTimeOff,
+  notifications,
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte, like } from "drizzle-orm";
 
 export interface IStorage {
   // Workspace CRUD
@@ -1083,4 +1102,477 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // Workspace CRUD
+  async getWorkspaces(): Promise<Workspace[]> {
+    return await db.select().from(workspaces);
+  }
+
+  async getWorkspace(id: string): Promise<Workspace | undefined> {
+    const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, id));
+    return workspace || undefined;
+  }
+
+  async getWorkspaceBySlug(slug: string): Promise<Workspace | undefined> {
+    const [workspace] = await db.select().from(workspaces).where(eq(workspaces.slug, slug));
+    return workspace || undefined;
+  }
+
+  async isWorkspaceSlugAvailable(slug: string): Promise<boolean> {
+    const [workspace] = await db.select().from(workspaces).where(eq(workspaces.slug, slug));
+    return !workspace;
+  }
+
+  async createWorkspace(workspace: InsertWorkspace): Promise<Workspace> {
+    const [newWorkspace] = await db.insert(workspaces).values(workspace).returning();
+    return newWorkspace;
+  }
+
+  async updateWorkspace(id: string, workspace: Partial<InsertWorkspace>): Promise<Workspace | undefined> {
+    const [updatedWorkspace] = await db
+      .update(workspaces)
+      .set(workspace)
+      .where(eq(workspaces.id, id))
+      .returning();
+    return updatedWorkspace || undefined;
+  }
+
+  async deleteWorkspace(id: string): Promise<boolean> {
+    const result = await db.delete(workspaces).where(eq(workspaces.id, id));
+    return result.rowCount > 0;
+  }
+
+  // User CRUD
+  async getUsers(workspaceId: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.workspaceId, workspaceId));
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(user)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Crew Member CRUD
+  async getCrewMembers(workspaceId: string): Promise<CrewMember[]> {
+    return await db.select().from(crewMembers).where(eq(crewMembers.workspaceId, workspaceId));
+  }
+
+  async getCrewMember(id: string): Promise<CrewMember | undefined> {
+    const [crewMember] = await db.select().from(crewMembers).where(eq(crewMembers.id, id));
+    return crewMember || undefined;
+  }
+
+  async createCrewMember(crewMember: InsertCrewMember): Promise<CrewMember> {
+    const [newCrewMember] = await db.insert(crewMembers).values(crewMember).returning();
+    return newCrewMember;
+  }
+
+  async updateCrewMember(id: string, crewMember: Partial<InsertCrewMember>): Promise<CrewMember | undefined> {
+    const [updatedCrewMember] = await db
+      .update(crewMembers)
+      .set(crewMember)
+      .where(eq(crewMembers.id, id))
+      .returning();
+    return updatedCrewMember || undefined;
+  }
+
+  async deleteCrewMember(id: string): Promise<boolean> {
+    const result = await db.delete(crewMembers).where(eq(crewMembers.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Job CRUD
+  async getJobs(workspaceId: string): Promise<Job[]> {
+    return await db.select().from(jobs).where(eq(jobs.workspaceId, workspaceId));
+  }
+
+  async getJob(id: string): Promise<Job | undefined> {
+    const [job] = await db.select().from(jobs).where(eq(jobs.id, id));
+    return job || undefined;
+  }
+
+  async createJob(job: InsertJob): Promise<Job> {
+    const [newJob] = await db.insert(jobs).values(job).returning();
+    return newJob;
+  }
+
+  async updateJob(id: string, job: Partial<InsertJob>): Promise<Job | undefined> {
+    const [updatedJob] = await db
+      .update(jobs)
+      .set(job)
+      .where(eq(jobs.id, id))
+      .returning();
+    return updatedJob || undefined;
+  }
+
+  async deleteJob(id: string): Promise<boolean> {
+    const result = await db.delete(jobs).where(eq(jobs.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Crew Member Job CRUD
+  async getCrewMemberJobs(workspaceId: string): Promise<CrewMemberJob[]> {
+    return await db.select().from(crewMemberJobs).where(eq(crewMemberJobs.workspaceId, workspaceId));
+  }
+
+  async getCrewMemberJobsByCrewMember(crewMemberId: string): Promise<CrewMemberJob[]> {
+    return await db.select().from(crewMemberJobs).where(eq(crewMemberJobs.crewMemberId, crewMemberId));
+  }
+
+  async createCrewMemberJob(crewMemberJob: InsertCrewMemberJob): Promise<CrewMemberJob> {
+    const [newCrewMemberJob] = await db.insert(crewMemberJobs).values(crewMemberJob).returning();
+    return newCrewMemberJob;
+  }
+
+  async deleteCrewMemberJob(id: string): Promise<boolean> {
+    const result = await db.delete(crewMemberJobs).where(eq(crewMemberJobs.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Resource CRUD
+  async getResources(workspaceId: string): Promise<Resource[]> {
+    return await db.select().from(resources).where(eq(resources.workspaceId, workspaceId));
+  }
+
+  async getResource(id: string): Promise<Resource | undefined> {
+    const [resource] = await db.select().from(resources).where(eq(resources.id, id));
+    return resource || undefined;
+  }
+
+  async createResource(resource: InsertResource): Promise<Resource> {
+    const [newResource] = await db.insert(resources).values(resource).returning();
+    return newResource;
+  }
+
+  async updateResource(id: string, resource: Partial<InsertResource>): Promise<Resource | undefined> {
+    const [updatedResource] = await db
+      .update(resources)
+      .set(resource)
+      .where(eq(resources.id, id))
+      .returning();
+    return updatedResource || undefined;
+  }
+
+  async deleteResource(id: string): Promise<boolean> {
+    const result = await db.delete(resources).where(eq(resources.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Show Category CRUD
+  async getShowCategories(workspaceId: string): Promise<ShowCategory[]> {
+    return await db.select().from(showCategories).where(eq(showCategories.workspaceId, workspaceId));
+  }
+
+  async getShowCategory(id: string): Promise<ShowCategory | undefined> {
+    const [showCategory] = await db.select().from(showCategories).where(eq(showCategories.id, id));
+    return showCategory || undefined;
+  }
+
+  async createShowCategory(showCategory: InsertShowCategory): Promise<ShowCategory> {
+    const [newShowCategory] = await db.insert(showCategories).values(showCategory).returning();
+    return newShowCategory;
+  }
+
+  async updateShowCategory(id: string, showCategory: Partial<InsertShowCategory>): Promise<ShowCategory | undefined> {
+    const [updatedShowCategory] = await db
+      .update(showCategories)
+      .set(showCategory)
+      .where(eq(showCategories.id, id))
+      .returning();
+    return updatedShowCategory || undefined;
+  }
+
+  async deleteShowCategory(id: string): Promise<boolean> {
+    const result = await db.delete(showCategories).where(eq(showCategories.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Show CRUD
+  async getShows(workspaceId: string): Promise<Show[]> {
+    return await db.select().from(shows).where(eq(shows.workspaceId, workspaceId));
+  }
+
+  async getShowsInRange(workspaceId: string, startDate: Date, endDate: Date): Promise<Show[]> {
+    return await db
+      .select()
+      .from(shows)
+      .where(
+        and(
+          eq(shows.workspaceId, workspaceId),
+          gte(shows.startTime, startDate),
+          lte(shows.endTime, endDate)
+        )
+      );
+  }
+
+  async getShow(id: string): Promise<Show | undefined> {
+    const [show] = await db.select().from(shows).where(eq(shows.id, id));
+    return show || undefined;
+  }
+
+  async createShow(show: InsertShow): Promise<Show> {
+    const [newShow] = await db.insert(shows).values(show).returning();
+    return newShow;
+  }
+
+  async updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined> {
+    const [updatedShow] = await db
+      .update(shows)
+      .set(show)
+      .where(eq(shows.id, id))
+      .returning();
+    return updatedShow || undefined;
+  }
+
+  async deleteShow(id: string): Promise<boolean> {
+    const result = await db.delete(shows).where(eq(shows.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Show Category Assignment CRUD
+  async getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]> {
+    return await db.select().from(showCategoryAssignments).where(eq(showCategoryAssignments.workspaceId, workspaceId));
+  }
+
+  async getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]> {
+    return await db.select().from(showCategoryAssignments).where(eq(showCategoryAssignments.showId, showId));
+  }
+
+  async createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment> {
+    const [newAssignment] = await db.insert(showCategoryAssignments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async deleteShowCategoryAssignment(id: string): Promise<boolean> {
+    const result = await db.delete(showCategoryAssignments).where(eq(showCategoryAssignments.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Required Job CRUD
+  async getRequiredJobs(workspaceId: string): Promise<RequiredJob[]> {
+    return await db.select().from(requiredJobs).where(eq(requiredJobs.workspaceId, workspaceId));
+  }
+
+  async getRequiredJobsByShow(showId: string): Promise<RequiredJob[]> {
+    return await db.select().from(requiredJobs).where(eq(requiredJobs.showId, showId));
+  }
+
+  async createRequiredJob(requiredJob: InsertRequiredJob): Promise<RequiredJob> {
+    const [newRequiredJob] = await db.insert(requiredJobs).values(requiredJob).returning();
+    return newRequiredJob;
+  }
+
+  async updateRequiredJob(id: string, requiredJob: Partial<InsertRequiredJob>): Promise<RequiredJob | undefined> {
+    const [updatedRequiredJob] = await db
+      .update(requiredJobs)
+      .set(requiredJob)
+      .where(eq(requiredJobs.id, id))
+      .returning();
+    return updatedRequiredJob || undefined;
+  }
+
+  async deleteRequiredJob(id: string): Promise<boolean> {
+    const result = await db.delete(requiredJobs).where(eq(requiredJobs.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Show Resource CRUD
+  async getShowResources(workspaceId: string): Promise<ShowResource[]> {
+    return await db.select().from(showResources).where(eq(showResources.workspaceId, workspaceId));
+  }
+
+  async getShowResourcesByShow(showId: string): Promise<ShowResource[]> {
+    return await db.select().from(showResources).where(eq(showResources.showId, showId));
+  }
+
+  async createShowResource(showResource: InsertShowResource): Promise<ShowResource> {
+    const [newShowResource] = await db.insert(showResources).values(showResource).returning();
+    return newShowResource;
+  }
+
+  async deleteShowResource(id: string): Promise<boolean> {
+    const result = await db.delete(showResources).where(eq(showResources.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Crew Assignment CRUD
+  async getCrewAssignments(workspaceId: string): Promise<CrewAssignment[]> {
+    return await db.select().from(crewAssignments).where(eq(crewAssignments.workspaceId, workspaceId));
+  }
+
+  async getCrewAssignmentsByShow(showId: string): Promise<CrewAssignment[]> {
+    return await db.select().from(crewAssignments).where(eq(crewAssignments.showId, showId));
+  }
+
+  async getCrewAssignmentsByCrewMember(crewMemberId: string): Promise<CrewAssignment[]> {
+    return await db.select().from(crewAssignments).where(eq(crewAssignments.crewMemberId, crewMemberId));
+  }
+
+  async createCrewAssignment(crewAssignment: InsertCrewAssignment): Promise<CrewAssignment> {
+    const [newCrewAssignment] = await db.insert(crewAssignments).values(crewAssignment).returning();
+    return newCrewAssignment;
+  }
+
+  async updateCrewAssignment(id: string, crewAssignment: Partial<InsertCrewAssignment>): Promise<CrewAssignment | undefined> {
+    const [updatedCrewAssignment] = await db
+      .update(crewAssignments)
+      .set(crewAssignment)
+      .where(eq(crewAssignments.id, id))
+      .returning();
+    return updatedCrewAssignment || undefined;
+  }
+
+  async deleteCrewAssignment(id: string): Promise<boolean> {
+    const result = await db.delete(crewAssignments).where(eq(crewAssignments.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Crew Schedule CRUD
+  async getCrewSchedules(workspaceId: string): Promise<CrewSchedule[]> {
+    return await db.select().from(crewSchedules).where(eq(crewSchedules.workspaceId, workspaceId));
+  }
+
+  async getCrewSchedulesByCrewMember(crewMemberId: string): Promise<CrewSchedule[]> {
+    return await db.select().from(crewSchedules).where(eq(crewSchedules.crewMemberId, crewMemberId));
+  }
+
+  async createCrewSchedule(crewSchedule: InsertCrewSchedule): Promise<CrewSchedule> {
+    const [newCrewSchedule] = await db.insert(crewSchedules).values(crewSchedule).returning();
+    return newCrewSchedule;
+  }
+
+  async updateCrewSchedule(id: string, crewSchedule: Partial<InsertCrewSchedule>): Promise<CrewSchedule | undefined> {
+    const [updatedCrewSchedule] = await db
+      .update(crewSchedules)
+      .set(crewSchedule)
+      .where(eq(crewSchedules.id, id))
+      .returning();
+    return updatedCrewSchedule || undefined;
+  }
+
+  async deleteCrewSchedule(id: string): Promise<boolean> {
+    const result = await db.delete(crewSchedules).where(eq(crewSchedules.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Crew Time Off CRUD
+  async getCrewTimeOffs(workspaceId: string): Promise<CrewTimeOff[]> {
+    return await db.select().from(crewTimeOff).where(eq(crewTimeOff.workspaceId, workspaceId));
+  }
+
+  async getCrewTimeOffsByCrewMember(crewMemberId: string): Promise<CrewTimeOff[]> {
+    return await db.select().from(crewTimeOff).where(eq(crewTimeOff.crewMemberId, crewMemberId));
+  }
+
+  async createCrewTimeOff(crewTimeOffData: InsertCrewTimeOff): Promise<CrewTimeOff> {
+    const [newCrewTimeOff] = await db.insert(crewTimeOff).values(crewTimeOffData).returning();
+    return newCrewTimeOff;
+  }
+
+  async updateCrewTimeOff(id: string, crewTimeOffData: Partial<InsertCrewTimeOff>): Promise<CrewTimeOff | undefined> {
+    const [updatedCrewTimeOff] = await db
+      .update(crewTimeOff)
+      .set(crewTimeOffData)
+      .where(eq(crewTimeOff.id, id))
+      .returning();
+    return updatedCrewTimeOff || undefined;
+  }
+
+  async deleteCrewTimeOff(id: string): Promise<boolean> {
+    const result = await db.delete(crewTimeOff).where(eq(crewTimeOff.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Notification CRUD
+  async getNotifications(workspaceId: string): Promise<Notification[]> {
+    return await db.select().from(notifications).where(eq(notifications.workspaceId, workspaceId));
+  }
+
+  async getNotificationsByUser(userId: string): Promise<Notification[]> {
+    return await db.select().from(notifications).where(eq(notifications.userId, userId));
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db.insert(notifications).values(notification).returning();
+    return newNotification;
+  }
+
+  async markNotificationAsRead(id: string): Promise<Notification | undefined> {
+    const [updatedNotification] = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return updatedNotification || undefined;
+  }
+
+  async deleteNotification(id: string): Promise<boolean> {
+    const result = await db.delete(notifications).where(eq(notifications.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Conflict Detection
+  async detectCrewConflicts(showId: string, crewMemberId: string): Promise<boolean> {
+    const show = await this.getShow(showId);
+    if (!show) return false;
+
+    const conflictingAssignments = await db
+      .select()
+      .from(crewAssignments)
+      .innerJoin(shows, eq(crewAssignments.showId, shows.id))
+      .where(
+        and(
+          eq(crewAssignments.crewMemberId, crewMemberId),
+          gte(shows.endTime, show.startTime),
+          lte(shows.startTime, show.endTime)
+        )
+      );
+
+    return conflictingAssignments.length > 0;
+  }
+
+  async detectResourceConflicts(showId: string, resourceId: string): Promise<boolean> {
+    const show = await this.getShow(showId);
+    if (!show) return false;
+
+    const conflictingResources = await db
+      .select()
+      .from(showResources)
+      .innerJoin(shows, eq(showResources.showId, shows.id))
+      .where(
+        and(
+          eq(showResources.resourceId, resourceId),
+          gte(shows.endTime, show.startTime),
+          lte(shows.startTime, show.endTime)
+        )
+      );
+
+    return conflictingResources.length > 0;
+  }
+}
+
+export const storage = new DatabaseStorage();
