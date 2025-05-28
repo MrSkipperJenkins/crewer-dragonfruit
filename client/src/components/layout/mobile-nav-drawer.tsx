@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -10,7 +10,6 @@ import {
   BarChart3, 
   Plus,
   ChevronRight,
-  ChevronDown,
   Settings,
   UserPlus,
   LogOut
@@ -36,7 +35,6 @@ const navigationItems = [
     title: "Dashboard",
     href: "/",
     icon: LayoutDashboard,
-    badge: null
   },
   {
     title: "Shows",
@@ -51,25 +49,21 @@ const navigationItems = [
     title: "Crew Members",
     href: "/crew-members",
     icon: Users,
-    badge: null
   },
   {
     title: "Crew Schedule",
     href: "/crew-schedule",
     icon: Clock,
-    badge: null
   },
   {
     title: "Jobs",
     href: "/jobs",
     icon: Briefcase,
-    badge: null
   },
   {
     title: "Resources",
     href: "/resources",
     icon: Package,
-    badge: null
   },
   {
     title: "Reports",
@@ -84,7 +78,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
   const [expandedSections, setExpandedSections] = useState<string[]>(['Shows']);
   const { toast } = useToast();
 
-  // Get all workspaces for the dropdown
   const { data: workspaces = [] } = useQuery({
     queryKey: ['/api/workspaces'],
     queryFn: async () => {
@@ -93,7 +86,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
     }
   });
 
-  // Switch workspace mutation
   const switchWorkspaceMutation = useMutation({
     mutationFn: async (workspaceSlug: string) => {
       return apiRequest("POST", "/api/workspaces/switch", { workspaceSlug });
@@ -124,7 +116,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
              (currentWorkspace && location === `/workspaces/${currentWorkspace.slug}/dashboard`);
     }
     
-    // For workspace-specific routes, check both legacy and workspace URLs
     if (currentWorkspace) {
       const workspaceHref = `/workspaces/${currentWorkspace.slug}${href}`;
       return location === href || location === workspaceHref || location.startsWith(workspaceHref);
@@ -164,7 +155,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 p-0 overflow-y-auto">
         <div className="flex flex-col h-full">
-          {/* Workspace Header */}
           <SheetHeader className="p-4 border-b border-gray-200 dark:border-gray-700">
             {currentWorkspace ? (
               <div className="space-y-4">
@@ -184,7 +174,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
                   </div>
                 </div>
                 
-                {/* Quick Actions */}
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" className="flex-1">
                     <Settings className="h-3 w-3 mr-1" />
@@ -201,7 +190,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
             )}
           </SheetHeader>
 
-          {/* Workspace Switcher */}
           {workspaces.length > 1 && (
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <div className="text-xs text-gray-500 uppercase tracking-wide mb-2">
@@ -230,12 +218,10 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
             </div>
           )}
 
-          {/* Main Navigation */}
           <div className="flex-1 p-4">
             <nav className="space-y-2">
               {navigationItems.map((item) => {
                 if (item.items) {
-                  // Expandable section
                   const isExpanded = expandedSections.includes(item.title) || item.items.some(subItem => isActiveRoute(subItem.href));
                   
                   return (
@@ -279,7 +265,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
                   );
                 }
 
-                // Regular navigation item
                 const href = item.href ? `${getWorkspaceBasePath()}${item.href}` : "#";
                 
                 return (
@@ -308,7 +293,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
 
             <Separator className="my-4" />
 
-            {/* Quick Actions */}
             <div className="space-y-2">
               <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Quick Actions
@@ -332,7 +316,6 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
             </div>
           </div>
 
-          {/* Bottom Actions */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             <Button 
               variant="ghost" 

@@ -48,11 +48,12 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       />
       
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <WorkspaceSidebar 
-          currentWorkspace={currentWorkspace || undefined}
-          className="hidden lg:flex"
-        />
+        {/* Sidebar - Hidden on mobile, visible on desktop */}
+        <div className="hidden lg:block">
+          <WorkspaceSidebar 
+            currentWorkspace={currentWorkspace || undefined}
+          />
+        </div>
         
         {/* Main Content */}
         <main className="flex-1 overflow-auto">
