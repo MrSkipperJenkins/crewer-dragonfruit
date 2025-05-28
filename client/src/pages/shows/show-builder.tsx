@@ -205,11 +205,19 @@ export default function ShowBuilder() {
       return;
     }
     
-    // Add workspaceId to the data
-    data.workspaceId = currentWorkspace.id;
+    // Convert datetime-local strings to ISO timestamps
+    const submitData = {
+      ...data,
+      workspaceId: currentWorkspace.id,
+      startTime: data.startTime ? new Date(data.startTime).toISOString() : undefined,
+      endTime: data.endTime ? new Date(data.endTime).toISOString() : undefined,
+    };
+    
+    // Remove fields not in the database schema
+    const { selectedResources, selectedJobs, recurringDays, categoryId, ...showData } = submitData;
     
     // Submit mutation
-    createShowMutation.mutate(data);
+    createShowMutation.mutate(showData);
   };
 
   return (
