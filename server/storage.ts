@@ -1010,7 +1010,207 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Initialize database with demo data on startup
-seedDemoData().catch(console.error);
+// Enhanced demo data creation
+async function createEnhancedDemoData() {
+  try {
+    console.log("🔄 Creating enhanced demo data...");
+    
+    // Clear existing data in proper order to respect foreign key constraints
+    await db.delete(notifications);
+    await db.delete(crewTimeOff);
+    await db.delete(crewSchedules);
+    await db.delete(crewAssignments);
+    await db.delete(showResources);
+    await db.delete(requiredJobs);
+    await db.delete(showCategoryAssignments);
+    await db.delete(crewMemberJobs); // Delete this before crew members
+    await db.delete(shows);
+    await db.delete(crewMembers);
+    await db.delete(resources);
+    await db.delete(jobs);
+    await db.delete(showCategories);
+    await db.delete(users);
+    await db.delete(workspaces);
+    
+    // Create base demo data
+    await seedDemoData();
+    
+    // Get workspace and user data
+    const [workspace] = await db.select().from(workspaces).limit(1);
+    const [user] = await db.select().from(users).limit(1);
+    
+    if (!workspace || !user) {
+      console.error("Failed to get workspace or user data");
+      return;
+    }
+    
+    // Create realistic notifications for dashboard
+    const notificationData = [
+      {
+        userId: user.id,
+        workspaceId: workspace.id,
+        type: 'warning',
+        title: 'Crew Assignment Conflict',
+        message: 'John Smith is double-booked for Studio A tomorrow morning. Please reassign.',
+        relatedEntityType: 'crew_assignment',
+        relatedEntityId: null,
+        read: false,
+        readAt: null,
+      },
+      {
+        userId: user.id,
+        workspaceId: workspace.id,
+        type: 'info',
+        title: 'New Show Scheduled',
+        message: 'Evening News Special has been added to the schedule for next week.',
+        relatedEntityType: 'show',
+        relatedEntityId: null,
+        read: false,
+        readAt: null,
+      },
+      {
+        userId: user.id,
+        workspaceId: workspace.id,
+        type: 'error',
+        title: 'Equipment Failure',
+        message: 'Camera 3 in Studio B is malfunctioning and needs immediate repair.',
+        relatedEntityType: 'resource',
+        relatedEntityId: null,
+        read: false,
+        readAt: null,
+      },
+      {
+        userId: user.id,
+        workspaceId: workspace.id,
+        type: 'success',
+        title: 'Show Completed Successfully',
+        message: 'Morning Talk Show wrapped on time with all deliverables complete.',
+        relatedEntityType: 'show',
+        relatedEntityId: null,
+        read: true,
+        readAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      },
+      {
+        userId: user.id,
+        workspaceId: workspace.id,
+        type: 'warning',
+        title: 'Low Crew Availability',
+        message: 'Only 2 camera operators available for next Friday. Consider hiring freelancers.',
+        relatedEntityType: 'crew_member',
+        relatedEntityId: null,
+        read: false,
+        readAt: null,
+      },
+      {
+        userId: user.id,
+        workspaceId: workspace.id,
+        type: 'info',
+        title: 'Resource Maintenance Scheduled',
+        message: 'Studio A will be offline for maintenance this weekend.',
+        relatedEntityType: 'resource',
+        relatedEntityId: null,
+        read: true,
+        readAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+      },
+      {
+        userId: user.id,
+        workspaceId: workspace.id,
+        type: 'warning',
+        title: 'Budget Alert',
+        message: 'Production costs for Drama Series are 15% over budget.',
+        relatedEntityType: 'show',
+        relatedEntityId: null,
+        read: false,
+        readAt: null,
+      },
+      {
+        userId: user.id,
+        workspaceId: workspace.id,
+        type: 'success',
+        title: 'Crew Training Completed',
+        message: 'All sound engineers have completed safety certification.',
+        relatedEntityType: 'crew_member',
+        relatedEntityId: null,
+        read: true,
+        readAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+      }
+    ];
+    
+    for (const notification of notificationData) {
+      await db.insert(notifications).values(notification);
+    }
+    
+    // Update existing shows with varied statuses for realistic dashboard metrics
+    const existingShows = await db.select().from(shows).where(eq(shows.workspaceId, workspace.id));
+    
+    // Set different statuses for shows to create realistic dashboard data
+    if (existingShows.length > 0) {
+      // Make some shows active/scheduled
+      await db.update(shows)
+        .set({ status: 'scheduled' })
+        .where(eq(shows.id, existingShows[0].id));
+        
+      if (existingShows.length > 1) {
+        await db.update(shows)
+          .set({ status: 'in_progress' })
+          .where(eq(shows.id, existingShows[1].id));
+      }
+      
+      if (existingShows.length > 2) {
+        await db.update(shows)
+          .set({ status: 'completed' })
+          .where(eq(shows.id, existingShows[2].id));
+      }
+    }
+    
+    // Create additional upcoming shows for dashboard metrics
+    const upcomingShowsData = [
+      {
+        title: 'Evening News Special',
+        description: 'Breaking news coverage and analysis',
+        startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+        endTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // Tomorrow + 2 hours
+        status: 'scheduled',
+        color: '#ef4444',
+        workspaceId: workspace.id,
+      },
+      {
+        title: 'Weekend Sports Review',
+        description: 'Highlights and analysis from weekend games',
+        startTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
+        endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000), // + 1.5 hours
+        status: 'scheduled',
+        color: '#10b981',
+        workspaceId: workspace.id,
+      },
+      {
+        title: 'Live Concert Broadcast',
+        description: 'Live performance from the city hall',
+        startTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+        endTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // + 3 hours
+        status: 'scheduled',
+        color: '#8b5cf6',
+        workspaceId: workspace.id,
+      }
+    ];
+    
+    for (const showData of upcomingShowsData) {
+      await db.insert(shows).values(showData);
+    }
+    
+    console.log("✅ Enhanced demo data created successfully!");
+    console.log("📊 Dashboard now includes:");
+    console.log("   • 8 realistic notifications (4 unread)");
+    console.log("   • Multiple show statuses for metrics");
+    console.log("   • 3 additional upcoming shows");
+    console.log("   • Varied notification types (info, warning, error, success)");
+    
+  } catch (error) {
+    console.error("❌ Failed to create enhanced demo data:", error);
+  }
+}
+
+// Initialize database with enhanced demo data on startup
+createEnhancedDemoData().catch(console.error);
 
 export const storage = new DatabaseStorage();
