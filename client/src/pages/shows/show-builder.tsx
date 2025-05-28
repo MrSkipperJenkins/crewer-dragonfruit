@@ -196,6 +196,11 @@ export default function ShowBuilder() {
 
   // Form submission handler
   const onSubmit = (data: FormValues) => {
+    // Only proceed with show creation if we're on the final step
+    if (step !== "crew") {
+      return;
+    }
+    
     if (!currentWorkspace?.id) {
       toast({
         title: "Error",
@@ -211,11 +216,8 @@ export default function ShowBuilder() {
       workspaceId: currentWorkspace.id,
     };
     
-    // Remove fields not in the database schema
-    const { selectedResources, selectedJobs, recurringDays, categoryId, ...showData } = submitData;
-    
-    // Submit mutation
-    createShowMutation.mutate(showData);
+    // Submit mutation with all form data
+    createShowMutation.mutate(submitData);
   };
 
   return (
