@@ -135,9 +135,6 @@ export const shows = pgTable("shows", {
 export const insertShowSchema = createInsertSchema(shows).omit({
   id: true,
   createdAt: true,
-}).extend({
-  startTime: z.string().datetime().or(z.date()),
-  endTime: z.string().datetime().or(z.date()),
 });
 
 // Show Category Assignment - Links shows to categories (tags)
