@@ -258,7 +258,10 @@ export default function ShowBuilder() {
                           <Textarea 
                             placeholder="Enter show description" 
                             className="resize-none" 
-                            {...field} 
+                            value={field.value || ""} 
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
                           />
                         </FormControl>
                         <FormMessage />
