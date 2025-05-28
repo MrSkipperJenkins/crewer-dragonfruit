@@ -164,14 +164,34 @@ export interface IStorage {
   detectResourceConflicts(showId: string, resourceId: string): Promise<boolean>;
 }
 
+// Add method to clear existing demo data
+export async function clearDemoData(): Promise<void> {
+  console.log("🧹 Clearing existing demo data...");
+  
+  // Delete in reverse order of dependencies
+  await db.delete(notifications);
+  await db.delete(crewTimeOff);
+  await db.delete(crewSchedules);
+  await db.delete(crewAssignments);
+  await db.delete(showResources);
+  await db.delete(requiredJobs);
+  await db.delete(showCategoryAssignments);
+  await db.delete(shows);
+  await db.delete(showCategories);
+  await db.delete(resources);
+  await db.delete(crewMemberJobs);
+  await db.delete(jobs);
+  await db.delete(crewMembers);
+  await db.delete(users);
+  await db.delete(workspaces);
+  
+  console.log("✅ Demo data cleared successfully!");
+}
+
 // Add method to seed database with demo data
 export async function seedDemoData(): Promise<void> {
-  // Check if data already exists
-  const existingWorkspaces = await db.select().from(workspaces);
-  if (existingWorkspaces.length > 0) {
-    console.log("Demo data already exists, skipping seed...");
-    return;
-  }
+  // Clear existing data first
+  await clearDemoData();
 
   const setTime = (date: Date, hours: number, minutes: number = 0) => {
     const newDate = new Date(date);
@@ -193,93 +213,112 @@ export async function seedDemoData(): Promise<void> {
     }
   ]).returning();
 
-  // Create users
-  const [user1, user2] = await db.insert(users).values([
-    {
-      username: "admin",
-      password: "hashed_password_123",
-      name: "Sarah Mitchell",
-      email: "sarah.mitchell@bbcstudios.com",
-      role: "admin",
-      workspaceId: workspace1.id,
-    },
-    {
-      username: "producer",
-      password: "hashed_password_456",
-      name: "David Thompson",
-      email: "david.thompson@itv.com",
-      role: "producer",
-      workspaceId: workspace2.id,
-    }
+  // Create users (10 per workspace)
+  const workspace1Users = await db.insert(users).values([
+    { username: "admin", password: "hashed_password_123", name: "Sarah Mitchell", email: "sarah.mitchell@bbcstudios.com", role: "admin", workspaceId: workspace1.id },
+    { username: "producer1", password: "hashed_password_456", name: "James Carter", email: "james.carter@bbcstudios.com", role: "producer", workspaceId: workspace1.id },
+    { username: "director1", password: "hashed_password_789", name: "Emily Watson", email: "emily.watson@bbcstudios.com", role: "director", workspaceId: workspace1.id },
+    { username: "editor1", password: "hashed_password_012", name: "Michael Brown", email: "michael.brown@bbcstudios.com", role: "editor", workspaceId: workspace1.id },
+    { username: "coordinator1", password: "hashed_password_345", name: "Lisa Chen", email: "lisa.chen@bbcstudios.com", role: "coordinator", workspaceId: workspace1.id },
+    { username: "manager1", password: "hashed_password_678", name: "Robert Davis", email: "robert.davis@bbcstudios.com", role: "manager", workspaceId: workspace1.id },
+    { username: "assistant1", password: "hashed_password_901", name: "Anna Wilson", email: "anna.wilson@bbcstudios.com", role: "assistant", workspaceId: workspace1.id },
+    { username: "supervisor1", password: "hashed_password_234", name: "Chris Taylor", email: "chris.taylor@bbcstudios.com", role: "supervisor", workspaceId: workspace1.id },
+    { username: "scheduler1", password: "hashed_password_567", name: "Maria Garcia", email: "maria.garcia@bbcstudios.com", role: "scheduler", workspaceId: workspace1.id },
+    { username: "tech1", password: "hashed_password_890", name: "David Lee", email: "david.lee@bbcstudios.com", role: "technician", workspaceId: workspace1.id },
   ]).returning();
 
-  // Create crew members
-  const [crewMember1, crewMember2, crewMember3, crewMember4, crewMember5] = await db.insert(crewMembers).values([
-    {
-      name: "Alex Rodriguez",
-      email: "alex.rodriguez@bbcstudios.com",
-      phone: "+44 7700 900123",
-      title: "Camera Operator",
-      workspaceId: workspace1.id,
-    },
-    {
-      name: "Emma Johnson",
-      email: "emma.johnson@bbcstudios.com",
-      phone: "+44 7700 900456",
-      title: "Sound Engineer",
-      workspaceId: workspace1.id,
-    },
-    {
-      name: "James Wilson",
-      email: "james.wilson@bbcstudios.com",
-      phone: "+44 7700 900789",
-      title: "Lighting Technician",
-      workspaceId: workspace1.id,
-    },
-    {
-      name: "Sophie Turner",
-      email: "sophie.turner@bbcstudios.com",
-      phone: "+44 7700 900012",
-      title: "Director",
-      workspaceId: workspace1.id,
-    },
-    {
-      name: "Michael Chen",
-      email: "michael.chen@bbcstudios.com",
-      phone: "+44 7700 900345",
-      title: "Production Assistant",
-      workspaceId: workspace1.id,
-    }
+  const workspace2Users = await db.insert(users).values([
+    { username: "producer", password: "hashed_password_456", name: "David Thompson", email: "david.thompson@itv.com", role: "producer", workspaceId: workspace2.id },
+    { username: "admin2", password: "hashed_password_111", name: "Sophie Clarke", email: "sophie.clarke@itv.com", role: "admin", workspaceId: workspace2.id },
+    { username: "director2", password: "hashed_password_222", name: "Oliver Smith", email: "oliver.smith@itv.com", role: "director", workspaceId: workspace2.id },
+    { username: "editor2", password: "hashed_password_333", name: "Emma Jones", email: "emma.jones@itv.com", role: "editor", workspaceId: workspace2.id },
+    { username: "coordinator2", password: "hashed_password_444", name: "Tom Anderson", email: "tom.anderson@itv.com", role: "coordinator", workspaceId: workspace2.id },
+    { username: "manager2", password: "hashed_password_555", name: "Helen White", email: "helen.white@itv.com", role: "manager", workspaceId: workspace2.id },
+    { username: "assistant2", password: "hashed_password_666", name: "Jack Turner", email: "jack.turner@itv.com", role: "assistant", workspaceId: workspace2.id },
+    { username: "supervisor2", password: "hashed_password_777", name: "Lucy Martin", email: "lucy.martin@itv.com", role: "supervisor", workspaceId: workspace2.id },
+    { username: "scheduler2", password: "hashed_password_888", name: "Peter Green", email: "peter.green@itv.com", role: "scheduler", workspaceId: workspace2.id },
+    { username: "tech2", password: "hashed_password_999", name: "Rachel King", email: "rachel.king@itv.com", role: "technician", workspaceId: workspace2.id },
   ]).returning();
 
-  // Create jobs
-  const [job1, job2, job3, job4, job5] = await db.insert(jobs).values([
-    {
-      title: "Camera Operator",
-      description: "Operate professional broadcast cameras for live and recorded productions",
-      workspaceId: workspace1.id,
-    },
-    {
-      title: "Sound Engineer",
-      description: "Manage audio equipment and ensure high-quality sound recording",
-      workspaceId: workspace1.id,
-    },
-    {
-      title: "Lighting Technician",
-      description: "Set up and operate lighting equipment for optimal visual quality",
-      workspaceId: workspace1.id,
-    },
-    {
-      title: "Director",
-      description: "Lead creative direction and coordinate production activities",
-      workspaceId: workspace1.id,
-    },
-    {
-      title: "Production Assistant",
-      description: "Support production team with various tasks and coordination",
-      workspaceId: workspace1.id,
-    }
+  const [user1] = workspace1Users;
+
+  // Create crew members (20 per workspace)
+  const workspace1CrewMembers = await db.insert(crewMembers).values([
+    { name: "Alex Rodriguez", email: "alex.rodriguez@bbcstudios.com", phone: "+44 7700 900123", title: "Camera Operator", workspaceId: workspace1.id },
+    { name: "Emma Johnson", email: "emma.johnson@bbcstudios.com", phone: "+44 7700 900456", title: "Sound Engineer", workspaceId: workspace1.id },
+    { name: "James Wilson", email: "james.wilson@bbcstudios.com", phone: "+44 7700 900789", title: "Lighting Technician", workspaceId: workspace1.id },
+    { name: "Sophie Turner", email: "sophie.turner@bbcstudios.com", phone: "+44 7700 900012", title: "Director", workspaceId: workspace1.id },
+    { name: "Michael Chen", email: "michael.chen@bbcstudios.com", phone: "+44 7700 900345", title: "Production Assistant", workspaceId: workspace1.id },
+    { name: "Sarah Williams", email: "sarah.williams@bbcstudios.com", phone: "+44 7700 900678", title: "Camera Operator", workspaceId: workspace1.id },
+    { name: "Daniel Moore", email: "daniel.moore@bbcstudios.com", phone: "+44 7700 900901", title: "Video Editor", workspaceId: workspace1.id },
+    { name: "Jessica Brown", email: "jessica.brown@bbcstudios.com", phone: "+44 7700 901234", title: "Makeup Artist", workspaceId: workspace1.id },
+    { name: "Ryan Clark", email: "ryan.clark@bbcstudios.com", phone: "+44 7700 901567", title: "Gaffer", workspaceId: workspace1.id },
+    { name: "Amanda Lewis", email: "amanda.lewis@bbcstudios.com", phone: "+44 7700 901890", title: "Script Supervisor", workspaceId: workspace1.id },
+    { name: "Kevin Hall", email: "kevin.hall@bbcstudios.com", phone: "+44 7700 902123", title: "Boom Operator", workspaceId: workspace1.id },
+    { name: "Rachel Green", email: "rachel.green@bbcstudios.com", phone: "+44 7700 902456", title: "Wardrobe Stylist", workspaceId: workspace1.id },
+    { name: "Steven Adams", email: "steven.adams@bbcstudios.com", phone: "+44 7700 902789", title: "Set Decorator", workspaceId: workspace1.id },
+    { name: "Laura Baker", email: "laura.baker@bbcstudios.com", phone: "+44 7700 903012", title: "Floor Manager", workspaceId: workspace1.id },
+    { name: "Mark Thompson", email: "mark.thompson@bbcstudios.com", phone: "+44 7700 903345", title: "Camera Operator", workspaceId: workspace1.id },
+    { name: "Nicole Parker", email: "nicole.parker@bbcstudios.com", phone: "+44 7700 903678", title: "Graphics Operator", workspaceId: workspace1.id },
+    { name: "Andrew Hill", email: "andrew.hill@bbcstudios.com", phone: "+44 7700 903901", title: "Technical Director", workspaceId: workspace1.id },
+    { name: "Michelle Young", email: "michelle.young@bbcstudios.com", phone: "+44 7700 904234", title: "Production Coordinator", workspaceId: workspace1.id },
+    { name: "Brandon Scott", email: "brandon.scott@bbcstudios.com", phone: "+44 7700 904567", title: "Steadicam Operator", workspaceId: workspace1.id },
+    { name: "Stephanie Wright", email: "stephanie.wright@bbcstudios.com", phone: "+44 7700 904890", title: "Location Manager", workspaceId: workspace1.id },
   ]).returning();
+
+  const workspace2CrewMembers = await db.insert(crewMembers).values([
+    { name: "Oliver Mason", email: "oliver.mason@itv.com", phone: "+44 7700 905123", title: "Camera Operator", workspaceId: workspace2.id },
+    { name: "Charlotte Davis", email: "charlotte.davis@itv.com", phone: "+44 7700 905456", title: "Sound Engineer", workspaceId: workspace2.id },
+    { name: "Benjamin Evans", email: "benjamin.evans@itv.com", phone: "+44 7700 905789", title: "Lighting Technician", workspaceId: workspace2.id },
+    { name: "Amelia Roberts", email: "amelia.roberts@itv.com", phone: "+44 7700 906012", title: "Director", workspaceId: workspace2.id },
+    { name: "Jacob Turner", email: "jacob.turner@itv.com", phone: "+44 7700 906345", title: "Production Assistant", workspaceId: workspace2.id },
+    { name: "Isabella Cooper", email: "isabella.cooper@itv.com", phone: "+44 7700 906678", title: "Camera Operator", workspaceId: workspace2.id },
+    { name: "Ethan Ward", email: "ethan.ward@itv.com", phone: "+44 7700 906901", title: "Video Editor", workspaceId: workspace2.id },
+    { name: "Chloe Phillips", email: "chloe.phillips@itv.com", phone: "+44 7700 907234", title: "Makeup Artist", workspaceId: workspace2.id },
+    { name: "Nathan Cox", email: "nathan.cox@itv.com", phone: "+44 7700 907567", title: "Gaffer", workspaceId: workspace2.id },
+    { name: "Grace Ward", email: "grace.ward@itv.com", phone: "+44 7700 907890", title: "Script Supervisor", workspaceId: workspace2.id },
+    { name: "Samuel Kelly", email: "samuel.kelly@itv.com", phone: "+44 7700 908123", title: "Boom Operator", workspaceId: workspace2.id },
+    { name: "Zoe Bennett", email: "zoe.bennett@itv.com", phone: "+44 7700 908456", title: "Wardrobe Stylist", workspaceId: workspace2.id },
+    { name: "Luke Murphy", email: "luke.murphy@itv.com", phone: "+44 7700 908789", title: "Set Decorator", workspaceId: workspace2.id },
+    { name: "Lily Foster", email: "lily.foster@itv.com", phone: "+44 7700 909012", title: "Floor Manager", workspaceId: workspace2.id },
+    { name: "Connor Bailey", email: "connor.bailey@itv.com", phone: "+44 7700 909345", title: "Camera Operator", workspaceId: workspace2.id },
+    { name: "Mia Reed", email: "mia.reed@itv.com", phone: "+44 7700 909678", title: "Graphics Operator", workspaceId: workspace2.id },
+    { name: "Tyler Hughes", email: "tyler.hughes@itv.com", phone: "+44 7700 909901", title: "Technical Director", workspaceId: workspace2.id },
+    { name: "Sophia Morris", email: "sophia.morris@itv.com", phone: "+44 7700 910234", title: "Production Coordinator", workspaceId: workspace2.id },
+    { name: "Mason Wood", email: "mason.wood@itv.com", phone: "+44 7700 910567", title: "Steadicam Operator", workspaceId: workspace2.id },
+    { name: "Ava Price", email: "ava.price@itv.com", phone: "+44 7700 910890", title: "Location Manager", workspaceId: workspace2.id },
+  ]).returning();
+
+  const [crewMember1, crewMember2, crewMember3, crewMember4, crewMember5] = workspace1CrewMembers;
+
+  // Create jobs (10 per workspace)
+  const workspace1Jobs = await db.insert(jobs).values([
+    { title: "Camera Operator", description: "Operate professional broadcast cameras for live and recorded productions", workspaceId: workspace1.id },
+    { title: "Sound Engineer", description: "Manage audio equipment and ensure high-quality sound recording", workspaceId: workspace1.id },
+    { title: "Lighting Technician", description: "Set up and operate lighting equipment for optimal visual quality", workspaceId: workspace1.id },
+    { title: "Director", description: "Lead creative direction and coordinate production activities", workspaceId: workspace1.id },
+    { title: "Production Assistant", description: "Support production team with various tasks and coordination", workspaceId: workspace1.id },
+    { title: "Video Editor", description: "Edit and post-process video content for broadcast quality", workspaceId: workspace1.id },
+    { title: "Makeup Artist", description: "Apply makeup and styling for on-screen talent", workspaceId: workspace1.id },
+    { title: "Floor Manager", description: "Coordinate activities on set and manage crew during filming", workspaceId: workspace1.id },
+    { title: "Graphics Operator", description: "Create and manage on-screen graphics and visual elements", workspaceId: workspace1.id },
+    { title: "Technical Director", description: "Oversee technical aspects of production and equipment", workspaceId: workspace1.id },
+  ]).returning();
+
+  const workspace2Jobs = await db.insert(jobs).values([
+    { title: "Camera Operator", description: "Operate professional broadcast cameras for live and recorded productions", workspaceId: workspace2.id },
+    { title: "Sound Engineer", description: "Manage audio equipment and ensure high-quality sound recording", workspaceId: workspace2.id },
+    { title: "Lighting Technician", description: "Set up and operate lighting equipment for optimal visual quality", workspaceId: workspace2.id },
+    { title: "Director", description: "Lead creative direction and coordinate production activities", workspaceId: workspace2.id },
+    { title: "Production Assistant", description: "Support production team with various tasks and coordination", workspaceId: workspace2.id },
+    { title: "Video Editor", description: "Edit and post-process video content for broadcast quality", workspaceId: workspace2.id },
+    { title: "Makeup Artist", description: "Apply makeup and styling for on-screen talent", workspaceId: workspace2.id },
+    { title: "Floor Manager", description: "Coordinate activities on set and manage crew during filming", workspaceId: workspace2.id },
+    { title: "Graphics Operator", description: "Create and manage on-screen graphics and visual elements", workspaceId: workspace2.id },
+    { title: "Technical Director", description: "Oversee technical aspects of production and equipment", workspaceId: workspace2.id },
+  ]).returning();
+
+  const [job1, job2, job3, job4, job5] = workspace1Jobs;
 
   // Create crew member job assignments
   await db.insert(crewMemberJobs).values([
@@ -290,33 +329,34 @@ export async function seedDemoData(): Promise<void> {
     { crewMemberId: crewMember5.id, jobId: job5.id, workspaceId: workspace1.id },
   ]);
 
-  // Create resources
-  const [resource1, resource2, resource3, resource4] = await db.insert(resources).values([
-    {
-      name: "Studio A",
-      type: "studio",
-      description: "Main production studio with green screen capability",
-      workspaceId: workspace1.id,
-    },
-    {
-      name: "Control Room 1",
-      type: "control_room", 
-      description: "Primary control room with 4K broadcasting equipment",
-      workspaceId: workspace1.id,
-    },
-    {
-      name: "Camera Kit #1",
-      type: "equipment",
-      description: "Professional broadcast camera with tripod and accessories",
-      workspaceId: workspace1.id,
-    },
-    {
-      name: "Sound Mixing Board",
-      type: "equipment",
-      description: "16-channel digital mixing console",
-      workspaceId: workspace1.id,
-    }
+  // Create resources (10 per workspace)
+  const workspace1Resources = await db.insert(resources).values([
+    { name: "Studio A", type: "studio", description: "Main production studio with green screen capability", workspaceId: workspace1.id },
+    { name: "Control Room 1", type: "control_room", description: "Primary control room with 4K broadcasting equipment", workspaceId: workspace1.id },
+    { name: "Camera Kit #1", type: "equipment", description: "Professional broadcast camera with tripod and accessories", workspaceId: workspace1.id },
+    { name: "Sound Mixing Board", type: "equipment", description: "16-channel digital mixing console", workspaceId: workspace1.id },
+    { name: "Studio B", type: "studio", description: "Secondary studio for smaller productions", workspaceId: workspace1.id },
+    { name: "Control Room 2", type: "control_room", description: "Backup control room with HD equipment", workspaceId: workspace1.id },
+    { name: "Camera Kit #2", type: "equipment", description: "Secondary camera setup with wireless capabilities", workspaceId: workspace1.id },
+    { name: "Lighting Rig Alpha", type: "equipment", description: "Professional LED lighting setup for studio productions", workspaceId: workspace1.id },
+    { name: "Edit Suite 1", type: "control_room", description: "Post-production editing suite with color grading", workspaceId: workspace1.id },
+    { name: "Mobile Unit", type: "equipment", description: "Portable broadcast equipment for location shoots", workspaceId: workspace1.id },
   ]).returning();
+
+  const workspace2Resources = await db.insert(resources).values([
+    { name: "Studio Alpha", type: "studio", description: "Premier production studio with advanced facilities", workspaceId: workspace2.id },
+    { name: "Master Control", type: "control_room", description: "Main control room with latest broadcast technology", workspaceId: workspace2.id },
+    { name: "Camera System A", type: "equipment", description: "High-end camera system for premium content", workspaceId: workspace2.id },
+    { name: "Audio Console Pro", type: "equipment", description: "Professional 32-channel audio mixing console", workspaceId: workspace2.id },
+    { name: "Studio Beta", type: "studio", description: "Flexible studio space for various production types", workspaceId: workspace2.id },
+    { name: "Control Room Beta", type: "control_room", description: "Secondary control room for simultaneous productions", workspaceId: workspace2.id },
+    { name: "Camera System B", type: "equipment", description: "Versatile camera setup for documentary work", workspaceId: workspace2.id },
+    { name: "Lighting System Pro", type: "equipment", description: "Advanced lighting system with smart controls", workspaceId: workspace2.id },
+    { name: "Post-Production Suite", type: "control_room", description: "Complete post-production facility with latest software", workspaceId: workspace2.id },
+    { name: "OB Van", type: "equipment", description: "Outside broadcast vehicle for remote productions", workspaceId: workspace2.id },
+  ]).returning();
+
+  const [resource1, resource2, resource3, resource4] = workspace1Resources;
 
   // Create show categories
   const [category1, category2, category3] = await db.insert(showCategories).values([
