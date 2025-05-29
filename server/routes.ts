@@ -342,23 +342,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/shows", async (req, res) => {
     try {
-      // Handle date strings properly - they come as ISO strings from frontend now
+      // Convert datetime-local strings to proper Date objects preserving local time
       const processedBody = {
         ...req.body,
-        startTime: req.body.startTime ? new Date(req.body.startTime) : undefined,
-        endTime: req.body.endTime ? new Date(req.body.endTime) : undefined,
+        startTime: req.body.startTime ? new Date(req.body.startTime + ":00") : undefined,
+        endTime: req.body.endTime ? new Date(req.body.endTime + ":00") : undefined,
       };
       
       const validation = insertShowSchema.safeParse(processedBody);
       if (!validation.success) {
-        console.log("Show validation errors:", validation.error.errors);
         return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
       }
       
       const show = await storage.createShow(validation.data);
       res.status(201).json(show);
     } catch (error) {
-      console.error("Show creation error:", error);
       res.status(500).json({ message: "Failed to create show" });
     }
   });
