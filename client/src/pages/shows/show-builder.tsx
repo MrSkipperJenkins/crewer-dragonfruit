@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -69,6 +70,7 @@ export default function ShowBuilder() {
   const { currentWorkspace } = useWorkspace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [step, setStep] = useState<"details" | "resources" | "crew">("details");
 
   // Helper function to get next 15-minute interval in local time
@@ -243,9 +245,10 @@ export default function ShowBuilder() {
         title: "Success",
         description: "Show created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces', currentWorkspace?.id, 'shows'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
       form.reset();
       setStep("details");
+      setLocation(`/workspaces/${currentWorkspace?.slug}/shows/calendar`);
     },
     onError: () => {
       toast({
