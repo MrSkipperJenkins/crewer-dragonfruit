@@ -248,7 +248,7 @@ export default function ShowBuilder() {
       queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
       form.reset();
       setStep("details");
-      setLocation(`/workspaces/${currentWorkspace?.id}/shows/calendar`);
+      setLocation(`/workspaces/${currentWorkspace?.slug || currentWorkspace?.id}/shows/calendar`);
     },
     onError: () => {
       toast({
