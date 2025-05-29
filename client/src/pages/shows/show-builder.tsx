@@ -257,7 +257,7 @@ export default function ShowBuilder() {
       form.reset();
       setStep("details");
       // Navigate to calendar view to see the new show
-      setLocation(`/workspaces/${currentWorkspace?.slug}/shows`);
+      setLocation(`/shows`);
     },
     onError: () => {
       toast({
@@ -653,7 +653,9 @@ export default function ShowBuilder() {
               ) : (
                 <Button 
                   type="button" 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setStep(step === "details" ? "resources" : "crew");
                   }}
                 >
