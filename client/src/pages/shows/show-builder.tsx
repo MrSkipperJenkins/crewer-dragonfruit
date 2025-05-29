@@ -154,7 +154,7 @@ export default function ShowBuilder() {
   });
 
   // Group resources by type
-  const resourcesByType = resources.reduce((acc: any, resource: any) => {
+  const resourcesByType = (resources as any[]).reduce((acc: any, resource: any) => {
     const { type } = resource;
     if (!acc[type]) {
       acc[type] = [];
@@ -248,7 +248,7 @@ export default function ShowBuilder() {
       queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
       form.reset();
       setStep("details");
-      setLocation(`/workspaces/${currentWorkspace?.slug}/shows/calendar`);
+      setLocation(`/workspaces/${currentWorkspace?.id}/shows/calendar`);
     },
     onError: () => {
       toast({
@@ -302,358 +302,305 @@ export default function ShowBuilder() {
             </TabsList>
           </Tabs>
         </CardHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="px-6 pt-4">
-              {step === "details" && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Show Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter the show title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Enter show description" 
-                            className="resize-none" 
-                            value={field.value || ""} 
-                            onChange={field.onChange}
-                            onBlur={field.onBlur}
-                            name={field.name}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="startTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Start Time</FormLabel>
-                          <FormControl>
-                            <Input type="datetime-local" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="endTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>End Time</FormLabel>
-                          <FormControl>
-                            <Input type="datetime-local" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="scheduled">Scheduled</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Event Color</FormLabel>
-                        <FormControl>
-                          <ColorPicker
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Choose a color to help identify this event in the calendar
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map((category: any) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Categorize your show for easier filtering
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="space-y-2">
-                    <FormLabel>Recurring Schedule</FormLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { value: "0", label: "Sunday" },
-                        { value: "1", label: "Monday" },
-                        { value: "2", label: "Tuesday" },
-                        { value: "3", label: "Wednesday" },
-                        { value: "4", label: "Thursday" },
-                        { value: "5", label: "Friday" },
-                        { value: "6", label: "Saturday" }
-                      ].map((day) => (
-                        <FormField
-                          key={day.value}
-                          control={form.control}
-                          name="recurringDays"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={day.value}
-                                className="flex flex-row items-start space-x-2 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(day.value)}
-                                    onCheckedChange={(checked) => {
-                                      const currentValue = [...(field.value || [])];
-                                      if (checked) {
-                                        field.onChange([...currentValue, day.value]);
-                                      } else {
-                                        field.onChange(
-                                          currentValue.filter((value) => value !== day.value)
-                                        );
-                                      }
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal cursor-pointer">
-                                  {day.label}
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          }}
+        
+        <CardContent className="px-6 pt-4">
+          <Form {...form}>
+            {step === "details" && (
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Show Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter the show title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter show description" 
+                          className="resize-none" 
+                          value={field.value || ""} 
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
                         />
-                      ))}
-                    </div>
-                    <FormDescription>
-                      Select days for recurring shows
-                    </FormDescription>
-                  </div>
-                </div>
-              )}
-
-              {step === "resources" && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Select Resources</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Choose studios, control rooms, and equipment needed for the show
-                    </p>
-                  </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Time</FormLabel>
+                        <FormControl>
+                          <Input type="datetime-local" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  {Object.entries(resourcesByType).map(([type, items]: [string, any]) => (
-                    <div key={type} className="space-y-3">
-                      <h4 className="font-medium text-gray-700">
-                        {type === 'studio' ? 'Studios' : 
-                         type === 'control_room' ? 'Control Rooms' : 
-                         'Equipment'}
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {items.map((resource: any) => (
-                          <FormField
-                            key={resource.id}
-                            control={form.control}
-                            name="selectedResources"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={resource.id}
-                                  className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(resource.id)}
-                                      onCheckedChange={(checked) => {
-                                        const currentValue = [...(field.value || [])];
-                                        if (checked) {
-                                          field.onChange([...currentValue, resource.id]);
-                                        } else {
-                                          field.onChange(
-                                            currentValue.filter((value) => value !== resource.id)
-                                          );
-                                        }
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <div className="space-y-1">
-                                    <FormLabel className="font-medium text-base">
-                                      {resource.name}
-                                    </FormLabel>
-                                    {resource.description && (
-                                      <FormDescription>
-                                        {resource.description}
-                                      </FormDescription>
-                                    )}
-                                  </div>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                  <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Time</FormLabel>
+                        <FormControl>
+                          <Input type="datetime-local" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              )}
-
-              {step === "crew" && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Required Crew Positions</h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Select job roles needed for this show
-                    </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {jobs.map((job: any) => (
+                
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="scheduled">Scheduled</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Event Color</FormLabel>
+                      <FormControl>
+                        <ColorPicker
+                          value={field.value || "#3b82f6"}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Choose a color to help identify this event in the calendar
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(categories as any[]).map((category: any) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Categorize your show for easier filtering
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="space-y-2">
+                  <Label>Recurring Schedule</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
                       <FormField
-                        key={job.id}
+                        key={day}
                         control={form.control}
-                        name="selectedJobs"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={job.id}
-                              className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(job.id)}
-                                  onCheckedChange={(checked) => {
-                                    const currentValue = [...(field.value || [])];
-                                    if (checked) {
-                                      field.onChange([...currentValue, job.id]);
-                                    } else {
-                                      field.onChange(
-                                        currentValue.filter((value) => value !== job.id)
-                                      );
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <div className="space-y-1">
-                                <FormLabel className="font-medium text-base">
-                                  {job.title}
-                                </FormLabel>
-                                {job.description && (
-                                  <FormDescription>
-                                    {job.description}
-                                  </FormDescription>
-                                )}
-                              </div>
-                            </FormItem>
-                          );
-                        }}
+                        name="recurringDays"
+                        render={({ field }) => (
+                          <FormItem key={day} className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(day) || false}
+                                onCheckedChange={(checked) => {
+                                  const currentValue = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentValue, day]);
+                                  } else {
+                                    field.onChange(currentValue.filter((value: string) => value !== day));
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {day.slice(0, 3)}
+                            </FormLabel>
+                          </FormItem>
+                        )}
                       />
                     ))}
                   </div>
                 </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-between border-t px-6 py-4">
-              {step === "details" ? (
-                <div></div>
-              ) : (
-                <Button type="button" variant="outline" onClick={() => {
-                  setStep(step === "resources" ? "details" : "resources");
-                }}>
-                  Back
-                </Button>
-              )}
-              
-              {step === "crew" ? (
-                <Button 
-                  type="submit" 
-                  disabled={createShowMutation.isPending}
-                >
-                  {createShowMutation.isPending ? "Creating..." : "Create Show"}
-                </Button>
-              ) : (
-                <Button 
-                  type="button" 
-                  onClick={() => {
-                    setStep(step === "details" ? "resources" : "crew");
-                  }}
-                >
-                  Continue
-                </Button>
-              )}
-            </CardFooter>
-          </form>
-        </Form>
+              </div>
+            )}
+            
+            {step === "resources" && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium">Select Resources</h3>
+                  <p className="text-gray-500 text-sm">Choose studios, control rooms, and equipment for this show</p>
+                </div>
+                
+                {Object.keys(resourcesByType).map((type) => (
+                  <div key={type} className="space-y-2">
+                    <h4 className="font-medium capitalize">{type.replace('_', ' ')}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {resourcesByType[type].map((resource: any) => (
+                        <FormField
+                          key={resource.id}
+                          control={form.control}
+                          name="selectedResources"
+                          render={({ field }) => (
+                            <FormItem key={resource.id} className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(resource.id) || false}
+                                  onCheckedChange={(checked) => {
+                                    const currentValue = field.value || [];
+                                    if (checked) {
+                                      field.onChange([...currentValue, resource.id]);
+                                    } else {
+                                      field.onChange(currentValue.filter((value: string) => value !== resource.id));
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal text-sm">
+                                {resource.name}
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {step === "crew" && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium">Crew Requirements</h3>
+                  <p className="text-gray-500 text-sm">Select the jobs/roles required for this show</p>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {(jobs as any[]).map((job: any) => (
+                    <FormField
+                      key={job.id}
+                      control={form.control}
+                      name="selectedJobs"
+                      render={({ field }) => (
+                        <FormItem key={job.id} className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(job.id) || false}
+                              onCheckedChange={(checked) => {
+                                const currentValue = field.value || [];
+                                if (checked) {
+                                  field.onChange([...currentValue, job.id]);
+                                } else {
+                                  field.onChange(currentValue.filter((value: string) => value !== job.id));
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal text-sm">
+                            {job.title}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </Form>
+        </CardContent>
+        
+        <CardFooter className="flex justify-between border-t px-6 py-4">
+          {step === "details" ? (
+            <div></div>
+          ) : (
+            <Button type="button" variant="outline" onClick={() => {
+              setStep(step === "resources" ? "details" : "resources");
+            }}>
+              Back
+            </Button>
+          )}
+          
+          {step === "crew" ? (
+            <Button 
+              type="button" 
+              disabled={createShowMutation.isPending}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {createShowMutation.isPending ? "Creating..." : "Create Show"}
+            </Button>
+          ) : (
+            <Button 
+              type="button" 
+              onClick={() => {
+                setStep(step === "details" ? "resources" : "crew");
+              }}
+            >
+              Continue
+            </Button>
+          )}
+        </CardFooter>
       </Card>
     </div>
   );
