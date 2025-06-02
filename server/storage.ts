@@ -49,7 +49,7 @@ import {
   notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, like, ne } from "drizzle-orm";
+import { eq, and, gte, lte, like, not } from "drizzle-orm";
 
 export interface IStorage {
   // Workspace CRUD
@@ -982,7 +982,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(crewAssignments.crewMemberId, crewMemberId),
-          ne(shows.id, showId), // Exclude the current show
+          not(eq(shows.id, showId)), // Exclude the current show
           gte(shows.endTime, show.startTime),
           lte(shows.startTime, show.endTime)
         )
