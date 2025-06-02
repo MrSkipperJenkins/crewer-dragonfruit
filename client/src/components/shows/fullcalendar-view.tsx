@@ -410,7 +410,7 @@ export function FullCalendarView() {
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'timeGridWeek,timeGridDay,dayGridMonth'
           }}
           buttonText={{
             today: 'Today',
@@ -427,7 +427,7 @@ export function FullCalendarView() {
           droppable={true}
           selectable={true}
           selectMirror={true}
-          height="600px"
+          height="900px"
           dayMaxEvents={3}
           moreLinkClick="popover"
           eventDisplay="block"
