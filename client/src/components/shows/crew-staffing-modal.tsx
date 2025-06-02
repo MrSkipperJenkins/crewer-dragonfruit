@@ -75,10 +75,12 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
       
       requiredJobs.forEach((job: any) => {
         const quantity = job.quantity || 1;
+        const existingJobAssignments = crewAssignments.filter(
+          (assignment: any) => assignment.jobId === job.jobId
+        );
+        
         for (let i = 0; i < quantity; i++) {
-          const existingAssignment = crewAssignments.find(
-            (assignment: any) => assignment.jobId === job.jobId && assignment.position === i
-          );
+          const existingAssignment = existingJobAssignments[i];
           
           initialAssignments.push({
             jobId: job.jobId,
@@ -125,7 +127,8 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
           showId,
           crewMemberId: assignment.crewMemberId,
           jobId: assignment.jobId,
-          position: index,
+          status: "confirmed",
+          workspaceId: currentWorkspace?.id,
         });
       }
     },
