@@ -69,8 +69,8 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
 
   // Create workspace mutation
   const createWorkspaceMutation = useMutation({
-    mutationFn: async (name: string) => {
-      return apiRequest("POST", "/api/workspaces", { name });
+    mutationFn: async (workspaceData: { name: string; slug: string; region: string }) => {
+      return apiRequest("POST", "/api/workspaces", workspaceData);
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
@@ -98,7 +98,13 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
   const handleCreateWorkspace = () => {
     const name = prompt("Enter workspace name:");
     if (name && name.trim()) {
-      createWorkspaceMutation.mutate(name.trim());
+      const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const workspaceData = {
+        name: name.trim(),
+        slug: slug,
+        region: 'us-east-1'
+      };
+      createWorkspaceMutation.mutate(workspaceData);
     }
   };
 
