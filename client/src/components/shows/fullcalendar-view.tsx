@@ -501,7 +501,7 @@ export function FullCalendarView() {
           allDaySlot={false}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
-          slotDuration="00:15:00"
+          slotDuration="00:10:00"
           snapDuration="00:15:00"
           slotLabelInterval="01:00:00"
           businessHours={{

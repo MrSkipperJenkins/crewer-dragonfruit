@@ -17,6 +17,8 @@
   --fc-event-border-color: #2563eb;
   --fc-event-text-color: #ffffff;
   --fc-today-bg-color: rgba(59, 130, 246, 0.1);
+  /* Custom slot height variable */
+  --fc-timegrid-slot-height: 15px;
 }
 
 /* Reduce time slot height for more compact view */
@@ -84,6 +86,87 @@
 .fc td.fc-timegrid-slot {
   height: 20px !important;
   padding: 0 !important;
+}
+
+/* More aggressive height overrides */
+.fc-timegrid-body .fc-timegrid-slots .fc-timegrid-slot {
+  height: 20px !important;
+  min-height: 20px !important;
+  max-height: 20px !important;
+}
+
+.fc-timegrid-slots .fc-timegrid-slot {
+  height: 20px !important;
+  min-height: 20px !important;
+}
+
+/* Override the table structure */
+.fc-timegrid-slots table {
+  table-layout: fixed !important;
+}
+
+.fc-timegrid-slots td {
+  height: 20px !important;
+  min-height: 20px !important;
+  vertical-align: top !important;
+}
+
+/* Force slot lane height */
+.fc-timegrid-slot-lane {
+  height: 20px !important;
+  min-height: 20px !important;
+}
+
+/* Target the time axis cells specifically */
+.fc-timegrid-axis-cushion {
+  padding: 1px 4px !important;
+  font-size: 0.75rem !important;
+  line-height: 18px !important;
+}
+
+/* Ultimate override - target all possible height properties */
+.fc-theme-standard .fc-timegrid-slot {
+  height: 15px !important;
+  min-height: 15px !important;
+  max-height: 15px !important;
+}
+
+.fc-theme-standard td.fc-timegrid-slot {
+  height: 15px !important;
+  min-height: 15px !important;
+}
+
+/* Use CSS Grid to force consistent heights */
+.fc-timegrid-slots {
+  display: grid !important;
+  grid-template-rows: repeat(auto, 15px) !important;
+}
+
+/* Force all time rows to be consistent */
+.fc-timegrid-slots tbody tr {
+  height: 15px !important;
+  max-height: 15px !important;
+}
+
+/* Nuclear option - override everything with higher specificity */
+.fc.fc .fc-timegrid-body .fc-timegrid-slots table tbody tr {
+  height: 15px !important;
+}
+
+.fc.fc .fc-timegrid-body .fc-timegrid-slots table tbody tr td {
+  height: 15px !important;
+  padding: 0 !important;
+}
+
+/* Override using attribute selectors for maximum specificity */
+.fc[class*="fc"] .fc-timegrid-slot {
+  height: 15px !important;
+  min-height: 15px !important;
+}
+
+/* Target by data attributes if they exist */
+.fc-timegrid-slot[class*="fc-timegrid-slot"] {
+  height: 15px !important;
 }
 
 /* Button Styling */
