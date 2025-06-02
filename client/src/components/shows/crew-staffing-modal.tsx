@@ -148,13 +148,11 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
 
   const isLoading = isLoadingShow || isLoadingJobs || isLoadingAssignments;
 
-  // Group assignments by job type for display
+  // Since we removed quantity, each required job should have exactly one assignment
   const groupedAssignments = assignments.reduce((groups: any, assignment, index) => {
     const jobId = assignment.jobId;
-    if (!groups[jobId]) {
-      groups[jobId] = [];
-    }
-    groups[jobId].push({ ...assignment, index });
+    // Each job should have only one assignment now
+    groups[jobId] = [{ ...assignment, index }];
     return groups;
   }, {});
 
@@ -230,9 +228,6 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
                   <CardContent className="space-y-3">
                     {jobAssignments.map((assignment: any) => (
                       <div key={assignment.index} className="flex items-center space-x-3">
-                        <div className="flex-shrink-0 w-20 text-sm font-medium text-gray-600 dark:text-gray-400">
-                          Position {jobAssignments.indexOf(assignment) + 1}:
-                        </div>
                         <div className="flex-1">
                           <Select
                             value={assignment.crewMemberId || "unassigned"}
