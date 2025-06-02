@@ -6,11 +6,20 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { X } from "lucide-react";
+import { Edit2, Save, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDateTime, getStatusColor, formatTime } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -23,7 +32,15 @@ type ShowDetailModalProps = {
 export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [notes, setNotes] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedShow, setEditedShow] = useState({
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: '',
+    status: '',
+    notes: ''
+  });
   
   // Fetch show details
   const { data: show, isLoading: isLoadingShow } = useQuery({
@@ -67,16 +84,23 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
     enabled: !!(show as any)?.workspaceId,
   });
   
-  // Set initial notes from show data
+  // Set initial form data from show data
   useEffect(() => {
-    if (show?.notes) {
-      setNotes(show.notes);
+    if (show) {
+      setEditedShow({
+        title: (show as any).title || '',
+        description: (show as any).description || '',
+        startTime: (show as any).startTime || '',
+        endTime: (show as any).endTime || '',
+        status: (show as any).status || '',
+        notes: (show as any).notes || ''
+      });
     }
   }, [show]);
   
   // Update show mutation
   const updateShowMutation = useMutation({
-    mutationFn: async (updatedShow: { notes: string }) => {
+    mutationFn: async (updatedShow: any) => {
       return apiRequest("PUT", `/api/shows/${showId}`, updatedShow);
     },
     onSuccess: () => {
@@ -85,7 +109,8 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
         description: "Show updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}`] });
-      onClose();
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/shows`] });
+      setIsEditing(false);
     },
     onError: () => {
       toast({
@@ -113,7 +138,29 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
   
   // Handle save changes
   const handleSaveChanges = () => {
-    updateShowMutation.mutate({ notes });
+    updateShowMutation.mutate(editedShow);
+  };
+
+  // Handle cancel editing
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    if (show) {
+      setEditedShow({
+        title: (show as any).title || '',
+        description: (show as any).description || '',
+        startTime: (show as any).startTime || '',
+        endTime: (show as any).endTime || '',
+        status: (show as any).status || '',
+        notes: (show as any).notes || ''
+      });
+    }
+  };
+
+  // Format datetime for input fields
+  const formatDateTimeForInput = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().slice(0, 16);
   };
   
   // Format crew name for avatar fallback
