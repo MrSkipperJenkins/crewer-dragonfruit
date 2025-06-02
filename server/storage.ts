@@ -213,9 +213,9 @@ export async function seedDemoData(): Promise<void> {
     }
   ]).returning();
 
-  // Create users (10 per workspace)
+  // Create users (10 per workspace) - first user has specific ID for dashboard notifications
   const workspace1Users = await db.insert(users).values([
-    { username: "admin", password: "hashed_password_123", name: "Sarah Mitchell", email: "sarah.mitchell@bbcstudios.com", role: "admin", workspaceId: workspace1.id },
+    { id: "e7f21c28-2cad-47c3-858e-e2ba07ac8701", username: "admin", password: "hashed_password_123", name: "Sarah Mitchell", email: "sarah.mitchell@bbcstudios.com", role: "admin", workspaceId: workspace1.id },
     { username: "producer1", password: "hashed_password_456", name: "James Carter", email: "james.carter@bbcstudios.com", role: "producer", workspaceId: workspace1.id },
     { username: "director1", password: "hashed_password_789", name: "Emily Watson", email: "emily.watson@bbcstudios.com", role: "director", workspaceId: workspace1.id },
     { username: "editor1", password: "hashed_password_012", name: "Michael Brown", email: "michael.brown@bbcstudios.com", role: "editor", workspaceId: workspace1.id },
@@ -498,10 +498,10 @@ export async function seedDemoData(): Promise<void> {
     }
   ]);
 
-  // Create notifications
+  // Create notifications - using the same user ID as dashboard
   await db.insert(notifications).values([
     {
-      userId: user1.id,
+      userId: "e7f21c28-2cad-47c3-858e-e2ba07ac8701",
       title: "New Show Scheduled",
       message: "Evening News has been scheduled for today at 6:00 PM",
       type: "info",
@@ -510,7 +510,7 @@ export async function seedDemoData(): Promise<void> {
       workspaceId: workspace1.id,
     },
     {
-      userId: user1.id,
+      userId: "e7f21c28-2cad-47c3-858e-e2ba07ac8701",
       title: "Crew Assignment Pending",
       message: "Alex Rodriguez needs confirmation for Morning Drama Recording",
       type: "warning",
@@ -519,7 +519,7 @@ export async function seedDemoData(): Promise<void> {
       workspaceId: workspace1.id,
     },
     {
-      userId: user1.id,
+      userId: "e7f21c28-2cad-47c3-858e-e2ba07ac8701",
       title: "Resource Conflict",
       message: "Studio A is double-booked for next week",
       type: "error",
