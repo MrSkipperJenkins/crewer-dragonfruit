@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { 
@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 export default function Dashboard() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useCurrentWorkspace();
   
   // Fetch shows
   const { data: shows = [] } = useQuery({
