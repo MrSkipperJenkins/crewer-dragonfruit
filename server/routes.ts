@@ -345,8 +345,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert datetime-local strings to proper Date objects preserving local time
       const processedBody = {
         ...req.body,
-        startTime: req.body.startTime ? new Date(req.body.startTime + ":00") : undefined,
-        endTime: req.body.endTime ? new Date(req.body.endTime + ":00") : undefined,
+        startTime: req.body.startTime ? new Date(req.body.startTime) : undefined,
+        endTime: req.body.endTime ? new Date(req.body.endTime) : undefined,
       };
       
       const validation = insertShowSchema.safeParse(processedBody);
