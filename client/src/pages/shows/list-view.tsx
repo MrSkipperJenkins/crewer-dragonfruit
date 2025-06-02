@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { useShowStaffing } from "@/hooks/use-show-staffing";
 import {
   Table,
   TableBody,
@@ -56,52 +57,9 @@ export default function ShowsListView() {
     enabled: !!currentWorkspace?.id,
   });
 
-  // Query all show-specific data for the shows we have
+  // Get show IDs and use shared staffing hook
   const showIds = (shows as any[]).map((show: any) => show.id);
-  
-  // Query crew assignments for all shows
-  const crewAssignmentQueries = useQuery({
-    queryKey: [`/api/crew-assignments-batch`, showIds],
-    queryFn: async () => {
-      const results: Record<string, any[]> = {};
-      for (const showId of showIds) {
-        try {
-          const response = await fetch(`/api/shows/${showId}/crew-assignments`);
-          if (response.ok) {
-            results[showId] = await response.json();
-          } else {
-            results[showId] = [];
-          }
-        } catch {
-          results[showId] = [];
-        }
-      }
-      return results;
-    },
-    enabled: showIds.length > 0,
-  });
-
-  // Query required jobs for all shows
-  const requiredJobQueries = useQuery({
-    queryKey: [`/api/required-jobs-batch`, showIds],
-    queryFn: async () => {
-      const results: Record<string, any[]> = {};
-      for (const showId of showIds) {
-        try {
-          const response = await fetch(`/api/shows/${showId}/required-jobs`);
-          if (response.ok) {
-            results[showId] = await response.json();
-          } else {
-            results[showId] = [];
-          }
-        } catch {
-          results[showId] = [];
-        }
-      }
-      return results;
-    },
-    enabled: showIds.length > 0,
-  });
+  const { getCrewStaffingStatus } = useShowStaffing(showIds);
 
   // Function to get show category
   const getShowCategory = (showId: string) => {
@@ -116,20 +74,7 @@ export default function ShowsListView() {
     );
   };
 
-  // Function to get crew staffing status for a show
-  const getCrewStaffingStatus = (showId: string) => {
-    const showRequiredJobs = requiredJobQueries.data?.[showId] || [];
-    const showCrewAssignments = crewAssignmentQueries.data?.[showId] || [];
-    
-    const totalRequired = showRequiredJobs.reduce((sum: number, job: any) => sum + (job.quantity || 0), 0);
-    const totalAssigned = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
-    
-    return {
-      assigned: totalAssigned,
-      required: totalRequired,
-      isFullyStaffed: totalAssigned >= totalRequired
-    };
-  };
+
 
   // Filter shows based on status and search query
   const filteredShows = shows.filter((show: any) => {

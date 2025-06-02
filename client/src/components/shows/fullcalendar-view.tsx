@@ -7,6 +7,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useToast } from "@/hooks/use-toast";
+import { useShowStaffing } from "@/hooks/use-show-staffing";
 import { apiRequest } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import { getContrastTextColor } from "@/lib/colors";
@@ -152,6 +153,9 @@ export function FullCalendarView() {
   // Query all show-specific data for the shows we have
   const showIds = (shows as any[]).map((show: any) => show.id);
   
+  // Use shared staffing hook
+  const { getCrewStaffingStatus, crewAssignmentQueries, requiredJobQueries } = useShowStaffing(showIds);
+  
   // Query show resources for all shows
   const showResourceQueries = useQuery({
     queryKey: [`/api/show-resources-batch`, showIds],
@@ -160,50 +164,6 @@ export function FullCalendarView() {
       for (const showId of showIds) {
         try {
           const response = await fetch(`/api/shows/${showId}/resources`);
-          if (response.ok) {
-            results[showId] = await response.json();
-          } else {
-            results[showId] = [];
-          }
-        } catch {
-          results[showId] = [];
-        }
-      }
-      return results;
-    },
-    enabled: showIds.length > 0,
-  });
-
-  // Query crew assignments for all shows
-  const crewAssignmentQueries = useQuery({
-    queryKey: [`/api/crew-assignments-batch`, showIds],
-    queryFn: async () => {
-      const results: Record<string, any[]> = {};
-      for (const showId of showIds) {
-        try {
-          const response = await fetch(`/api/shows/${showId}/crew-assignments`);
-          if (response.ok) {
-            results[showId] = await response.json();
-          } else {
-            results[showId] = [];
-          }
-        } catch {
-          results[showId] = [];
-        }
-      }
-      return results;
-    },
-    enabled: showIds.length > 0,
-  });
-
-  // Query required jobs for all shows
-  const requiredJobQueries = useQuery({
-    queryKey: [`/api/required-jobs-batch`, showIds],
-    queryFn: async () => {
-      const results: Record<string, any[]> = {};
-      for (const showId of showIds) {
-        try {
-          const response = await fetch(`/api/shows/${showId}/required-jobs`);
           if (response.ok) {
             results[showId] = await response.json();
           } else {
@@ -227,20 +187,7 @@ export function FullCalendarView() {
     }).filter(Boolean);
   };
 
-  // Function to get crew staffing status for a show
-  const getCrewStaffingStatus = (showId: string) => {
-    const showRequiredJobs = requiredJobQueries.data?.[showId] || [];
-    const showCrewAssignments = crewAssignmentQueries.data?.[showId] || [];
-    
-    const totalRequired = showRequiredJobs.reduce((sum: number, job: any) => sum + (job.quantity || 0), 0);
-    const totalAssigned = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
-    
-    return {
-      assigned: totalAssigned,
-      required: totalRequired,
-      isFullyStaffed: totalAssigned >= totalRequired
-    };
-  };
+
 
   // Convert shows to FullCalendar events
   const calendarEvents = useMemo(() => {
