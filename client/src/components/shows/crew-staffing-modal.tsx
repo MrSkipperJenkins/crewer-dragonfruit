@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
+
 import {
   Dialog,
   DialogContent,
@@ -33,7 +34,7 @@ interface JobAssignment {
 }
 
 export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModalProps) {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const [assignments, setAssignments] = useState<JobAssignment[]>([]);
   const [hasChanges, setHasChanges] = useState(false);

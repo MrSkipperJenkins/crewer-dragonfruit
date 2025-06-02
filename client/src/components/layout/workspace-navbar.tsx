@@ -143,7 +143,12 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
                           </div>
                         </div>
                         <div className="flex space-x-2 mt-3">
-                          <Button variant="outline" size="sm" className="flex-1">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => setLocation(`/workspaces/${currentWorkspace.slug}/settings`)}
+                          >
                             <Settings className="h-3 w-3 mr-1" />
                             Settings
                           </Button>

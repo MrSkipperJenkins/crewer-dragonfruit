@@ -55,7 +55,7 @@ type ShowCategoryAssignment = {
 };
 
 export function CalendarView() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useCurrentWorkspace();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'today' | 'week' | 'month'>('week');
   const [selectedShow, setSelectedShow] = useState<string | null>(null);

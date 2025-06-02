@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { useShowStaffing } from "@/hooks/use-show-staffing";
 import {
   Table,
@@ -33,7 +33,7 @@ import ShowDetailModal from "@/components/shows/show-detail-modal";
 import CrewStaffingModal from "@/components/shows/crew-staffing-modal";
 
 export default function ShowsListView() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useCurrentWorkspace();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedShow, setSelectedShow] = useState<string | null>(null);
   const [crewStaffingShow, setCrewStaffingShow] = useState<string | null>(null);

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { 
   FilmIcon, 
   LayoutDashboardIcon, 
@@ -33,7 +33,7 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: {
   setIsMobileOpen: (open: boolean) => void;
 }) {
   const [location] = useLocation();
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useCurrentWorkspace();
   
   // Fetch notifications count
   const { data: notifications = [] } = useQuery({

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -73,7 +74,12 @@ type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
 
 export default function Settings() {
-  const { currentWorkspace, setCurrentWorkspaceId, workspaces } = useWorkspace();
+  const { currentWorkspace } = useCurrentWorkspace();
+  
+  // Fetch workspaces data
+  const { data: workspaces = [] } = useQuery({
+    queryKey: ['/api/workspaces'],
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { theme, setTheme } = useTheme();
@@ -163,7 +169,7 @@ export default function Settings() {
           description: "Workspace created successfully",
         });
         queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
-        setCurrentWorkspaceId(workspace.id);
+        // Workspace will be automatically selected by URL routing
       });
     },
     onError: () => {
@@ -444,7 +450,7 @@ export default function Settings() {
                           ? "bg-primary-50 border-primary-200" 
                           : "hover:bg-gray-50 cursor-pointer"
                       }`}
-                      onClick={() => setCurrentWorkspaceId(workspace.id)}
+                      onClick={() => setLocation(`/workspaces/${workspace.slug}`)}
                     >
                       <div>
                         <h3 className="font-medium">{workspace.name}</h3>
