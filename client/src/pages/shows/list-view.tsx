@@ -257,6 +257,14 @@ export default function ShowsListView() {
           onClose={() => setSelectedShow(null)}
         />
       )}
+
+      {/* Crew Staffing Modal */}
+      {crewStaffingShow && (
+        <CrewStaffingModal
+          showId={crewStaffingShow}
+          onClose={() => setCrewStaffingShow(null)}
+        />
+      )}
     </div>
   );
 }
