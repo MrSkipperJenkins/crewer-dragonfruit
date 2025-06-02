@@ -74,19 +74,14 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
       const initialAssignments: JobAssignment[] = [];
       
       requiredJobs.forEach((job: any) => {
-        const quantity = job.quantity || 1;
-        const existingJobAssignments = crewAssignments.filter(
+        const existingAssignment = crewAssignments.find(
           (assignment: any) => assignment.jobId === job.jobId
         );
         
-        for (let i = 0; i < quantity; i++) {
-          const existingAssignment = existingJobAssignments[i];
-          
-          initialAssignments.push({
-            jobId: job.jobId,
-            crewMemberId: existingAssignment?.crewMemberId,
-          });
-        }
+        initialAssignments.push({
+          jobId: job.jobId,
+          crewMemberId: existingAssignment?.crewMemberId,
+        });
       });
       
       setAssignments(initialAssignments);

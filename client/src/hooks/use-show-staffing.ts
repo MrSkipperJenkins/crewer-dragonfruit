@@ -56,7 +56,7 @@ export function useShowStaffing(showIds: string[]) {
     const showRequiredJobs = requiredJobQueries.data?.[showId] || [];
     const showCrewAssignments = crewAssignmentQueries.data?.[showId] || [];
     
-    const totalRequired = showRequiredJobs.reduce((sum: number, job: any) => sum + (job.quantity || 0), 0);
+    const totalRequired = showRequiredJobs.length;
     const totalAssigned = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
     
     return {

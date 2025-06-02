@@ -219,7 +219,6 @@ export default function ShowBuilder() {
             apiRequest("POST", "/api/required-jobs", {
               showId: show.id,
               jobId,
-              quantity: 1,
               workspaceId: currentWorkspace?.id,
             })
           );

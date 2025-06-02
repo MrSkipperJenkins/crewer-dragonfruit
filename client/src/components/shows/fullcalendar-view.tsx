@@ -78,7 +78,6 @@ type RequiredJob = {
   id: string;
   showId: string;
   jobId: string;
-  quantity: number;
   workspaceId: string;
 };
 
