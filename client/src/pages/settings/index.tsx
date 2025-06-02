@@ -75,6 +75,7 @@ type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
 
 export default function Settings() {
   const { currentWorkspace } = useCurrentWorkspace();
+  const [, setLocation] = useLocation();
   
   // Fetch workspaces data
   const { data: workspaces = [] } = useQuery({
