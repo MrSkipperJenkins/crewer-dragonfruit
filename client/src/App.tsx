@@ -18,7 +18,6 @@ import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Notifications from "@/pages/notifications";
 import NewWorkspacePage from "@/pages/workspaces/new";
-import { WorkspaceProvider } from "@/hooks/use-workspace.tsx";
 import { CurrentWorkspaceProvider } from "@/hooks/use-current-workspace";
 
 function Router() {
@@ -73,12 +72,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WorkspaceProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </WorkspaceProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

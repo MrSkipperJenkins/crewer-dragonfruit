@@ -36,11 +36,21 @@ export function CurrentWorkspaceProvider({ children }: { children: React.ReactNo
       const workspace = workspaces.find((w: Workspace) => w.slug === slug);
       if (workspace && workspace.id !== currentWorkspace?.id) {
         setCurrentWorkspace(workspace);
+        // Store workspace ID in localStorage for consistency
+        localStorage.setItem("currentWorkspaceId", workspace.id);
       }
     } else {
-      // For non-workspace routes, use the first workspace as default
-      if (!currentWorkspace && workspaces.length > 0) {
+      // For non-workspace routes, try to get from localStorage first
+      const storedWorkspaceId = localStorage.getItem("currentWorkspaceId");
+      if (storedWorkspaceId) {
+        const workspace = workspaces.find((w: Workspace) => w.id === storedWorkspaceId);
+        if (workspace && workspace.id !== currentWorkspace?.id) {
+          setCurrentWorkspace(workspace);
+        }
+      } else if (!currentWorkspace && workspaces.length > 0) {
+        // Fallback to first workspace
         setCurrentWorkspace(workspaces[0]);
+        localStorage.setItem("currentWorkspaceId", workspaces[0].id);
       }
     }
   }, [location, workspaces, currentWorkspace]);
