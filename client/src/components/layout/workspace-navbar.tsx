@@ -67,44 +67,9 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
     }
   });
 
-  // Create workspace mutation
-  const createWorkspaceMutation = useMutation({
-    mutationFn: async (workspaceData: { name: string; slug: string; region: string }) => {
-      return apiRequest("POST", "/api/workspaces", workspaceData);
-    },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
-      setLocation(`/workspaces/${data.slug}/dashboard`);
-      toast({
-        title: "Workspace created",
-        description: "Successfully created new workspace"
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create workspace",
-        variant: "destructive"
-      });
-    }
-  });
-
   const handleWorkspaceSwitch = (workspace: Workspace) => {
     if (workspace.slug !== currentWorkspace?.slug) {
       switchWorkspaceMutation.mutate(workspace.slug);
-    }
-  };
-
-  const handleCreateWorkspace = () => {
-    const name = prompt("Enter workspace name:");
-    if (name && name.trim()) {
-      const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const workspaceData = {
-        name: name.trim(),
-        slug: slug,
-        region: 'us-east-1'
-      };
-      createWorkspaceMutation.mutate(workspaceData);
     }
   };
 
@@ -225,7 +190,7 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
                   )}
 
                   {/* Quick Actions */}
-                  <DropdownMenuItem onClick={handleCreateWorkspace}>
+                  <DropdownMenuItem>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Workspace
                   </DropdownMenuItem>
