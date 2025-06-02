@@ -3,7 +3,7 @@ import { format, addDays, startOfWeek, addWeeks, subWeeks, isSameDay, startOfMon
 import { cn, formatTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { 
   ChevronLeftIcon, 
   ChevronRightIcon, 

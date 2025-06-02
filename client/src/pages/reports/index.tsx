@@ -1,4 +1,4 @@
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, CalendarDays, Users, Clock } from "lucide-react";
@@ -20,7 +20,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 
 export default function Reports() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useCurrentWorkspace();
 
   // Fetch data from API
   const { data: shows = [] } = useQuery({

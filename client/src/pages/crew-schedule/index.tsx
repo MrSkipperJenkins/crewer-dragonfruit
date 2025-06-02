@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspace } from "@/hooks/use-workspace";
+import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 const hours = Array.from({ length: 13 }, (_, i) => i + 7); // 7 AM to 7 PM
 
 export default function CrewSchedulePage() {
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace } = useCurrentWorkspace();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedCrewMember, setSelectedCrewMember] = useState<string | null>(null);
   
