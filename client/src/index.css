@@ -346,6 +346,69 @@
 --fc-border-color: #374151;
   }
 
+@layer components {
+  /* Compact FullCalendar time grid rows */
+  .fc-timegrid-slot {
+    min-height: 24px !important;
+    height: 24px !important;
+  }
+  
+  .fc-timegrid-slot-minor {
+    border-top: none !important;
+  }
+  
+  .fc-timegrid-slot-label-cushion {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  .fc-timegrid-axis-cushion {
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+    padding: 2px 4px !important;
+  }
+  
+  .fc-timegrid-event {
+    line-height: 1.2 !important;
+    font-size: 0.8rem !important;
+    padding: 1px 3px !important;
+    border-radius: 2px !important;
+  }
+  
+  .fc-timegrid-event .fc-event-title {
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+  }
+  
+  .fc-timegrid-event .fc-event-time {
+    font-size: 0.7rem !important;
+    opacity: 0.9;
+  }
+  
+  /* Adjust time column width for compact display */
+  .fc-timegrid-axis {
+    width: 60px !important;
+  }
+  
+  /* Reduce padding in day headers */
+  .fc-col-header-cell {
+    padding: 8px 4px !important;
+  }
+  
+  /* Make event blocks fit tightly in compact slots */
+  .fc-timegrid-event-harness {
+    margin-bottom: 1px !important;
+  }
+  
+  /* Ensure proper spacing for overlapping events */
+  .fc-timegrid-event-harness-inset {
+    left: 1px !important;
+    right: 1px !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
