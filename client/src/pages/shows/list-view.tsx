@@ -56,16 +56,51 @@ export default function ShowsListView() {
     enabled: !!currentWorkspace?.id,
   });
 
-  // Fetch crew assignments for staffing counts
-  const { data: crewAssignments = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-assignments`],
-    enabled: !!currentWorkspace?.id,
+  // Query all show-specific data for the shows we have
+  const showIds = (shows as any[]).map((show: any) => show.id);
+  
+  // Query crew assignments for all shows
+  const crewAssignmentQueries = useQuery({
+    queryKey: [`/api/crew-assignments-batch`, showIds],
+    queryFn: async () => {
+      const results: Record<string, any[]> = {};
+      for (const showId of showIds) {
+        try {
+          const response = await fetch(`/api/shows/${showId}/crew-assignments`);
+          if (response.ok) {
+            results[showId] = await response.json();
+          } else {
+            results[showId] = [];
+          }
+        } catch {
+          results[showId] = [];
+        }
+      }
+      return results;
+    },
+    enabled: showIds.length > 0,
   });
 
-  // Fetch required jobs for staffing counts
-  const { data: requiredJobs = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/required-jobs`],
-    enabled: !!currentWorkspace?.id,
+  // Query required jobs for all shows
+  const requiredJobQueries = useQuery({
+    queryKey: [`/api/required-jobs-batch`, showIds],
+    queryFn: async () => {
+      const results: Record<string, any[]> = {};
+      for (const showId of showIds) {
+        try {
+          const response = await fetch(`/api/shows/${showId}/required-jobs`);
+          if (response.ok) {
+            results[showId] = await response.json();
+          } else {
+            results[showId] = [];
+          }
+        } catch {
+          results[showId] = [];
+        }
+      }
+      return results;
+    },
+    enabled: showIds.length > 0,
   });
 
   // Function to get show category
@@ -81,15 +116,19 @@ export default function ShowsListView() {
     );
   };
 
-  // Function to get crew staffing counts for a show
-  const getCrewStaffingCounts = (showId: string) => {
-    const showRequiredJobs = requiredJobs.filter((job: any) => job.showId === showId);
-    const showCrewAssignments = crewAssignments.filter((assignment: any) => assignment.showId === showId);
+  // Function to get crew staffing status for a show
+  const getCrewStaffingStatus = (showId: string) => {
+    const showRequiredJobs = requiredJobQueries.data?.[showId] || [];
+    const showCrewAssignments = crewAssignmentQueries.data?.[showId] || [];
     
-    const totalRequired = showRequiredJobs.reduce((sum: number, job: any) => sum + (job.quantity || 1), 0);
-    const totalAssigned = showCrewAssignments.length;
+    const totalRequired = showRequiredJobs.reduce((sum: number, job: any) => sum + (job.quantity || 0), 0);
+    const totalAssigned = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
     
-    return { assigned: totalAssigned, required: totalRequired };
+    return {
+      assigned: totalAssigned,
+      required: totalRequired,
+      isFullyStaffed: totalAssigned >= totalRequired
+    };
   };
 
   // Filter shows based on status and search query
@@ -191,7 +230,7 @@ export default function ShowsListView() {
 
                 {filteredShows.map((show: any) => {
                   const category = getShowCategory(show.id);
-                  const staffingCounts = getCrewStaffingCounts(show.id);
+                  const staffingStatus = getCrewStaffingStatus(show.id);
                   return (
                     <TableRow 
                       key={show.id}
@@ -223,7 +262,7 @@ export default function ShowsListView() {
                           onClick={(e) => handleCrewStaffingClick(e, show.id)}
                         >
                           <Users className="h-4 w-4 mr-1" />
-                          {staffingCounts.assigned} of {staffingCounts.required} Crew Members Assigned
+                          {staffingStatus.assigned} of {staffingStatus.required} Crew Members Assigned
                         </Button>
                       </TableCell>
                       <TableCell className="text-right">
