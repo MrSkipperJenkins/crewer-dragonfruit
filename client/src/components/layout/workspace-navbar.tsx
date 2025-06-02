@@ -190,7 +190,7 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
                   )}
 
                   {/* Quick Actions */}
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLocation('/workspace-wizard')}>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Workspace
                   </DropdownMenuItem>
