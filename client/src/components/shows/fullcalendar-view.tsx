@@ -372,7 +372,7 @@ export function FullCalendarView() {
       if (calendarApi) {
         // Get current time and scroll to it
         const now = new Date();
-        const currentHour = now.getHours();
+        const currentHour = now.getHours() - 2;
         const currentMinute = now.getMinutes();
         
         // Format time as HH:mm:ss for scrollToTime
@@ -396,7 +396,7 @@ export function FullCalendarView() {
         const calendarApi = calendarRef.current?.getApi();
         if (calendarApi) {
           const now = new Date();
-          const currentHour = now.getHours();
+          const currentHour = now.getHours() - 2;
           const currentMinute = now.getMinutes();
           const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}:00`;
           
