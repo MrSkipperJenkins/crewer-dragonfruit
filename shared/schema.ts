@@ -160,7 +160,6 @@ export const requiredJobs = pgTable("required_jobs", {
   id: uuid("id").defaultRandom().primaryKey(),
   showId: uuid("show_id").references(() => shows.id).notNull(),
   jobId: uuid("job_id").references(() => jobs.id).notNull(),
-  quantity: integer("quantity").notNull().default(1),
   notes: text("notes"),
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

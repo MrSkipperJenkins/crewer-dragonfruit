@@ -429,18 +429,18 @@ export async function seedDemoData(): Promise<void> {
 
   // Create required jobs for shows
   await db.insert(requiredJobs).values([
-    { showId: show1.id, jobId: job1.id, quantity: 2, notes: "Need experienced operators for live broadcast", workspaceId: workspace1.id },
-    { showId: show1.id, jobId: job2.id, quantity: 1, workspaceId: workspace1.id },
-    { showId: show1.id, jobId: job4.id, quantity: 1, workspaceId: workspace1.id },
-    { showId: show2.id, jobId: job1.id, quantity: 3, notes: "Multi-camera setup required", workspaceId: workspace1.id },
-    { showId: show2.id, jobId: job2.id, quantity: 1, workspaceId: workspace1.id },
-    { showId: show2.id, jobId: job3.id, quantity: 2, workspaceId: workspace1.id },
-    { showId: show2.id, jobId: job4.id, quantity: 1, workspaceId: workspace1.id },
-    { showId: show3.id, jobId: job1.id, quantity: 2, workspaceId: workspace1.id },
-    { showId: show3.id, jobId: job2.id, quantity: 1, workspaceId: workspace1.id },
-    { showId: show4.id, jobId: job1.id, quantity: 3, workspaceId: workspace1.id },
-    { showId: show4.id, jobId: job2.id, quantity: 1, workspaceId: workspace1.id },
-    { showId: show4.id, jobId: job3.id, quantity: 2, workspaceId: workspace1.id },
+    { showId: show1.id, jobId: job1.id, notes: "Need experienced operators for live broadcast", workspaceId: workspace1.id },
+    { showId: show1.id, jobId: job2.id, workspaceId: workspace1.id },
+    { showId: show1.id, jobId: job4.id, workspaceId: workspace1.id },
+    { showId: show2.id, jobId: job1.id, notes: "Multi-camera setup required", workspaceId: workspace1.id },
+    { showId: show2.id, jobId: job2.id, workspaceId: workspace1.id },
+    { showId: show2.id, jobId: job3.id, workspaceId: workspace1.id },
+    { showId: show2.id, jobId: job4.id, workspaceId: workspace1.id },
+    { showId: show3.id, jobId: job1.id, workspaceId: workspace1.id },
+    { showId: show3.id, jobId: job2.id, workspaceId: workspace1.id },
+    { showId: show4.id, jobId: job1.id, workspaceId: workspace1.id },
+    { showId: show4.id, jobId: job2.id, workspaceId: workspace1.id },
+    { showId: show4.id, jobId: job3.id, workspaceId: workspace1.id },
   ]);
 
   // Create show resource assignments

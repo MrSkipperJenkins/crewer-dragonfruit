@@ -103,7 +103,6 @@ describe('Jobs API Endpoints', () => {
         showId,
         jobId,
         workspaceId: demoWorkspaceId,
-        quantity: 2,
         notes: 'Test required job notes'
       };
 
@@ -115,7 +114,6 @@ describe('Jobs API Endpoints', () => {
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('showId', showId);
       expect(response.body).toHaveProperty('jobId', jobId);
-      expect(response.body).toHaveProperty('quantity', 2);
       
       requiredJobId = response.body.id;
     });
@@ -129,7 +127,6 @@ describe('Jobs API Endpoints', () => {
 
     test('PUT /api/required-jobs/:id should update a required job', async () => {
       const updatedData = {
-        quantity: 3,
         notes: 'Updated test required job notes'
       };
 
@@ -139,7 +136,6 @@ describe('Jobs API Endpoints', () => {
       
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('id', requiredJobId);
-      expect(response.body).toHaveProperty('quantity', 3);
       expect(response.body).toHaveProperty('notes', 'Updated test required job notes');
     });
 
