@@ -172,13 +172,13 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
     slugCheck?.available !== false;
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <button
             onClick={onCancel}
-            className="absolute top-6 left-6 text-gray-400 hover:text-white transition-colors"
+            className="absolute top-6 left-6 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
@@ -189,27 +189,27 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                 <div
                   key={step}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    step <= currentStep ? 'bg-blue-500' : 'bg-gray-600'
+                    step <= currentStep ? 'bg-blue-500' : 'bg-gray-300'
                   }`}
                 />
               ))}
             </div>
           </div>
           
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-600 text-sm">
             Step {currentStep} of 2
           </p>
         </div>
 
         {/* Main Card */}
-        <div className="bg-gray-800 rounded-lg p-8 shadow-xl">
+        <div className="bg-white rounded-lg p-8 shadow-xl border border-gray-200">
           {currentStep === 1 && (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-2xl font-semibold text-white mb-2">
+                <h1 className="text-2xl font-semibold text-gray-900 mb-2">
                   Create a new workspace
                 </h1>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-600 text-sm">
                   Workspaces are shared environments where teams can work<br />
                   on projects, cycles and issues.
                 </p>
@@ -217,7 +217,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
 
               <form onSubmit={workspaceForm.handleSubmit(handleStep1Submit)} className="space-y-6">
                 <div>
-                  <Label htmlFor="name" className="text-gray-300 text-sm">
+                  <Label htmlFor="name" className="text-gray-700 text-sm">
                     Workspace Name
                   </Label>
                   <Input
@@ -225,39 +225,39 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                     placeholder="Acme Inc"
                     value={watchedName}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white mt-2"
+                    className="bg-white border-gray-300 text-gray-900 mt-2"
                     autoFocus
                   />
                   {workspaceForm.formState.errors.name && (
-                    <p className="text-red-400 text-sm mt-1">
+                    <p className="text-red-500 text-sm mt-1">
                       {workspaceForm.formState.errors.name.message}
                     </p>
                   )}
-                  <p className="text-red-400 text-xs mt-1">Required</p>
+                  <p className="text-red-500 text-xs mt-1">Required</p>
                 </div>
 
                 <div>
-                  <Label htmlFor="slug" className="text-gray-300 text-sm">
+                  <Label htmlFor="slug" className="text-gray-700 text-sm">
                     Workspace URL
                   </Label>
                   <Input
                     id="slug"
                     placeholder="acme-inc"
                     {...workspaceForm.register("slug")}
-                    className="bg-gray-700 border-gray-600 text-white mt-2"
+                    className="bg-white border-gray-300 text-gray-900 mt-2"
                   />
                   {watchedSlug.length >= 3 && (
                     <div className="mt-1">
                       {slugCheck?.available === false && (
-                        <p className="text-red-400 text-xs">This URL is already taken</p>
+                        <p className="text-red-500 text-xs">This URL is already taken</p>
                       )}
                       {slugCheck?.available === true && (
-                        <p className="text-green-400 text-xs">✓ Available</p>
+                        <p className="text-green-600 text-xs">✓ Available</p>
                       )}
                     </div>
                   )}
                   {workspaceForm.formState.errors.slug && (
-                    <p className="text-red-400 text-sm mt-1">
+                    <p className="text-red-500 text-sm mt-1">
                       {workspaceForm.formState.errors.slug.message}
                     </p>
                   )}
@@ -279,17 +279,17 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
           {currentStep === 2 && (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-2xl font-semibold text-white mb-2">
+                <h1 className="text-2xl font-semibold text-gray-900 mb-2">
                   Start with your team
                 </h1>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-600 text-sm">
                   Crewer works best with your teammates
                 </p>
               </div>
 
               <form onSubmit={inviteForm.handleSubmit(handleStep2Submit)} className="space-y-6">
                 <div>
-                  <Label className="text-gray-300 text-sm mb-3 block">
+                  <Label className="text-gray-700 text-sm mb-3 block">
                     Invite people
                   </Label>
                   
@@ -303,7 +303,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                           emails[index] = e.target.value;
                           inviteForm.setValue("emails", emails);
                         }}
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-white border-gray-300 text-gray-900"
                       />
                       {inviteForm.watch("emails").length > 1 && (
                         <Button
@@ -311,7 +311,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => removeEmailField(index)}
-                          className="border-gray-600 text-gray-400 hover:text-white"
+                          className="border-gray-300 text-gray-600 hover:text-gray-900"
                         >
                           ×
                         </Button>
@@ -323,7 +323,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                     <button
                       type="button"
                       onClick={addEmailField}
-                      className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1 mt-2"
+                      className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1 mt-2"
                     >
                       <Plus className="h-4 w-4" />
                       Add more or bulk invite
@@ -336,7 +336,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                     type="button"
                     variant="outline"
                     onClick={copyInviteLink}
-                    className="w-full border-gray-600 text-blue-400 hover:text-blue-300 mb-4 flex items-center justify-center gap-2"
+                    className="w-full border-gray-300 text-blue-600 hover:text-blue-700 mb-4 flex items-center justify-center gap-2"
                   >
                     <Link2 className="h-4 w-4" />
                     Copy invite link
@@ -347,7 +347,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                       type="button"
                       variant="outline"
                       onClick={() => setCurrentStep(1)}
-                      className="flex-1 border-gray-600 text-gray-400 hover:text-white"
+                      className="flex-1 border-gray-300 text-gray-600 hover:text-gray-900"
                     >
                       Back
                     </Button>
