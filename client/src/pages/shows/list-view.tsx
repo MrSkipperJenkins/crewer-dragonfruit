@@ -86,19 +86,6 @@ export default function ShowsListView() {
     const showRequiredJobs = requiredJobs.filter((job: any) => job.showId === showId);
     const showCrewAssignments = crewAssignments.filter((assignment: any) => assignment.showId === showId);
     
-    // Debug logging
-    if (showId === shows[0]?.id) {
-      console.log('Debug crew counts for first show:', {
-        showId,
-        allRequiredJobs: requiredJobs.length,
-        allCrewAssignments: crewAssignments.length,
-        showRequiredJobs: showRequiredJobs.length,
-        showCrewAssignments: showCrewAssignments.length,
-        sampleRequiredJob: requiredJobs[0],
-        sampleCrewAssignment: crewAssignments[0]
-      });
-    }
-    
     const totalRequired = showRequiredJobs.reduce((sum: number, job: any) => sum + (job.quantity || 1), 0);
     const totalAssigned = showCrewAssignments.length;
     
