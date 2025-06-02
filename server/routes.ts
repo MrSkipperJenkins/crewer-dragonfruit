@@ -28,6 +28,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(workspaces);
   });
 
+  // Workspace slug validation (must come before /:id route)
+  app.get("/api/workspaces/slug-check", async (req, res) => {
+    const slug = req.query.slug as string;
+    if (!slug) {
+      return res.status(400).json({ message: "Slug parameter is required" });
+    }
+    
+    try {
+      const isAvailable = await storage.isWorkspaceSlugAvailable(slug);
+      res.json({ available: isAvailable });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check slug availability" });
+    }
+  });
+
   app.get("/api/workspaces/:id", async (req, res) => {
     const workspace = await storage.getWorkspace(req.params.id);
     if (!workspace) {
@@ -67,20 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Workspace slug validation
-  app.get("/api/workspaces/slug-check", async (req, res) => {
-    const slug = req.query.slug as string;
-    if (!slug) {
-      return res.status(400).json({ message: "Slug parameter is required" });
-    }
-    
-    try {
-      const isAvailable = await storage.isWorkspaceSlugAvailable(slug);
-      res.json({ available: isAvailable });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to check slug availability" });
-    }
-  });
+
 
   // Workspace invitations
   app.post("/api/workspaces/:slug/invites", async (req, res) => {
