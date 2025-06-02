@@ -187,37 +187,111 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
             <DialogHeader className="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <Badge 
-                    className={getStatusColor((show as any)?.status)}
-                    variant="secondary"
-                  >
-                    {(show as any)?.status === 'scheduled' ? 'Active' : (show as any)?.status}
-                  </Badge>
-                  <h2 className="text-xl font-semibold text-gray-900 mt-2">{(show as any)?.title}</h2>
-                  <p className="text-sm text-gray-500 mt-1">{(show as any)?.description}</p>
+                  {isEditing ? (
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="status">Status</Label>
+                        <Select 
+                          value={editedShow.status} 
+                          onValueChange={(value) => setEditedShow(prev => ({...prev, status: value}))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="title">Title</Label>
+                        <Input
+                          id="title"
+                          value={editedShow.title}
+                          onChange={(e) => setEditedShow(prev => ({...prev, title: e.target.value}))}
+                          placeholder="Show title"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="description">Description</Label>
+                        <Textarea
+                          id="description"
+                          value={editedShow.description}
+                          onChange={(e) => setEditedShow(prev => ({...prev, description: e.target.value}))}
+                          placeholder="Show description"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <Badge 
+                        className={getStatusColor((show as any)?.status)}
+                        variant="secondary"
+                      >
+                        {(show as any)?.status === 'scheduled' ? 'Active' : (show as any)?.status}
+                      </Badge>
+                      <h2 className="text-xl font-semibold text-gray-900 mt-2">{(show as any)?.title}</h2>
+                      <p className="text-sm text-gray-500 mt-1">{(show as any)?.description}</p>
+                    </>
+                  )}
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => isEditing ? handleCancelEdit() : setIsEditing(true)}
+                  className="ml-4"
+                >
+                  {isEditing ? <X className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+                </Button>
               </div>
             </DialogHeader>
             
             <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gray-50 p-3 rounded-md">
-                  <div className="text-sm text-gray-500">Schedule</div>
-                  <div className="font-medium">
-                    {show?.recurringPattern?.includes("WEEKLY") 
-                      ? `Weekdays, ${formatTime(show?.startTime)} - ${formatTime(show?.endTime)}`
-                      : `${formatDateTime(show?.startTime)} - ${formatDateTime(show?.endTime)}`}
+              {isEditing ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <Label htmlFor="startTime">Start Time</Label>
+                    <Input
+                      id="startTime"
+                      type="datetime-local"
+                      value={formatDateTimeForInput(editedShow.startTime)}
+                      onChange={(e) => setEditedShow(prev => ({...prev, startTime: e.target.value ? new Date(e.target.value).toISOString() : ''}))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="endTime">End Time</Label>
+                    <Input
+                      id="endTime"
+                      type="datetime-local"
+                      value={formatDateTimeForInput(editedShow.endTime)}
+                      onChange={(e) => setEditedShow(prev => ({...prev, endTime: e.target.value ? new Date(e.target.value).toISOString() : ''}))}
+                    />
                   </div>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-md">
-                  <div className="text-sm text-gray-500">Category</div>
-                  <div className="font-medium">News</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div className="text-sm text-gray-500">Schedule</div>
+                    <div className="font-medium">
+                      {(show as any)?.recurringPattern?.includes("WEEKLY") 
+                        ? `Weekdays, ${formatTime((show as any)?.startTime)} - ${formatTime((show as any)?.endTime)}`
+                        : `${formatDateTime((show as any)?.startTime)} - ${formatDateTime((show as any)?.endTime)}`}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div className="text-sm text-gray-500">Category</div>
+                    <div className="font-medium">News</div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <div className="text-sm text-gray-500">Status</div>
+                    <div className="font-medium text-green-600">Fully Staffed</div>
+                  </div>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-md">
-                  <div className="text-sm text-gray-500">Status</div>
-                  <div className="font-medium text-green-600">Fully Staffed</div>
-                </div>
-              </div>
+              )}
               
               <div className="mb-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-3">Resources</h3>
@@ -322,19 +396,28 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                 <Textarea 
                   className="w-full border border-gray-300 rounded-md px-3 py-2 h-24"
                   placeholder="Add show notes here..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  value={editedShow.notes}
+                  onChange={(e) => setEditedShow(prev => ({...prev, notes: e.target.value}))}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
             
             <DialogFooter className="p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveChanges} disabled={updateShowMutation.isPending}>
-                {updateShowMutation.isPending ? "Saving..." : "Save Changes"}
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button variant="outline" onClick={handleCancelEdit}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveChanges} disabled={updateShowMutation.isPending}>
+                    {updateShowMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={onClose}>
+                  Close
+                </Button>
+              )}
             </DialogFooter>
           </>
         )}
