@@ -67,9 +67,38 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
     }
   });
 
+  // Create workspace mutation
+  const createWorkspaceMutation = useMutation({
+    mutationFn: async (name: string) => {
+      return apiRequest("POST", "/api/workspaces", { name });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
+      setLocation(`/workspaces/${data.slug}/dashboard`);
+      toast({
+        title: "Workspace created",
+        description: "Successfully created new workspace"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create workspace",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleWorkspaceSwitch = (workspace: Workspace) => {
     if (workspace.slug !== currentWorkspace?.slug) {
       switchWorkspaceMutation.mutate(workspace.slug);
+    }
+  };
+
+  const handleCreateWorkspace = () => {
+    const name = prompt("Enter workspace name:");
+    if (name && name.trim()) {
+      createWorkspaceMutation.mutate(name.trim());
     }
   };
 
@@ -190,7 +219,7 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
                   )}
 
                   {/* Quick Actions */}
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCreateWorkspace}>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Workspace
                   </DropdownMenuItem>
