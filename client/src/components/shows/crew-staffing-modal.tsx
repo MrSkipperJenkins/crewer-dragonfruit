@@ -114,13 +114,14 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
     mutationFn: async () => {
       // First, delete all existing assignments for this show
       for (const assignment of crewAssignments) {
-        await apiRequest(`/api/crew-assignments/${assignment.id}`, "DELETE");
+        await apiRequest("DELETE", `/api/crew-assignments/${assignment.id}`);
       }
 
       // Then create new assignments
       const newAssignments = assignments.filter(a => a.crewMemberId);
-      for (const [index, assignment] of newAssignments.entries()) {
-        await apiRequest("/api/crew-assignments", "POST", {
+      for (let index = 0; index < newAssignments.length; index++) {
+        const assignment = newAssignments[index];
+        await apiRequest("POST", "/api/crew-assignments", {
           showId,
           crewMemberId: assignment.crewMemberId,
           jobId: assignment.jobId,

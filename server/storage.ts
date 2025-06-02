@@ -1194,8 +1194,53 @@ async function createEnhancedDemoData() {
       }
     ];
     
+    const newShows = [];
     for (const showData of upcomingShowsData) {
-      await db.insert(shows).values(showData);
+      const [newShow] = await db.insert(shows).values(showData).returning();
+      newShows.push(newShow);
+    }
+    
+    // Get jobs from the workspace for creating required jobs
+    const allJobs = await db.select().from(jobs).where(eq(jobs.workspaceId, workspace.id));
+    const [cameraJob, soundJob, lightingJob, directorJob] = allJobs.slice(0, 4);
+    
+    // Create required jobs for all existing and new shows
+    const allShows = await db.select().from(shows).where(eq(shows.workspaceId, workspace.id));
+    
+    // Add required jobs for all shows
+    const requiredJobsData = [];
+    for (const show of allShows) {
+      requiredJobsData.push(
+        { showId: show.id, jobId: cameraJob.id, quantity: 2, workspaceId: workspace.id },
+        { showId: show.id, jobId: soundJob.id, quantity: 1, workspaceId: workspace.id },
+        { showId: show.id, jobId: lightingJob.id, quantity: 1, workspaceId: workspace.id },
+        { showId: show.id, jobId: directorJob.id, quantity: 1, workspaceId: workspace.id }
+      );
+    }
+    
+    await db.insert(requiredJobs).values(requiredJobsData);
+    
+    // Get crew members for assignments
+    const allCrewMembers = await db.select().from(crewMembers).where(eq(crewMembers.workspaceId, workspace.id));
+    
+    // Create some crew assignments for variety
+    const crewAssignmentsData = [];
+    allShows.forEach((show, showIndex) => {
+      if (showIndex < allCrewMembers.length) {
+        // Assign different crew members to different shows
+        const crewMember = allCrewMembers[showIndex % allCrewMembers.length];
+        crewAssignmentsData.push({
+          showId: show.id,
+          crewMemberId: crewMember.id,
+          jobId: cameraJob.id,
+          status: 'confirmed',
+          workspaceId: workspace.id
+        });
+      }
+    });
+    
+    if (crewAssignmentsData.length > 0) {
+      await db.insert(crewAssignments).values(crewAssignmentsData);
     }
     
     console.log("✅ Enhanced demo data created successfully!");
