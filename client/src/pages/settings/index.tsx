@@ -88,7 +88,7 @@ export default function Settings() {
   
   // Fetch show categories
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-categories'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
     enabled: !!currentWorkspace?.id,
   });
   
@@ -120,7 +120,7 @@ export default function Settings() {
         title: "Success",
         description: "Category created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-categories'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`] });
       categoryForm.reset({
         name: "",
         color: "#3B82F6",
