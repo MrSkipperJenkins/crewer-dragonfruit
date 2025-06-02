@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -365,6 +365,30 @@ export function FullCalendarView() {
     }
   };
 
+  // Auto-scroll to current time on page load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const calendarApi = calendarRef.current?.getApi();
+      if (calendarApi) {
+        // Get current time and scroll to it
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        // Format time as HH:mm:ss for scrollToTime
+        const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}:00`;
+        
+        // Only scroll if we're in a time grid view
+        const currentView = calendarApi.view.type;
+        if (currentView.includes('timeGrid')) {
+          calendarApi.scrollToTime(timeString);
+        }
+      }
+    }, 100); // Small delay to ensure calendar is fully rendered
+
+    return () => clearTimeout(timer);
+  }, [viewMode]); // Re-run when view mode changes
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       {/* Page Header */}
@@ -455,8 +479,9 @@ export function FullCalendarView() {
           allDaySlot={false}
           slotMinTime="00:00:00"
           slotMaxTime="24:00:00"
-          slotDuration="00:30:00"
+          slotDuration="00:15:00"
           snapDuration="00:15:00"
+          slotLabelInterval="01:00:00"
           businessHours={{
             daysOfWeek: [1, 2, 3, 4, 5, 6, 0],
             startTime: '08:00',

@@ -19,6 +19,46 @@
   --fc-today-bg-color: rgba(59, 130, 246, 0.1);
 }
 
+/* Reduce time slot height for more compact view */
+.fc-timegrid-slot {
+  height: 24px !important;
+  min-height: 24px !important;
+}
+
+.fc-timegrid-slot-minor {
+  border-top: none !important;
+}
+
+.fc-timegrid-slot-label {
+  font-size: 0.75rem;
+  padding: 2px 4px;
+}
+
+/* Adjust axis width to give more space for events */
+.fc-timegrid-axis {
+  width: 50px !important;
+}
+
+/* Compact event styling */
+.fc-event {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.fc-event-title {
+  font-weight: 500;
+}
+
+/* Reduce padding in time grid */
+.fc-timegrid-event-harness {
+  margin-right: 1px;
+}
+
+/* More compact header */
+.fc-col-header-cell {
+  padding: 4px 8px;
+}
+
 /* Button Styling */
 .fc .fc-button {
   background-color: var(--fc-button-bg-color);
