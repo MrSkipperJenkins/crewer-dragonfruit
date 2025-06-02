@@ -384,10 +384,32 @@ export function FullCalendarView() {
           calendarApi.scrollToTime(timeString);
         }
       }
-    }, 100); // Small delay to ensure calendar is fully rendered
+    }, 500); // Longer delay to ensure calendar is fully rendered
 
     return () => clearTimeout(timer);
-  }, [viewMode]); // Re-run when view mode changes
+  }, [viewMode, calendarEvents]); // Re-run when view mode or events change
+
+  // Additional effect to scroll when calendar first loads
+  useEffect(() => {
+    if (calendarEvents.length > 0) {
+      const timer = setTimeout(() => {
+        const calendarApi = calendarRef.current?.getApi();
+        if (calendarApi) {
+          const now = new Date();
+          const currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
+          const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}:00`;
+          
+          const currentView = calendarApi.view.type;
+          if (currentView.includes('timeGrid')) {
+            calendarApi.scrollToTime(timeString);
+          }
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [calendarEvents]);
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -458,7 +480,7 @@ export function FullCalendarView() {
           droppable={true}
           selectable={true}
           selectMirror={true}
-          height="auto"
+          height="600px"
           dayMaxEvents={3}
           moreLinkClick="popover"
           eventDisplay="block"
