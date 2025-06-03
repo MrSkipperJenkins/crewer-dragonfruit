@@ -170,9 +170,9 @@ export default function EditShow() {
     }
   }, [show, form]);
 
-  // Initialize selected category
+  // Initialize selected category (only when show first loads)
   useEffect(() => {
-    if (show && categoryAssignments) {
+    if (show && categoryAssignments && selectedCategory === "") {
       const currentAssignment = (categoryAssignments as any[])?.find(
         (ca: any) => ca.showId === show.id
       );
