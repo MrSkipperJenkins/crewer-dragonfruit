@@ -296,7 +296,7 @@ export default function CrewMembers() {
                           <FormItem>
                             <FormLabel>Phone</FormLabel>
                             <FormControl>
-                              <Input placeholder="Phone number" {...field} />
+                              <Input placeholder="Phone number" value={field.value || ""} onChange={field.onChange} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -390,16 +390,41 @@ export default function CrewMembers() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[250px]">Name</TableHead>
-                  <TableHead>Title</TableHead>
+                  <TableHead className="w-[250px]">
+                    <Button 
+                      variant="ghost" 
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                      onClick={() => handleSort('name')}
+                    >
+                      Name
+                      {sortField === 'name' && (
+                        sortDirection === 'asc' ? 
+                        <ChevronUpIcon className="ml-1 h-4 w-4" /> : 
+                        <ChevronDownIcon className="ml-1 h-4 w-4" />
+                      )}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button 
+                      variant="ghost" 
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                      onClick={() => handleSort('title')}
+                    >
+                      Title
+                      {sortField === 'title' && (
+                        sortDirection === 'asc' ? 
+                        <ChevronUpIcon className="ml-1 h-4 w-4" /> : 
+                        <ChevronDownIcon className="ml-1 h-4 w-4" />
+                      )}
+                    </Button>
+                  </TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
+                    <TableCell colSpan={3} className="text-center py-8">
                       <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       </div>
@@ -407,16 +432,20 @@ export default function CrewMembers() {
                   </TableRow>
                 )}
 
-                {!isLoading && filteredCrewMembers.length === 0 && (
+                {!isLoading && filteredAndSortedCrewMembers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={3} className="text-center py-8 text-gray-500">
                       No crew members found
                     </TableCell>
                   </TableRow>
                 )}
 
-                {filteredCrewMembers.map((member: any) => (
-                  <TableRow key={member.id}>
+                {filteredAndSortedCrewMembers.map((member) => (
+                  <TableRow 
+                    key={member.id} 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleRowClick(member)}
+                  >
                     <TableCell className="font-medium">
                       <div className="flex items-center space-x-3">
                         <Avatar>
@@ -431,11 +460,6 @@ export default function CrewMembers() {
                       <div>{member.email}</div>
                       <div className="text-gray-500 text-sm">{member.phone}</div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -443,6 +467,132 @@ export default function CrewMembers() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Crew Member Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(() => {})}>
+              <DialogHeader>
+                <DialogTitle>Edit Crew Member</DialogTitle>
+                <DialogDescription>
+                  Update the crew member details and job assignments.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="Email address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Phone number" value={field.value || ""} onChange={field.onChange} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={editForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title/Position</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Camera Operator" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="space-y-2">
+                  <FormLabel>Qualified Jobs</FormLabel>
+                  <div className="grid grid-cols-2 gap-2">
+                    {jobs.map((job: any) => (
+                      <FormField
+                        key={job.id}
+                        control={editForm.control}
+                        name="selectedJobs"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={job.id}
+                              className="flex flex-row items-start space-x-2 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(job.id)}
+                                  onCheckedChange={(checked) => {
+                                    const currentValue = [...(field.value || [])];
+                                    if (checked) {
+                                      field.onChange([...currentValue, job.id]);
+                                    } else {
+                                      field.onChange(
+                                        currentValue.filter((value) => value !== job.id)
+                                      );
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal cursor-pointer">
+                                {job.title}
+                              </FormLabel>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage>
+                    {editForm.formState.errors.selectedJobs?.message}
+                  </FormMessage>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={false}>
+                  Update Crew Member
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
