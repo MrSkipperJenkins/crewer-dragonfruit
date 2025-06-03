@@ -317,6 +317,17 @@ export default function EditShow() {
     setHasUnsavedChanges(true);
   };
 
+  const handleLocalUpdateAssignmentStatus = (requiredJobId: string, status: string) => {
+    setLocalCrewAssignments(prev => 
+      prev.map(ca => 
+        ca.requiredJobId === requiredJobId 
+          ? { ...ca, status } 
+          : ca
+      )
+    );
+    setHasUnsavedChanges(true);
+  };
+
   const onSubmit = async (data: EditShowFormValues) => {
     try {
       // First update the show details
@@ -700,26 +711,60 @@ export default function EditShow() {
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
                                 {assignment && assignedCrewMember ? (
-                                  <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span className="text-sm font-medium text-blue-700">
-                                          {assignedCrewMember.name.split(' ').map((n: string) => n[0]).join('')}
-                                        </span>
+                                  <div className="bg-gray-50 p-3 rounded-lg space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                          <span className="text-sm font-medium text-blue-700">
+                                            {assignedCrewMember.name.split(' ').map((n: string) => n[0]).join('')}
+                                          </span>
+                                        </div>
+                                        <div>
+                                          <p className="font-medium text-sm">{assignedCrewMember.name}</p>
+                                          <p className="text-xs text-gray-600">{assignedCrewMember.title}</p>
+                                        </div>
                                       </div>
-                                      <div>
-                                        <p className="font-medium text-sm">{assignedCrewMember.name}</p>
-                                        <p className="text-xs text-gray-600">{assignedCrewMember.title}</p>
-                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleLocalRemoveCrewAssignment(requiredJob.id)}
+                                        className="text-gray-400 hover:text-red-600"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
                                     </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleLocalRemoveCrewAssignment(requiredJob.id)}
-                                      className="text-gray-400 hover:text-red-600"
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
+                                    
+                                    <div className="flex items-center gap-3">
+                                      <label className="text-sm font-medium text-gray-700">Status:</label>
+                                      <Select 
+                                        value={assignment.status} 
+                                        onValueChange={(status) => handleLocalUpdateAssignmentStatus(requiredJob.id, status)}
+                                      >
+                                        <SelectTrigger className="w-32">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="pending">
+                                            <div className="flex items-center gap-2">
+                                              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                              Pending
+                                            </div>
+                                          </SelectItem>
+                                          <SelectItem value="confirmed">
+                                            <div className="flex items-center gap-2">
+                                              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                              Confirmed
+                                            </div>
+                                          </SelectItem>
+                                          <SelectItem value="declined">
+                                            <div className="flex items-center gap-2">
+                                              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                              Declined
+                                            </div>
+                                          </SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
                                   </div>
                                 ) : (
                                   <Select onValueChange={(crewMemberId) => handleLocalAssignCrew(crewMemberId, requiredJob.id)}>
