@@ -228,17 +228,99 @@ export default function Resources() {
     // Submit mutation
     createResourceMutation.mutate(data);
   };
+
+  // Edit form submission handler
+  const onEditSubmit = (data: EditFormValues) => {
+    if (!currentWorkspace?.id) {
+      toast({
+        title: "Error",
+        description: "No workspace selected",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Add workspaceId to the data
+    data.workspaceId = currentWorkspace.id;
+    
+    // Submit mutation
+    updateResourceMutation.mutate(data);
+  };
+
+  // Handle edit resource
+  const handleEditResource = (resource: any) => {
+    setEditingResource(resource);
+    editForm.reset({
+      id: resource.id,
+      name: resource.name,
+      type: resource.type,
+      description: resource.description || "",
+      color: resource.color || "hsl(207 90% 54%)",
+      workspaceId: resource.workspaceId,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle delete resource
+  const handleDeleteResource = (resourceId: string) => {
+    deleteResourceMutation.mutate(resourceId);
+  };
+
+  // Handle sorting
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Get sort icon
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-4 w-4" /> 
+      : <ArrowDown className="h-4 w-4" />;
+  };
   
-  // Filter resources based on search query and type filter
-  const filteredResources = resources.filter((resource: any) => {
-    const matchesSearch = !searchQuery || 
-      resource.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (resource.description && resource.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesType = typeFilter === "all" || resource.type === typeFilter;
-    
-    return matchesSearch && matchesType;
-  });
+  // Filter and sort resources
+  const filteredAndSortedResources = (resources as any[])
+    .filter((resource: any) => {
+      const matchesSearch = !searchQuery || 
+        resource.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (resource.description && resource.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      const matchesType = typeFilter === "all" || resource.type === typeFilter;
+      
+      return matchesSearch && matchesType;
+    })
+    .sort((a: any, b: any) => {
+      let aValue: string, bValue: string;
+      
+      switch (sortField) {
+        case 'name':
+          aValue = a.name || '';
+          bValue = b.name || '';
+          break;
+        case 'type':
+          aValue = getResourceTypeLabel(a.type) || '';
+          bValue = getResourceTypeLabel(b.type) || '';
+          break;
+        case 'description':
+          aValue = a.description || '';
+          bValue = b.description || '';
+          break;
+        default:
+          aValue = a.name || '';
+          bValue = b.name || '';
+      }
+      
+      const comparison = aValue.localeCompare(bValue);
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
 
   // Get icon for resource type
   const getResourceTypeIcon = (type: string) => {
@@ -344,9 +426,30 @@ export default function Resources() {
                             <Textarea 
                               placeholder="Add details about this resource" 
                               className="resize-none" 
-                              {...field} 
+                              {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Color</FormLabel>
+                          <FormControl>
+                            <ColorPicker
+                              value={field.value || "hsl(207 90% 54%)"}
+                              onChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Choose a color to help identify this resource
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -358,6 +461,110 @@ export default function Resources() {
                       disabled={createResourceMutation.isPending}
                     >
                       {createResourceMutation.isPending ? "Saving..." : "Save Resource"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Resource Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[500px]">
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(onEditSubmit)}>
+                  <DialogHeader>
+                    <DialogTitle>Edit Resource</DialogTitle>
+                    <DialogDescription>
+                      Update the resource details.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <FormField
+                      control={editForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. Studio A" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={editForm.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Resource Type</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a resource type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="studio">Studio</SelectItem>
+                              <SelectItem value="control_room">Control Room</SelectItem>
+                              <SelectItem value="equipment">Equipment</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={editForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Add details about this resource" 
+                              className="resize-none" 
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Color</FormLabel>
+                          <FormControl>
+                            <ColorPicker
+                              value={field.value || "hsl(207 90% 54%)"}
+                              onChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Choose a color to help identify this resource
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button 
+                      type="submit" 
+                      disabled={updateResourceMutation.isPending}
+                    >
+                      {updateResourceMutation.isPending ? "Updating..." : "Update Resource"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -399,16 +606,41 @@ export default function Resources() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead className="w-[50px]">Color</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('name')}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Name {getSortIcon('name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('type')}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Type {getSortIcon('type')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('description')}
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                    >
+                      Description {getSortIcon('description')}
+                    </Button>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
+                    <TableCell colSpan={5} className="text-center py-8">
                       <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       </div>
@@ -416,16 +648,22 @@ export default function Resources() {
                   </TableRow>
                 )}
 
-                {!isLoading && filteredResources.length === 0 && (
+                {!isLoading && filteredAndSortedResources.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                       No resources found
                     </TableCell>
                   </TableRow>
                 )}
 
-                {filteredResources.map((resource: any) => (
+                {filteredAndSortedResources.map((resource: any) => (
                   <TableRow key={resource.id}>
+                    <TableCell>
+                      <div
+                        className="w-6 h-6 rounded-full border border-gray-300"
+                        style={{ backgroundColor: resource.color || "hsl(207 90% 54%)" }}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{resource.name}</TableCell>
                     <TableCell>
                       <Badge variant={getResourceTypeBadgeVariant(resource.type)} className="flex w-fit items-center">
@@ -438,12 +676,37 @@ export default function Resources() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="icon">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleEditResource(resource)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Resource</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{resource.name}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteResource(resource.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
