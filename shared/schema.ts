@@ -196,6 +196,7 @@ export const crewAssignments = pgTable("crew_assignments", {
   showId: uuid("show_id").references(() => shows.id).notNull(),
   crewMemberId: uuid("crew_member_id").references(() => crewMembers.id).notNull(),
   jobId: uuid("job_id").references(() => jobs.id).notNull(),
+  requiredJobId: uuid("required_job_id").references(() => requiredJobs.id), // Links to specific required job
   status: text("status").notNull().default("pending"), // pending, confirmed, declined
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -400,7 +401,7 @@ export const showCategoryAssignmentRelations = relations(showCategoryAssignments
   }),
 }));
 
-export const requiredJobRelations = relations(requiredJobs, ({ one }) => ({
+export const requiredJobRelations = relations(requiredJobs, ({ one, many }) => ({
   show: one(shows, {
     fields: [requiredJobs.showId],
     references: [shows.id],
@@ -413,6 +414,7 @@ export const requiredJobRelations = relations(requiredJobs, ({ one }) => ({
     fields: [requiredJobs.workspaceId],
     references: [workspaces.id],
   }),
+  crewAssignments: many(crewAssignments),
 }));
 
 export const showResourceRelations = relations(showResources, ({ one }) => ({
@@ -442,6 +444,10 @@ export const crewAssignmentRelations = relations(crewAssignments, ({ one }) => (
   job: one(jobs, {
     fields: [crewAssignments.jobId],
     references: [jobs.id],
+  }),
+  requiredJob: one(requiredJobs, {
+    fields: [crewAssignments.requiredJobId],
+    references: [requiredJobs.id],
   }),
   workspace: one(workspaces, {
     fields: [crewAssignments.workspaceId],
