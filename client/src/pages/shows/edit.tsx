@@ -78,6 +78,8 @@ export default function EditShow() {
   const queryClient = useQueryClient();
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
+  const [localCrewAssignments, setLocalCrewAssignments] = useState<any[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const showId = params.id;
 
@@ -174,6 +176,13 @@ export default function EditShow() {
       setSelectedResources(showResources.map((sr: any) => sr.resourceId));
     }
   }, [showResources]);
+
+  // Initialize local crew assignments when data loads
+  useEffect(() => {
+    if (crewAssignments.length > 0) {
+      setLocalCrewAssignments([...crewAssignments]);
+    }
+  }, [crewAssignments]);
 
   // Update show mutation
   const updateShowMutation = useMutation({
@@ -275,45 +284,90 @@ export default function EditShow() {
     },
   });
 
-  // Assign crew member mutation
-  const assignCrewMutation = useMutation({
-    mutationFn: async (data: { crewMemberId: string; jobId: string }) => {
-      // First check if there's already an assignment for this job
-      const existingAssignment = (crewAssignments as any[]).find(ca => ca.jobId === data.jobId);
+  // Local crew assignment handlers (no API calls until save)
+  const handleLocalAssignCrew = (crewMemberId: string, requiredJobId: string) => {
+    const requiredJob = requiredJobs.find((rj: any) => rj.id === requiredJobId);
+    if (!requiredJob) return;
+
+    // Remove existing assignment for this required job if it exists
+    const updatedAssignments = localCrewAssignments.filter(ca => ca.requiredJobId !== requiredJobId);
+    
+    // Add new assignment
+    const newAssignment = {
+      id: `temp-${Date.now()}`, // Temporary ID for local state
+      showId,
+      crewMemberId,
+      jobId: requiredJob.jobId,
+      requiredJobId,
+      status: "pending",
+      workspaceId: currentWorkspace?.id,
+      isLocal: true // Flag to identify local changes
+    };
+    
+    setLocalCrewAssignments([...updatedAssignments, newAssignment]);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleLocalRemoveCrewAssignment = (requiredJobId: string) => {
+    const updatedAssignments = localCrewAssignments.filter(ca => ca.requiredJobId !== requiredJobId);
+    setLocalCrewAssignments(updatedAssignments);
+    setHasUnsavedChanges(true);
+  };
+
+  const onSubmit = async (data: EditShowFormValues) => {
+    try {
+      // First update the show details
+      await updateShowMutation.mutateAsync(data);
       
-      if (existingAssignment) {
-        // Update existing assignment instead of creating a new one
-        return apiRequest("PUT", `/api/crew-assignments/${existingAssignment.id}`, {
-          crewMemberId: data.crewMemberId,
-        });
-      } else {
-        // Create new assignment
-        return apiRequest("POST", "/api/crew-assignments", {
-          showId,
-          crewMemberId: data.crewMemberId,
-          jobId: data.jobId,
-          status: "pending",
-          workspaceId: currentWorkspace?.id,
-        });
+      // Then save crew assignment changes if any
+      if (hasUnsavedChanges) {
+        await saveCrewAssignmentChanges();
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
-    },
-  });
+      
+      toast({
+        title: "Success",
+        description: "Show updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update show",
+        variant: "destructive",
+      });
+    }
+  };
 
-  // Remove crew assignment mutation
-  const removeCrewAssignmentMutation = useMutation({
-    mutationFn: async (assignmentId: string) => {
-      return apiRequest("DELETE", `/api/crew-assignments/${assignmentId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
-    },
-  });
+  const saveCrewAssignmentChanges = async () => {
+    // Delete all existing assignments for this show
+    for (const assignment of crewAssignments) {
+      try {
+        await apiRequest("DELETE", `/api/crew-assignments/${assignment.id}`);
+      } catch (error) {
+        console.error("Failed to delete assignment:", error);
+      }
+    }
 
-  const onSubmit = (data: EditShowFormValues) => {
-    updateShowMutation.mutate(data);
+    // Create new assignments from local state
+    for (const assignment of localCrewAssignments) {
+      if (!assignment.isLocal) continue; // Skip existing assignments
+      
+      try {
+        await apiRequest("POST", "/api/crew-assignments", {
+          showId: assignment.showId,
+          crewMemberId: assignment.crewMemberId,
+          jobId: assignment.jobId,
+          requiredJobId: assignment.requiredJobId,
+          status: assignment.status,
+          workspaceId: assignment.workspaceId,
+        });
+      } catch (error) {
+        console.error("Failed to create assignment:", error);
+      }
+    }
+
+    // Refresh crew assignments data
+    queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
+    setHasUnsavedChanges(false);
   };
 
   const handleAddJob = (jobId: string) => {
@@ -346,13 +400,7 @@ export default function EditShow() {
     }
   };
 
-  const handleAssignCrew = (crewMemberId: string, jobId: string) => {
-    assignCrewMutation.mutate({ crewMemberId, jobId });
-  };
-
-  const handleRemoveCrewAssignment = (assignmentId: string) => {
-    removeCrewAssignmentMutation.mutate(assignmentId);
-  };
+  // These handlers are replaced by local handlers above
 
   if (showLoading) {
     return (
@@ -638,19 +686,14 @@ export default function EditShow() {
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-medium">{job.title}</h4>
                           {!assignment && (
-                            <Select onValueChange={(crewMemberId) => handleAssignCrew(crewMemberId, jobId)}>
+                            <Select onValueChange={(crewMemberId) => handleLocalAssignCrew(crewMemberId, jobId)}>
                               <SelectTrigger className="w-48">
                                 <SelectValue placeholder="Assign crew member" />
                               </SelectTrigger>
                               <SelectContent>
                                 {(crewMembers as any[])
-                                  .filter(cm => {
-                                    // Filter out crew members already assigned to other jobs for this show
-                                    const isAlreadyAssigned = (crewAssignments as any[]).some(ca => ca.crewMemberId === cm.id);
-                                    return !isAlreadyAssigned;
-                                  })
                                   .map(crewMember => (
-                                    <SelectItem key={`${jobId}-${crewMember.id}`} value={crewMember.id}>
+                                    <SelectItem key={`job-${jobId}-crew-${crewMember.id}`} value={crewMember.id}>
                                       {crewMember.name} - {crewMember.title}
                                     </SelectItem>
                                   ))}
