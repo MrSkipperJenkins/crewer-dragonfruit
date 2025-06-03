@@ -34,7 +34,7 @@ import { formatDate, formatTime, getStatusColor } from "@/lib/utils";
 
 import CrewStaffingModal from "@/components/shows/crew-staffing-modal";
 
-type SortField = "title" | "date" | "time" | "status" | "category";
+type SortField = "title" | "datetime" | "status" | "category";
 type SortDirection = "asc" | "desc";
 
 export default function ShowsListView() {
@@ -43,7 +43,7 @@ export default function ShowsListView() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [crewStaffingShow, setCrewStaffingShow] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortField, setSortField] = useState<SortField>("datetime");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // Fetch shows data
@@ -110,11 +110,7 @@ export default function ShowsListView() {
         aValue = a.title.toLowerCase();
         bValue = b.title.toLowerCase();
         break;
-      case "date":
-        aValue = new Date(a.startTime);
-        bValue = new Date(b.startTime);
-        break;
-      case "time":
+      case "datetime":
         aValue = new Date(a.startTime);
         bValue = new Date(b.startTime);
         break;
@@ -219,24 +215,11 @@ export default function ShowsListView() {
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-gray-50 select-none"
-                    onClick={() => handleSort("date")}
+                    onClick={() => handleSort("datetime")}
                   >
                     <div className="flex items-center gap-1">
-                      Date
-                      {sortField === "date" && (
-                        sortDirection === "asc" ? 
-                          <ChevronUpIcon className="h-4 w-4" /> : 
-                          <ChevronDownIcon className="h-4 w-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-gray-50 select-none"
-                    onClick={() => handleSort("time")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Time
-                      {sortField === "time" && (
+                      Date & Time
+                      {sortField === "datetime" && (
                         sortDirection === "asc" ? 
                           <ChevronUpIcon className="h-4 w-4" /> : 
                           <ChevronDownIcon className="h-4 w-4" />
@@ -308,9 +291,11 @@ export default function ShowsListView() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>{formatDate(show.startTime)}</TableCell>
                       <TableCell>
-                        {formatTime(show.startTime)} - {formatTime(show.endTime)}
+                        <div className="font-medium">{formatDate(show.startTime)}</div>
+                        <div className="text-sm text-gray-500">
+                          {formatTime(show.startTime)} - {formatTime(show.endTime)}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(show.status || 'scheduled')}>
