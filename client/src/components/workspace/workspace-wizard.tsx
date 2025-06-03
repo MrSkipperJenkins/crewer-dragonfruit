@@ -18,7 +18,7 @@ import { insertWorkspaceSchema, type Workspace } from "@shared/schema";
 const workspaceInfoSchema = insertWorkspaceSchema.extend({
   name: z.string().min(3, "Workspace name must be at least 3 characters"),
   slug: z.string().min(3, "URL slug must be at least 3 characters").refine(isValidSlug, "Invalid URL format")
-}).omit({ region: true });
+});
 
 const inviteTeammatesSchema = z.object({
   emails: z.array(z.string().email("Invalid email address")).min(0).max(10)
