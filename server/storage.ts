@@ -628,8 +628,52 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Crew Member CRUD
-  async getCrewMembers(workspaceId: string): Promise<CrewMember[]> {
-    return await db.select().from(crewMembers).where(eq(crewMembers.workspaceId, workspaceId));
+  async getCrewMembers(workspaceId: string): Promise<any[]> {
+    const crewMembersWithJobs = await db
+      .select({
+        id: crewMembers.id,
+        name: crewMembers.name,
+        email: crewMembers.email,
+        phone: crewMembers.phone,
+        title: crewMembers.title,
+        workspaceId: crewMembers.workspaceId,
+        createdAt: crewMembers.createdAt,
+        jobId: jobs.id,
+        jobTitle: jobs.title,
+      })
+      .from(crewMembers)
+      .leftJoin(crewMemberJobs, eq(crewMembers.id, crewMemberJobs.crewMemberId))
+      .leftJoin(jobs, eq(crewMemberJobs.jobId, jobs.id))
+      .where(eq(crewMembers.workspaceId, workspaceId));
+
+    // Group by crew member and aggregate jobs
+    const crewMembersMap = new Map();
+    
+    for (const row of crewMembersWithJobs) {
+      const crewMemberId = row.id;
+      
+      if (!crewMembersMap.has(crewMemberId)) {
+        crewMembersMap.set(crewMemberId, {
+          id: row.id,
+          name: row.name,
+          email: row.email,
+          phone: row.phone,
+          title: row.title,
+          workspaceId: row.workspaceId,
+          createdAt: row.createdAt,
+          qualifiedJobs: []
+        });
+      }
+      
+      if (row.jobId && row.jobTitle) {
+        crewMembersMap.get(crewMemberId).qualifiedJobs.push({
+          id: row.jobId,
+          title: row.jobTitle
+        });
+      }
+    }
+    
+    return Array.from(crewMembersMap.values());
   }
 
   async getCrewMember(id: string): Promise<CrewMember | undefined> {

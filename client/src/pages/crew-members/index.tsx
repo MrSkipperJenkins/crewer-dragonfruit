@@ -86,8 +86,8 @@ export default function CrewMembers() {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
-  // Fetch crew members
-  const { data: crewMembers = [], isLoading } = useQuery<CrewMember[]>({
+  // Fetch crew members with qualified jobs
+  const { data: crewMembers = [], isLoading } = useQuery<any[]>({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
     enabled: !!currentWorkspace?.id,
   });
@@ -182,6 +182,24 @@ export default function CrewMembers() {
     createCrewMemberMutation.mutate(data);
   };
 
+  // Edit form submission handler
+  const onEditSubmit = (data: FormValues) => {
+    if (!currentWorkspace?.id || !editingMember?.id) {
+      toast({
+        title: "Error",
+        description: "Missing workspace or crew member information",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Add workspaceId and member id to the data
+    data.workspaceId = currentWorkspace.id;
+    
+    // Submit update mutation
+    updateCrewMemberMutation.mutate({ ...data, id: editingMember.id });
+  };
+
   // Handle sorting
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -193,7 +211,7 @@ export default function CrewMembers() {
   };
 
   // Handle edit click
-  const handleEditClick = (member: CrewMember) => {
+  const handleEditClick = (member: any) => {
     setEditingMember(member);
     editForm.reset({
       name: member.name,
@@ -201,10 +219,58 @@ export default function CrewMembers() {
       phone: member.phone || "",
       title: member.title,
       workspaceId: member.workspaceId,
-      selectedJobs: [], // Will be loaded from API
+      selectedJobs: member.qualifiedJobs?.map((job: any) => job.id) || [],
     });
     setIsEditDialogOpen(true);
   };
+
+  // Create update crew member mutation
+  const updateCrewMemberMutation = useMutation({
+    mutationFn: async (data: FormValues & { id: string }) => {
+      const { selectedJobs, id, ...crewMemberData } = data;
+      
+      // Update crew member
+      const response = await apiRequest("PUT", `/api/crew-members/${id}`, crewMemberData);
+      const crewMember = await response.json();
+      
+      // Delete existing job assignments
+      const existingJobs = await apiRequest("GET", `/api/crew-members/${id}/jobs`);
+      const existingJobsData = await existingJobs.json();
+      
+      const deletePromises = existingJobsData.map((job: any) => 
+        apiRequest("DELETE", `/api/crew-member-jobs/${job.id}`)
+      );
+      await Promise.all(deletePromises);
+      
+      // Create new job assignments
+      const createPromises = selectedJobs.map(jobId => 
+        apiRequest("POST", "/api/crew-member-jobs", {
+          crewMemberId: id,
+          jobId,
+          workspaceId: currentWorkspace?.id,
+        })
+      );
+      await Promise.all(createPromises);
+      
+      return crewMember;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Crew member updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`] });
+      editForm.reset();
+      setIsEditDialogOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update crew member",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Create delete mutation
   const deleteCrewMemberMutation = useMutation({
@@ -228,7 +294,7 @@ export default function CrewMembers() {
   });
 
   // Handle delete click
-  const handleDeleteClick = (member: CrewMember) => {
+  const handleDeleteClick = (member: any) => {
     if (window.confirm(`Are you sure you want to delete ${member.name}?`)) {
       deleteCrewMemberMutation.mutate(member.id);
     }
@@ -447,13 +513,14 @@ export default function CrewMembers() {
                     </Button>
                   </TableHead>
                   <TableHead>Contact</TableHead>
+                  <TableHead>Qualified Jobs</TableHead>
                   <TableHead className="text-right w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
+                    <TableCell colSpan={5} className="text-center py-8">
                       <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       </div>
@@ -463,7 +530,7 @@ export default function CrewMembers() {
 
                 {!isLoading && filteredAndSortedCrewMembers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                       No crew members found
                     </TableCell>
                   </TableRow>
@@ -484,6 +551,22 @@ export default function CrewMembers() {
                     <TableCell>
                       <div>{member.email}</div>
                       <div className="text-gray-500 text-sm">{member.phone}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {member.qualifiedJobs && member.qualifiedJobs.length > 0 ? (
+                          member.qualifiedJobs.map((job: any) => (
+                            <span
+                              key={job.id}
+                              className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                            >
+                              {job.title}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-400 text-sm">No jobs assigned</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
