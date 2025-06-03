@@ -70,13 +70,13 @@ export default function ShowsListView() {
 
   // Function to get show category
   const getShowCategory = (showId: string) => {
-    const assignment = categoryAssignments.find(
+    const assignment = (categoryAssignments as any[])?.find(
       (ca: any) => ca.showId === showId
     );
     
     if (!assignment) return null;
     
-    return categories.find(
+    return (categories as any[])?.find(
       (c: any) => c.id === assignment.categoryId
     );
   };

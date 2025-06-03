@@ -111,6 +111,11 @@ export default function EditShow() {
     enabled: !!currentWorkspace?.id,
   });
 
+  const { data: categoryAssignments = [] } = useQuery({
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
+    enabled: !!currentWorkspace?.id,
+  });
+
   // Fetch show-specific data
   const { data: requiredJobs = [] } = useQuery({
     queryKey: [`/api/shows/${showId}/required-jobs`],
@@ -164,6 +169,16 @@ export default function EditShow() {
       });
     }
   }, [show, form]);
+
+  // Initialize selected category
+  useEffect(() => {
+    if (show && categoryAssignments) {
+      const currentAssignment = (categoryAssignments as any[])?.find(
+        (ca: any) => ca.showId === show.id
+      );
+      setSelectedCategory(currentAssignment?.categoryId || "none");
+    }
+  }, [show, categoryAssignments]);
 
   // Update selected jobs and resources when data loads
   useEffect(() => {
@@ -561,7 +576,7 @@ export default function EditShow() {
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Category</SelectItem>
+                      <SelectItem value="none">No Category</SelectItem>
                       {(categories as any[])?.map(category => (
                         <SelectItem key={category.id} value={category.id}>
                           <div className="flex items-center gap-2">
