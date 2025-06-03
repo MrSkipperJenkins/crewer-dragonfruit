@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { useShowStaffing } from "@/hooks/use-show-staffing";
 import {
@@ -34,8 +35,8 @@ import CrewStaffingModal from "@/components/shows/crew-staffing-modal";
 
 export default function ShowsListView() {
   const { currentWorkspace } = useCurrentWorkspace();
+  const [, navigate] = useLocation();
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedShow, setSelectedShow] = useState<string | null>(null);
   const [crewStaffingShow, setCrewStaffingShow] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -88,7 +89,7 @@ export default function ShowsListView() {
 
   // Function to handle row click
   const handleRowClick = (showId: string) => {
-    setSelectedShow(showId);
+    navigate(`/shows/${showId}/edit`);
   };
 
   // Function to handle crew staffing click

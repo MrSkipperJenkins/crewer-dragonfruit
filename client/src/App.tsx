@@ -10,6 +10,7 @@ import Shows from "@/pages/shows";
 import ShowsCalendarView from "@/pages/shows/calendar-view";
 import ShowsListView from "@/pages/shows/list-view";
 import ShowBuilder from "@/pages/shows/show-builder";
+import EditShow from "@/pages/shows/edit";
 import CrewMembers from "@/pages/crew-members";
 import CrewSchedule from "@/pages/crew-schedule";
 import Jobs from "@/pages/jobs";
@@ -36,6 +37,7 @@ function Router() {
               <Route path="/shows" component={Shows} />
               <Route path="/shows/calendar" component={ShowsCalendarView} />
               <Route path="/shows/list" component={ShowsListView} />
+              <Route path="/shows/:id/edit" component={EditShow} />
               <Route path="/shows/builder" component={ShowBuilder} />
               <Route path="/crew-members" component={CrewMembers} />
               <Route path="/crew-schedule" component={CrewSchedule} />
@@ -51,6 +53,7 @@ function Router() {
               <Route path="/workspaces/:slug/shows" component={Shows} />
               <Route path="/workspaces/:slug/shows/calendar" component={ShowsCalendarView} />
               <Route path="/workspaces/:slug/shows/list" component={ShowsListView} />
+              <Route path="/workspaces/:slug/shows/:id/edit" component={EditShow} />
               <Route path="/workspaces/:slug/shows/builder" component={ShowBuilder} />
               <Route path="/workspaces/:slug/crew-members" component={CrewMembers} />
               <Route path="/workspaces/:slug/crew-schedule" component={CrewSchedule} />
