@@ -491,7 +491,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assignment = await storage.createShowCategoryAssignment(validation.data);
       res.status(201).json(assignment);
     } catch (error) {
+      console.error("Failed to create category assignment:", error);
       res.status(500).json({ message: "Failed to create category assignment" });
+    }
+  });
+
+  app.patch("/api/show-category-assignments/:id", async (req, res) => {
+    try {
+      const validation = insertShowCategoryAssignmentSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid assignment data", errors: validation.error.errors });
+      }
+      const assignment = await storage.updateShowCategoryAssignment(req.params.id, validation.data);
+      if (!assignment) {
+        return res.status(404).json({ message: "Category assignment not found" });
+      }
+      res.json(assignment);
+    } catch (error) {
+      console.error("Failed to update category assignment:", error);
+      res.status(500).json({ message: "Failed to update category assignment" });
+    }
+  });
+
+  app.delete("/api/show-category-assignments/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteShowCategoryAssignment(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Category assignment not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete category assignment:", error);
+      res.status(500).json({ message: "Failed to delete category assignment" });
     }
   });
 

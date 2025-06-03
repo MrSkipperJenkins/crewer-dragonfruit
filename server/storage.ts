@@ -895,6 +895,15 @@ export class DatabaseStorage implements IStorage {
     return newAssignment;
   }
 
+  async updateShowCategoryAssignment(id: string, assignment: Partial<InsertShowCategoryAssignment>): Promise<ShowCategoryAssignment | undefined> {
+    const [updatedAssignment] = await db
+      .update(showCategoryAssignments)
+      .set(assignment)
+      .where(eq(showCategoryAssignments.id, id))
+      .returning();
+    return updatedAssignment || undefined;
+  }
+
   async deleteShowCategoryAssignment(id: string): Promise<boolean> {
     const result = await db.delete(showCategoryAssignments).where(eq(showCategoryAssignments.id, id));
     return (result.rowCount || 0) > 0;
