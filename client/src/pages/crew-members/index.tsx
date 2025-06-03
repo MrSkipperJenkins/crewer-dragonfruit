@@ -599,7 +599,7 @@ export default function CrewMembers() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(() => {})}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)}>
               <DialogHeader>
                 <DialogTitle>Edit Crew Member</DialogTitle>
                 <DialogDescription>
@@ -712,8 +712,11 @@ export default function CrewMembers() {
                 <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={false}>
-                  Update Crew Member
+                <Button 
+                  type="submit" 
+                  disabled={updateCrewMemberMutation.isPending}
+                >
+                  {updateCrewMemberMutation.isPending ? "Updating..." : "Update Crew Member"}
                 </Button>
               </DialogFooter>
             </form>
