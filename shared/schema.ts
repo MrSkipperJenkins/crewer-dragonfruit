@@ -8,6 +8,7 @@ export const workspaces = pgTable("workspaces", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
+  lastAccessedAt: timestamp("last_accessed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

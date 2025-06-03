@@ -49,7 +49,7 @@ import {
   notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, like } from "drizzle-orm";
+import { eq, and, gte, lte, like, ne, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Workspace CRUD
@@ -58,6 +58,8 @@ export interface IStorage {
   getWorkspaceBySlug(slug: string): Promise<Workspace | undefined>;
   isWorkspaceSlugAvailable(slug: string): Promise<boolean>;
   createWorkspace(workspace: InsertWorkspace): Promise<Workspace>;
+  getMostRecentWorkspace(): Promise<Workspace | undefined>;
+  updateWorkspaceLastAccessed(id: string): Promise<void>;
   updateWorkspace(id: string, workspace: Partial<InsertWorkspace>): Promise<Workspace | undefined>;
   deleteWorkspace(id: string): Promise<boolean>;
 
@@ -554,8 +556,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createWorkspace(workspace: InsertWorkspace): Promise<Workspace> {
-    const [newWorkspace] = await db.insert(workspaces).values(workspace).returning();
+    const [newWorkspace] = await db.insert(workspaces).values({
+      ...workspace,
+      lastAccessedAt: new Date()
+    }).returning();
     return newWorkspace;
+  }
+
+  async getMostRecentWorkspace(): Promise<Workspace | undefined> {
+    const [workspace] = await db
+      .select()
+      .from(workspaces)
+      .where(ne(workspaces.lastAccessedAt, null))
+      .orderBy(desc(workspaces.lastAccessedAt))
+      .limit(1);
+    return workspace || undefined;
+  }
+
+  async updateWorkspaceLastAccessed(id: string): Promise<void> {
+    await db
+      .update(workspaces)
+      .set({ lastAccessedAt: new Date() })
+      .where(eq(workspaces.id, id));
   }
 
   async updateWorkspace(id: string, workspace: Partial<InsertWorkspace>): Promise<Workspace | undefined> {
