@@ -101,11 +101,9 @@ export default function Jobs() {
   // Create job mutation
   const createJobMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      console.log("Making API request with:", data);
       return apiRequest("POST", "/api/jobs", data);
     },
     onSuccess: () => {
-      console.log("Job created successfully");
       toast({
         title: "Success",
         description: "Job created successfully",
@@ -114,8 +112,7 @@ export default function Jobs() {
       form.reset();
       setIsDialogOpen(false);
     },
-    onError: (error) => {
-      console.error("Failed to create job:", error);
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to create job",
@@ -202,9 +199,6 @@ export default function Jobs() {
 
   // Form submission handlers
   const onSubmit = (data: FormValues) => {
-    console.log("Form submitted with data:", data);
-    console.log("Form errors:", form.formState.errors);
-    
     if (!currentWorkspace?.id) {
       toast({
         title: "Error",
@@ -215,7 +209,6 @@ export default function Jobs() {
     }
     
     data.workspaceId = currentWorkspace.id;
-    console.log("Submitting job with data:", data);
     createJobMutation.mutate(data);
   };
 
