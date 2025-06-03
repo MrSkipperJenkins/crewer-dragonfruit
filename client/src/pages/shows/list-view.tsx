@@ -20,6 +20,7 @@ import {
   SearchIcon, 
   FilterIcon, 
   ChevronDownIcon,
+  ChevronUpIcon,
   Users
 } from "lucide-react";
 import {
@@ -33,12 +34,17 @@ import { formatDate, formatTime, getStatusColor } from "@/lib/utils";
 
 import CrewStaffingModal from "@/components/shows/crew-staffing-modal";
 
+type SortField = "title" | "date" | "time" | "status" | "category";
+type SortDirection = "asc" | "desc";
+
 export default function ShowsListView() {
   const { currentWorkspace } = useCurrentWorkspace();
   const [, navigate] = useLocation();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [crewStaffingShow, setCrewStaffingShow] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // Fetch shows data
   const { data: shows = [], isLoading } = useQuery({
@@ -77,14 +83,63 @@ export default function ShowsListView() {
 
 
 
-  // Filter shows based on status and search query
-  const filteredShows = shows.filter((show: any) => {
+  // Helper function to handle sorting
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Filter and sort shows
+  const filteredShows = (shows as any[]).filter((show: any) => {
     const matchesStatus = statusFilter === "all" || show.status === statusFilter;
     const matchesSearch = !searchQuery || 
       show.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (show.description && show.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
     return matchesStatus && matchesSearch;
+  }).sort((a: any, b: any) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortField) {
+      case "title":
+        aValue = a.title.toLowerCase();
+        bValue = b.title.toLowerCase();
+        break;
+      case "date":
+        aValue = new Date(a.startTime);
+        bValue = new Date(b.startTime);
+        break;
+      case "time":
+        aValue = new Date(a.startTime);
+        bValue = new Date(b.startTime);
+        break;
+      case "status":
+        aValue = a.status;
+        bValue = b.status;
+        break;
+      case "category":
+        const aCat = getShowCategory(a.id);
+        const bCat = getShowCategory(b.id);
+        aValue = aCat?.name || "";
+        bValue = bCat?.name || "";
+        break;
+      default:
+        aValue = a.startTime;
+        bValue = b.startTime;
+    }
+
+    if (aValue < bValue) {
+      return sortDirection === "asc" ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortDirection === "asc" ? 1 : -1;
+    }
+    return 0;
   });
 
   // Function to handle row click
@@ -149,12 +204,72 @@ export default function ShowsListView() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Show</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("title")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Show
+                      {sortField === "title" && (
+                        sortDirection === "asc" ? 
+                          <ChevronUpIcon className="h-4 w-4" /> : 
+                          <ChevronDownIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("date")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Date
+                      {sortField === "date" && (
+                        sortDirection === "asc" ? 
+                          <ChevronUpIcon className="h-4 w-4" /> : 
+                          <ChevronDownIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("time")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Time
+                      {sortField === "time" && (
+                        sortDirection === "asc" ? 
+                          <ChevronUpIcon className="h-4 w-4" /> : 
+                          <ChevronDownIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("status")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Status
+                      {sortField === "status" && (
+                        sortDirection === "asc" ? 
+                          <ChevronUpIcon className="h-4 w-4" /> : 
+                          <ChevronDownIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
                   <TableHead>Crew Staffing</TableHead>
-                  <TableHead className="text-right">Category</TableHead>
+                  <TableHead 
+                    className="text-right cursor-pointer hover:bg-gray-50 select-none"
+                    onClick={() => handleSort("category")}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      Category
+                      {sortField === "category" && (
+                        sortDirection === "asc" ? 
+                          <ChevronUpIcon className="h-4 w-4" /> : 
+                          <ChevronDownIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
