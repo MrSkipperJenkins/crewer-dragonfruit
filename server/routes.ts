@@ -334,6 +334,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/resources/:id", async (req, res) => {
+    try {
+      const validation = insertResourceSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid resource data", errors: validation.error.errors });
+      }
+      const resource = await storage.updateResource(req.params.id, validation.data);
+      if (!resource) {
+        return res.status(404).json({ message: "Resource not found" });
+      }
+      res.json(resource);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update resource" });
+    }
+  });
+
+  app.delete("/api/resources/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteResource(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Resource not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete resource" });
+    }
+  });
+
   // Show Categories
   app.get("/api/workspaces/:workspaceId/show-categories", async (req, res) => {
     const categories = await storage.getShowCategories(req.params.workspaceId);

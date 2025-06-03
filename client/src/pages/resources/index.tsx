@@ -125,7 +125,7 @@ export default function Resources() {
       name: "",
       type: "studio",
       description: "",
-      color: "hsl(207 90% 54%)",
+      color: "#2094f3",
       workspaceId: currentWorkspace?.id || "",
     },
   });
@@ -138,7 +138,7 @@ export default function Resources() {
       name: "",
       type: "studio",
       description: "",
-      color: "hsl(207 90% 54%)",
+      color: "#2094f3",
       workspaceId: currentWorkspace?.id || "",
     },
   });
@@ -255,7 +255,7 @@ export default function Resources() {
       name: resource.name,
       type: resource.type,
       description: resource.description || "",
-      color: resource.color || "hsl(207 90% 54%)",
+      color: resource.color || "#2094f3",
       workspaceId: resource.workspaceId,
     });
     setIsEditDialogOpen(true);
@@ -661,7 +661,7 @@ export default function Resources() {
                     <TableCell>
                       <div
                         className="w-6 h-6 rounded-full border border-gray-300"
-                        style={{ backgroundColor: resource.color || "hsl(207 90% 54%)" }}
+                        style={{ backgroundColor: resource.color || "#2094f3" }}
                       />
                     </TableCell>
                     <TableCell className="font-medium">{resource.name}</TableCell>
