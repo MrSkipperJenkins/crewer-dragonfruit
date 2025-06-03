@@ -295,6 +295,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/crew-member-jobs/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteCrewMemberJob(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Crew member job not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete crew member job" });
+    }
+  });
+
   // Resources
   app.get("/api/workspaces/:workspaceId/resources", async (req, res) => {
     const resources = await storage.getResources(req.params.workspaceId);

@@ -233,24 +233,31 @@ export default function CrewMembers() {
       const response = await apiRequest("PUT", `/api/crew-members/${id}`, crewMemberData);
       const crewMember = await response.json();
       
-      // Delete existing job assignments
+      // Get existing job assignments
       const existingJobs = await apiRequest("GET", `/api/crew-members/${id}/jobs`);
       const existingJobsData = await existingJobs.json();
+      const existingJobIds = existingJobsData.map((job: any) => job.jobId);
       
-      const deletePromises = existingJobsData.map((job: any) => 
+      // Find jobs to remove and jobs to add
+      const jobsToRemove = existingJobsData.filter((job: any) => !selectedJobs.includes(job.jobId));
+      const jobsToAdd = selectedJobs.filter((jobId: string) => !existingJobIds.includes(jobId));
+      
+      // Remove unselected jobs
+      const deletePromises = jobsToRemove.map((job: any) => 
         apiRequest("DELETE", `/api/crew-member-jobs/${job.id}`)
       );
-      await Promise.all(deletePromises);
       
-      // Create new job assignments
-      const createPromises = selectedJobs.map(jobId => 
+      // Add new selected jobs
+      const createPromises = jobsToAdd.map((jobId: string) => 
         apiRequest("POST", "/api/crew-member-jobs", {
           crewMemberId: id,
           jobId,
           workspaceId: currentWorkspace?.id,
         })
       );
-      await Promise.all(createPromises);
+      
+      // Execute all operations
+      await Promise.all([...deletePromises, ...createPromises]);
       
       return crewMember;
     },
