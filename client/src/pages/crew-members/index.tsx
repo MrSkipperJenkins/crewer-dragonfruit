@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertCrewMemberSchema } from "@shared/schema";
+import { insertCrewMemberSchema, type CrewMember } from "@shared/schema";
 
 import {
   Card,
@@ -53,7 +53,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { PlusIcon, SearchIcon, ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 
 // Extend the insert schema for form validation
 const formSchema = insertCrewMemberSchema.extend({
@@ -72,27 +72,47 @@ type FormValues = z.infer<typeof formSchema> & {
   selectedJobs: string[];
 };
 
+type SortField = 'name' | 'title';
+type SortDirection = 'asc' | 'desc';
+
 export default function CrewMembers() {
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<CrewMember | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   // Fetch crew members
-  const { data: crewMembers = [], isLoading } = useQuery({
+  const { data: crewMembers = [], isLoading } = useQuery<CrewMember[]>({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
     enabled: !!currentWorkspace?.id,
   });
   
   // Fetch jobs for selection
-  const { data: jobs = [] } = useQuery({
+  const { data: jobs = [] } = useQuery<any[]>({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
     enabled: !!currentWorkspace?.id,
   });
   
   // Initialize form with default values
   const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      title: "",
+      workspaceId: currentWorkspace?.id || "",
+      selectedJobs: [],
+    },
+  });
+
+  // Initialize edit form
+  const editForm = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -131,7 +151,7 @@ export default function CrewMembers() {
         title: "Success",
         description: "Crew member created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces', currentWorkspace?.id, 'crew-members'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`] });
       form.reset();
       setIsDialogOpen(false);
     },
@@ -161,17 +181,52 @@ export default function CrewMembers() {
     // Submit mutation
     createCrewMemberMutation.mutate(data);
   };
+
+  // Handle sorting
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Handle row click for editing
+  const handleRowClick = (member: CrewMember) => {
+    setEditingMember(member);
+    editForm.reset({
+      name: member.name,
+      email: member.email,
+      phone: member.phone || "",
+      title: member.title,
+      workspaceId: member.workspaceId,
+      selectedJobs: [], // Will be loaded from API
+    });
+    setIsEditDialogOpen(true);
+  };
   
-  // Filter crew members based on search query
-  const filteredCrewMembers = crewMembers.filter((member: any) => {
-    if (!searchQuery) return true;
-    
-    return (
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
+  // Filter and sort crew members
+  const filteredAndSortedCrewMembers = crewMembers
+    .filter((member) => {
+      if (!searchQuery) return true;
+      
+      return (
+        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.email.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      const aValue = a[sortField].toLowerCase();
+      const bValue = b[sortField].toLowerCase();
+      
+      if (sortDirection === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    });
   
   // Get initials for avatar
   const getInitials = (name: string) => {
