@@ -675,28 +675,37 @@ export default function EditShow() {
               {/* Crew Assignments */}
               <div>
                 <h3 className="text-lg font-medium mb-3">Crew Assignments</h3>
+                {hasUnsavedChanges && (
+                  <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">You have unsaved crew assignment changes. Click Save Changes to apply them.</p>
+                  </div>
+                )}
                 <div className="space-y-4">
-                  {selectedJobs.map(jobId => {
-                    const job = (jobs as any[]).find(j => j.id === jobId);
-                    const assignment = (crewAssignments as any[]).find(ca => ca.jobId === jobId);
+                  {requiredJobs.map((requiredJob: any) => {
+                    const job = (jobs as any[]).find(j => j.id === requiredJob.jobId);
+                    const assignment = localCrewAssignments.find(ca => ca.requiredJobId === requiredJob.id);
                     const assignedCrewMember = assignment ? (crewMembers as any[]).find(cm => cm.id === assignment.crewMemberId) : null;
                     
                     return job ? (
-                      <div key={jobId} className="border rounded-lg p-4">
+                      <div key={`required-job-${requiredJob.id}`} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-medium">{job.title}</h4>
+                          <div>
+                            <h4 className="font-medium">{job.title}</h4>
+                            {requiredJob.notes && (
+                              <p className="text-sm text-gray-600">{requiredJob.notes}</p>
+                            )}
+                          </div>
                           {!assignment && (
-                            <Select onValueChange={(crewMemberId) => handleLocalAssignCrew(crewMemberId, jobId)}>
+                            <Select onValueChange={(crewMemberId) => handleLocalAssignCrew(crewMemberId, requiredJob.id)}>
                               <SelectTrigger className="w-48">
                                 <SelectValue placeholder="Assign crew member" />
                               </SelectTrigger>
                               <SelectContent>
-                                {(crewMembers as any[])
-                                  .map(crewMember => (
-                                    <SelectItem key={`job-${jobId}-crew-${crewMember.id}`} value={crewMember.id}>
-                                      {crewMember.name} - {crewMember.title}
-                                    </SelectItem>
-                                  ))}
+                                {(crewMembers as any[]).map(crewMember => (
+                                  <SelectItem key={`req-${requiredJob.id}-crew-${crewMember.id}`} value={crewMember.id}>
+                                    {crewMember.name} - {crewMember.title}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           )}
@@ -708,19 +717,19 @@ export default function EditShow() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleLocalRemoveCrewAssignment(assignment.requiredJobId)}
+                                onClick={() => handleLocalRemoveCrewAssignment(requiredJob.id)}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
                           ) : (
-                            <p className="text-gray-500 text-sm">No crew members assigned</p>
+                            <p className="text-gray-500 text-sm">No crew member assigned</p>
                           )}
                         </div>
                       </div>
                     ) : null;
                   })}
-                  {selectedJobs.length === 0 && (
+                  {requiredJobs.length === 0 && (
                     <p className="text-gray-500">Add required jobs to manage crew assignments</p>
                   )}
                 </div>
