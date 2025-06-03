@@ -1255,33 +1255,7 @@ async function createEnhancedDemoData() {
   }
 }
 
-// Ensure default workspace exists
-async function ensureDefaultWorkspace() {
-  try {
-    const storage = new DatabaseStorage();
-    const workspaces = await storage.getWorkspaces();
-    
-    if (workspaces.length === 0) {
-      console.log("🏗️  Creating default workspace...");
-      const defaultWorkspace = await storage.createWorkspace({
-        name: "Demo Workspace",
-        slug: "demo-workspace"
-      });
-      console.log(`✅ Default workspace created: ${defaultWorkspace.name} (${defaultWorkspace.slug})`);
-      return defaultWorkspace;
-    }
-    
-    return workspaces[0];
-  } catch (error) {
-    console.error("❌ Failed to ensure default workspace:", error);
-    return null;
-  }
-}
-
 // Initialize database with enhanced demo data on startup
-Promise.all([
-  ensureDefaultWorkspace(),
-  createEnhancedDemoData()
-]).catch(console.error);
+createEnhancedDemoData().catch(console.error);
 
 export const storage = new DatabaseStorage();
