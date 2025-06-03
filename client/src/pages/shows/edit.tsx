@@ -353,6 +353,13 @@ export default function EditShow() {
       // First update the show details
       await updateShowMutation.mutateAsync(data);
       
+      // Save category assignment
+      if (selectedCategory !== "none") {
+        await saveCategoryAssignment();
+      } else {
+        await removeCategoryAssignment();
+      }
+      
       // Then save crew assignment changes if any
       if (hasUnsavedChanges) {
         await saveCrewAssignmentChanges();
@@ -368,6 +375,41 @@ export default function EditShow() {
         description: "Failed to update show",
         variant: "destructive",
       });
+    }
+  };
+
+  const saveCategoryAssignment = async () => {
+    if (!show) return;
+    
+    // Check if assignment already exists
+    const existingAssignment = (categoryAssignments as any[])?.find(
+      (ca: any) => ca.showId === show.id
+    );
+    
+    if (existingAssignment) {
+      // Update existing assignment
+      await apiRequest("PATCH", `/api/show-category-assignments/${existingAssignment.id}`, {
+        categoryId: selectedCategory
+      });
+    } else {
+      // Create new assignment
+      await apiRequest("POST", "/api/show-category-assignments", {
+        showId: show.id,
+        categoryId: selectedCategory,
+        workspaceId: show.workspaceId
+      });
+    }
+  };
+
+  const removeCategoryAssignment = async () => {
+    if (!show) return;
+    
+    const existingAssignment = (categoryAssignments as any[])?.find(
+      (ca: any) => ca.showId === show.id
+    );
+    
+    if (existingAssignment) {
+      await apiRequest("DELETE", `/api/show-category-assignments/${existingAssignment.id}`);
     }
   };
 
