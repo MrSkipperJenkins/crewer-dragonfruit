@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDate, formatTime, getStatusColor } from "@/lib/utils";
-import ShowDetailModal from "@/components/shows/show-detail-modal";
+
 import CrewStaffingModal from "@/components/shows/crew-staffing-modal";
 
 export default function ShowsListView() {
@@ -234,14 +234,6 @@ export default function ShowsListView() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Show Detail Modal */}
-      {selectedShow && (
-        <ShowDetailModal
-          showId={selectedShow}
-          onClose={() => setSelectedShow(null)}
-        />
-      )}
 
       {/* Crew Staffing Modal */}
       {crewStaffingShow && (

@@ -464,6 +464,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/shows/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteShow(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Show not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete show" });
+    }
+  });
+
   // Show Categories Assignments
   app.get("/api/shows/:showId/categories", async (req, res) => {
     const assignments = await storage.getShowCategoryAssignmentsByShow(req.params.showId);
@@ -497,6 +509,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const requiredJob = await storage.createRequiredJob(validation.data);
       res.status(201).json(requiredJob);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create required job" });
+    }
+  });
+
+  app.delete("/api/required-jobs/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteRequiredJob(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Required job not found" });
+      }
+      res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to create required job" });
     }
