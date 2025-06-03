@@ -73,14 +73,14 @@ export function Sidebar({ isMobileOpen, setIsMobileOpen }: {
       ]
     },
     { 
-      href: "/crew-members", 
-      icon: <UsersIcon className="text-lg mr-3" />, 
-      label: "Crew Members" 
-    },
-    { 
       href: "/crew-schedule", 
       icon: <ClockIcon className="text-lg mr-3" />, 
       label: "Crew Schedule" 
+    },
+    { 
+      href: "/crew-members", 
+      icon: <UsersIcon className="text-lg mr-3" />, 
+      label: "Crew Members" 
     },
     { 
       href: "/jobs", 

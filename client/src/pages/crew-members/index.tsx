@@ -53,7 +53,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlusIcon, SearchIcon, ChevronUpIcon, ChevronDownIcon } from "lucide-react";
+import { PlusIcon, SearchIcon, ChevronUpIcon, ChevronDownIcon, Pencil, Trash2 } from "lucide-react";
 
 // Extend the insert schema for form validation
 const formSchema = insertCrewMemberSchema.extend({
@@ -192,8 +192,8 @@ export default function CrewMembers() {
     }
   };
 
-  // Handle row click for editing
-  const handleRowClick = (member: CrewMember) => {
+  // Handle edit click
+  const handleEditClick = (member: CrewMember) => {
     setEditingMember(member);
     editForm.reset({
       name: member.name,
@@ -204,6 +204,34 @@ export default function CrewMembers() {
       selectedJobs: [], // Will be loaded from API
     });
     setIsEditDialogOpen(true);
+  };
+
+  // Create delete mutation
+  const deleteCrewMemberMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/crew-members/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Crew member deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete crew member",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle delete click
+  const handleDeleteClick = (member: CrewMember) => {
+    if (window.confirm(`Are you sure you want to delete ${member.name}?`)) {
+      deleteCrewMemberMutation.mutate(member.id);
+    }
   };
   
   // Filter and sort crew members
@@ -419,12 +447,13 @@ export default function CrewMembers() {
                     </Button>
                   </TableHead>
                   <TableHead>Contact</TableHead>
+                  <TableHead className="text-right w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8">
+                    <TableCell colSpan={4} className="text-center py-8">
                       <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       </div>
@@ -434,18 +463,14 @@ export default function CrewMembers() {
 
                 {!isLoading && filteredAndSortedCrewMembers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                       No crew members found
                     </TableCell>
                   </TableRow>
                 )}
 
                 {filteredAndSortedCrewMembers.map((member) => (
-                  <TableRow 
-                    key={member.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleRowClick(member)}
-                  >
+                  <TableRow key={member.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center space-x-3">
                         <Avatar>
@@ -459,6 +484,25 @@ export default function CrewMembers() {
                     <TableCell>
                       <div>{member.email}</div>
                       <div className="text-gray-500 text-sm">{member.phone}</div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleEditClick(member)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleDeleteClick(member)}
+                          disabled={deleteCrewMemberMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

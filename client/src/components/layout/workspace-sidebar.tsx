@@ -39,15 +39,15 @@ const navigationItems = [
     ]
   },
   {
-    title: "Crew Members",
-    href: "/crew-members",
-    icon: Users,
-    badge: null
-  },
-  {
     title: "Crew Schedule",
     href: "/crew-schedule",
     icon: Clock,
+    badge: null
+  },
+  {
+    title: "Crew Members",
+    href: "/crew-members",
+    icon: Users,
     badge: null
   },
   {

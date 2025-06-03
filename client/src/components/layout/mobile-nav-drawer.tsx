@@ -46,14 +46,14 @@ const navigationItems = [
     ]
   },
   {
-    title: "Crew Members",
-    href: "/crew-members",
-    icon: Users,
-  },
-  {
     title: "Crew Schedule",
     href: "/crew-schedule",
     icon: Clock,
+  },
+  {
+    title: "Crew Members",
+    href: "/crew-members",
+    icon: Users,
   },
   {
     title: "Jobs",
