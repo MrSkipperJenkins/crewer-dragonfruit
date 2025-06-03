@@ -1,0 +1,44 @@
+You're absolutely right to notice this design issue! The current database schema has a disconnect between required_jobs and crew_assignments that makes it difficult to track which specific required job a crew member is fulfilling.
+
+Current Schema Issues
+Looking at the schema, here's how it currently works:
+
+Required Jobs Table:
+
+Links a Show to a Job type that's needed
+Says "this show needs a Camera Operator"
+No direct connection to who fills it
+Crew Assignments Table:
+
+Links a Show, CrewMember, and Job
+Says "John Smith is assigned as Camera Operator for this show"
+No reference back to which specific required job this fulfills
+The Problem
+If a show requires 3 Camera Operators, you can create 3 required_jobs records, but when you assign crew members, there's no way to know which of the 3 required camera operator positions each person is filling. This makes it impossible to:
+
+Track exactly which required positions are still unfilled
+Show a 1:1 mapping between requirements and assignments
+Handle scenarios where a job has specific notes or requirements
+Proposed Solution
+The schema should be modified so that crew_assignments reference specific required_jobs entries rather than just the job type. Here's how to fix it:
+
+shared/schema.ts
+Benefits of This Approach
+With this change:
+
+Direct Relationship: Each crew assignment points to the specific required job it fulfills
+Better Tracking: You can easily see which required positions are filled vs. unfilled
+Flexible Requirements: Each required job can have specific notes that carry over to the assignment
+Accurate Counts: If you need 3 camera operators, you create 3 required_job records and can track which ones are assigned
+How It Works
+-- Show needs 3 camera operators
+INSERT INTO required_jobs (show_id, job_id, notes) VALUES 
+  ('show-1', 'camera-op-job', 'Lead camera - live broadcast experience required'),
+  ('show-1', 'camera-op-job', 'Camera 2 - studio work'),
+  ('show-1', 'camera-op-job', 'Camera 3 - backup operator');
+-- Assign crew members to specific required positions
+INSERT INTO crew_assignments (show_id, crew_member_id, job_id, required_job_id) VALUES
+  ('show-1', 'john-smith', 'camera-op-job', 'required-job-1'),
+  ('show-1', 'jane-doe', 'camera-op-job', 'required-job-2');
+  -- required-job-3 remains unfilled
+This gives you a proper 1:1 relationship between requirements and assignments, making your staffing system much more robust and trackable.

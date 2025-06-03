@@ -456,17 +456,45 @@ export async function seedDemoData(): Promise<void> {
     { showId: show4.id, resourceId: resource2.id, workspaceId: workspace1.id },
   ]);
 
-  // Create crew assignments
-  await db.insert(crewAssignments).values([
-    { showId: show1.id, crewMemberId: crewMember1.id, jobId: job1.id, status: "confirmed", workspaceId: workspace1.id },
-    { showId: show1.id, crewMemberId: crewMember2.id, jobId: job2.id, status: "confirmed", workspaceId: workspace1.id },
-    { showId: show1.id, crewMemberId: crewMember4.id, jobId: job4.id, status: "confirmed", workspaceId: workspace1.id },
-    { showId: show2.id, crewMemberId: crewMember1.id, jobId: job1.id, status: "pending", workspaceId: workspace1.id },
-    { showId: show2.id, crewMemberId: crewMember3.id, jobId: job3.id, status: "confirmed", workspaceId: workspace1.id },
-    { showId: show3.id, crewMemberId: crewMember2.id, jobId: job2.id, status: "pending", workspaceId: workspace1.id },
-    { showId: show4.id, crewMemberId: crewMember1.id, jobId: job1.id, status: "declined", workspaceId: workspace1.id },
-    { showId: show4.id, crewMemberId: crewMember3.id, jobId: job3.id, status: "confirmed", workspaceId: workspace1.id },
-  ]);
+  // Get some required jobs to link assignments to
+  const show1RequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show1.id)).limit(3);
+  const show2RequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show2.id)).limit(2);
+  const show3RequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show3.id)).limit(1);
+  const show4RequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show4.id)).limit(2);
+
+  // Create crew assignments linked to specific required jobs
+  const assignmentsToCreate = [];
+  if (show1RequiredJobs.length > 0) {
+    assignmentsToCreate.push(
+      { showId: show1.id, crewMemberId: crewMember1.id, jobId: job1.id, requiredJobId: show1RequiredJobs[0].id, status: "confirmed", workspaceId: workspace1.id },
+      { showId: show1.id, crewMemberId: crewMember2.id, jobId: job2.id, requiredJobId: show1RequiredJobs[1]?.id, status: "confirmed", workspaceId: workspace1.id },
+      { showId: show1.id, crewMemberId: crewMember4.id, jobId: job4.id, requiredJobId: show1RequiredJobs[2]?.id, status: "confirmed", workspaceId: workspace1.id }
+    );
+  }
+  if (show2RequiredJobs.length > 0) {
+    assignmentsToCreate.push(
+      { showId: show2.id, crewMemberId: crewMember1.id, jobId: job1.id, requiredJobId: show2RequiredJobs[0].id, status: "pending", workspaceId: workspace1.id },
+      { showId: show2.id, crewMemberId: crewMember3.id, jobId: job3.id, requiredJobId: show2RequiredJobs[1]?.id, status: "confirmed", workspaceId: workspace1.id }
+    );
+  }
+  if (show3RequiredJobs.length > 0) {
+    assignmentsToCreate.push(
+      { showId: show3.id, crewMemberId: crewMember2.id, jobId: job2.id, requiredJobId: show3RequiredJobs[0].id, status: "pending", workspaceId: workspace1.id }
+    );
+  }
+  if (show4RequiredJobs.length > 0) {
+    assignmentsToCreate.push(
+      { showId: show4.id, crewMemberId: crewMember1.id, jobId: job1.id, requiredJobId: show4RequiredJobs[0].id, status: "declined", workspaceId: workspace1.id },
+      { showId: show4.id, crewMemberId: crewMember3.id, jobId: job3.id, requiredJobId: show4RequiredJobs[1]?.id, status: "confirmed", workspaceId: workspace1.id }
+    );
+  }
+
+  // Filter out any assignments with undefined requiredJobId
+  const validAssignments = assignmentsToCreate.filter(assignment => assignment.requiredJobId);
+  
+  if (validAssignments.length > 0) {
+    await db.insert(crewAssignments).values(validAssignments);
+  }
 
   // Create crew schedules
   await db.insert(crewSchedules).values([
@@ -1288,21 +1316,27 @@ async function createEnhancedDemoData() {
     // Get crew members for assignments
     const allCrewMembers = await db.select().from(crewMembers).where(eq(crewMembers.workspaceId, workspace.id));
     
-    // Create some crew assignments for variety
-    const crewAssignmentsData = [];
-    allShows.forEach((show, showIndex) => {
-      if (showIndex < allCrewMembers.length) {
-        // Assign different crew members to different shows
-        const crewMember = allCrewMembers[showIndex % allCrewMembers.length];
+    // Create some crew assignments linked to required jobs
+    const crewAssignmentsData: any[] = [];
+    
+    for (let showIndex = 0; showIndex < allShows.length && showIndex < allCrewMembers.length; showIndex++) {
+      const show = allShows[showIndex];
+      const crewMember = allCrewMembers[showIndex % allCrewMembers.length];
+      
+      // Get required jobs for this show
+      const showRequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show.id)).limit(1);
+      
+      if (showRequiredJobs.length > 0) {
         crewAssignmentsData.push({
           showId: show.id,
           crewMemberId: crewMember.id,
           jobId: cameraJob.id,
+          requiredJobId: showRequiredJobs[0].id,
           status: 'confirmed',
           workspaceId: workspace.id
         });
       }
-    });
+    }
     
     if (crewAssignmentsData.length > 0) {
       await db.insert(crewAssignments).values(crewAssignmentsData);
