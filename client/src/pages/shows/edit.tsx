@@ -278,13 +278,24 @@ export default function EditShow() {
   // Assign crew member mutation
   const assignCrewMutation = useMutation({
     mutationFn: async (data: { crewMemberId: string; jobId: string }) => {
-      return apiRequest("POST", "/api/crew-assignments", {
-        showId,
-        crewMemberId: data.crewMemberId,
-        jobId: data.jobId,
-        status: "pending",
-        workspaceId: currentWorkspace?.id,
-      });
+      // First check if there's already an assignment for this job
+      const existingAssignment = (crewAssignments as any[]).find(ca => ca.jobId === data.jobId);
+      
+      if (existingAssignment) {
+        // Update existing assignment instead of creating a new one
+        return apiRequest("PUT", `/api/crew-assignments/${existingAssignment.id}`, {
+          crewMemberId: data.crewMemberId,
+        });
+      } else {
+        // Create new assignment
+        return apiRequest("POST", "/api/crew-assignments", {
+          showId,
+          crewMemberId: data.crewMemberId,
+          jobId: data.jobId,
+          status: "pending",
+          workspaceId: currentWorkspace?.id,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
@@ -619,44 +630,47 @@ export default function EditShow() {
                 <div className="space-y-4">
                   {selectedJobs.map(jobId => {
                     const job = (jobs as any[]).find(j => j.id === jobId);
-                    const assignments = (crewAssignments as any[]).filter(ca => ca.jobId === jobId);
+                    const assignment = (crewAssignments as any[]).find(ca => ca.jobId === jobId);
+                    const assignedCrewMember = assignment ? (crewMembers as any[]).find(cm => cm.id === assignment.crewMemberId) : null;
                     
                     return job ? (
                       <div key={jobId} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-medium">{job.title}</h4>
-                          <Select onValueChange={(crewMemberId) => handleAssignCrew(crewMemberId, jobId)}>
-                            <SelectTrigger className="w-48">
-                              <SelectValue placeholder="Assign crew member" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {(crewMembers as any[])
-                                .filter(cm => !assignments.some((a: any) => a.crewMemberId === cm.id))
-                                .map(crewMember => (
-                                  <SelectItem key={`${jobId}-${crewMember.id}`} value={crewMember.id}>
-                                    {crewMember.name} - {crewMember.title}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
+                          {!assignment && (
+                            <Select onValueChange={(crewMemberId) => handleAssignCrew(crewMemberId, jobId)}>
+                              <SelectTrigger className="w-48">
+                                <SelectValue placeholder="Assign crew member" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(crewMembers as any[])
+                                  .filter(cm => {
+                                    // Filter out crew members already assigned to other jobs for this show
+                                    const isAlreadyAssigned = (crewAssignments as any[]).some(ca => ca.crewMemberId === cm.id);
+                                    return !isAlreadyAssigned;
+                                  })
+                                  .map(crewMember => (
+                                    <SelectItem key={`${jobId}-${crewMember.id}`} value={crewMember.id}>
+                                      {crewMember.name} - {crewMember.title}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </div>
                         <div className="space-y-2">
-                          {assignments.map((assignment: any) => {
-                            const crewMember = (crewMembers as any[]).find(cm => cm.id === assignment.crewMemberId);
-                            return crewMember ? (
-                              <div key={assignment.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                                <span>{crewMember.name} - {crewMember.title}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveCrewAssignment(assignment.id)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : null;
-                          })}
-                          {assignments.length === 0 && (
+                          {assignment && assignedCrewMember ? (
+                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <span>{assignedCrewMember.name} - {assignedCrewMember.title}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveCrewAssignment(assignment.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
                             <p className="text-gray-500 text-sm">No crew members assigned</p>
                           )}
                         </div>
