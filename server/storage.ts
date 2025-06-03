@@ -49,7 +49,7 @@ import {
   notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, like, ne, desc } from "drizzle-orm";
+import { eq, and, gte, lte, like, isNotNull, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Workspace CRUD
@@ -206,12 +206,11 @@ export async function seedDemoData(): Promise<void> {
     {
       name: "BBC Studios North",
       slug: "bbc-studios-north",
-      region: "Manchester",
+      lastAccessedAt: new Date(),
     },
     {
       name: "ITV London", 
       slug: "itv-london",
-      region: "London",
     }
   ]).returning();
 
@@ -567,7 +566,7 @@ export class DatabaseStorage implements IStorage {
     const [workspace] = await db
       .select()
       .from(workspaces)
-      .where(ne(workspaces.lastAccessedAt, null))
+      .where(isNotNull(workspaces.lastAccessedAt))
       .orderBy(desc(workspaces.lastAccessedAt))
       .limit(1);
     return workspace || undefined;

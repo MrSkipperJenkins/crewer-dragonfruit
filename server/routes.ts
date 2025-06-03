@@ -28,6 +28,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(workspaces);
   });
 
+  app.get("/api/workspaces/recent", async (req, res) => {
+    try {
+      const workspace = await storage.getMostRecentWorkspace();
+      if (!workspace) {
+        return res.status(404).json({ message: "No recent workspace found" });
+      }
+      res.json(workspace);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get recent workspace" });
+    }
+  });
+
   // Workspace slug validation (must come before /:id route)
   app.get("/api/workspaces/slug-check", async (req, res) => {
     const slug = req.query.slug as string;
@@ -75,6 +87,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!workspace) {
         return res.status(404).json({ message: "Workspace not found" });
       }
+      
+      // Update last accessed timestamp
+      await storage.updateWorkspaceLastAccessed(workspace.id);
       
       res.json({ success: true, workspace });
     } catch (error) {
