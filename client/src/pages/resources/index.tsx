@@ -47,6 +47,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,10 +68,14 @@ import {
   Trash2,
   TvIcon,
   LayoutPanelLeftIcon,
-  CameraIcon
+  CameraIcon,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getResourceTypeLabel } from "@/lib/utils";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 // Extend the insert schema for form validation
 const formSchema = insertResourceSchema.extend({
@@ -72,15 +87,30 @@ const formSchema = insertResourceSchema.extend({
   }),
 });
 
+// Edit schema for updating resources
+const editFormSchema = insertResourceSchema.extend({
+  id: z.string().uuid(),
+  name: z.string().min(3, {
+    message: "Name must be at least 3 characters.",
+  }),
+});
+
 type FormValues = z.infer<typeof formSchema>;
+type EditFormValues = z.infer<typeof editFormSchema>;
+type SortField = 'name' | 'type' | 'description';
+type SortDirection = 'asc' | 'desc';
 
 export default function Resources() {
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingResource, setEditingResource] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   // Fetch resources
   const { data: resources = [], isLoading } = useQuery({
@@ -95,6 +125,20 @@ export default function Resources() {
       name: "",
       type: "studio",
       description: "",
+      color: "hsl(207 90% 54%)",
+      workspaceId: currentWorkspace?.id || "",
+    },
+  });
+
+  // Initialize edit form
+  const editForm = useForm<EditFormValues>({
+    resolver: zodResolver(editFormSchema),
+    defaultValues: {
+      id: "",
+      name: "",
+      type: "studio",
+      description: "",
+      color: "hsl(207 90% 54%)",
       workspaceId: currentWorkspace?.id || "",
     },
   });
@@ -109,7 +153,7 @@ export default function Resources() {
         title: "Success",
         description: "Resource created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces', currentWorkspace?.id, 'resources'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/resources`] });
       form.reset();
       setIsDialogOpen(false);
     },
@@ -117,6 +161,51 @@ export default function Resources() {
       toast({
         title: "Error",
         description: "Failed to create resource",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update resource mutation
+  const updateResourceMutation = useMutation({
+    mutationFn: async (data: EditFormValues) => {
+      return apiRequest("PUT", `/api/resources/${data.id}`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Resource updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/resources`] });
+      editForm.reset();
+      setIsEditDialogOpen(false);
+      setEditingResource(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update resource",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete resource mutation
+  const deleteResourceMutation = useMutation({
+    mutationFn: async (resourceId: string) => {
+      return apiRequest("DELETE", `/api/resources/${resourceId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Resource deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/resources`] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete resource",
         variant: "destructive",
       });
     },

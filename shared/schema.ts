@@ -95,6 +95,7 @@ export const resources = pgTable("resources", {
   name: text("name").notNull(),
   type: text("type").notNull(), // studio, control_room, equipment
   description: text("description"),
+  color: text("color").default("hsl(207 90% 54%)"), // Color for resource visualization
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
