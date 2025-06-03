@@ -167,7 +167,9 @@ export default function EditShow() {
   // Update selected jobs and resources when data loads
   useEffect(() => {
     if (requiredJobs.length > 0) {
-      setSelectedJobs(requiredJobs.map((rj: any) => rj.jobId));
+      // Use Set to ensure unique job IDs only
+      const uniqueJobIds = [...new Set(requiredJobs.map((rj: any) => rj.jobId))];
+      setSelectedJobs(uniqueJobIds);
     }
   }, [requiredJobs]);
 
