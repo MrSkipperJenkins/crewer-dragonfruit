@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { generateSlug, isValidSlug } from "@/lib/utils";
 import { insertWorkspaceSchema, type Workspace } from "@shared/schema";
 
@@ -21,7 +21,7 @@ const workspaceInfoSchema = insertWorkspaceSchema.extend({
 });
 
 const inviteTeammatesSchema = z.object({
-  emails: z.array(z.string().email("Invalid email address")).min(0).max(10)
+  emails: z.array(z.string().email("Invalid email address").or(z.literal(""))).min(0).max(10)
 });
 
 type WorkspaceInfo = z.infer<typeof workspaceInfoSchema>;
@@ -84,11 +84,12 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
       const workspaceResponse = await apiRequest("POST", "/api/workspaces", data.workspaceInfo);
       const workspace = await workspaceResponse.json();
       
-      // Send invites if there are emails
-      if (data.emails.length > 0 && data.emails[0].trim()) {
+      // Send invites if there are valid emails
+      const validEmails = data.emails.filter(email => email.trim());
+      if (validEmails.length > 0) {
         try {
           const inviteResponse = await apiRequest("POST", `/api/workspaces/${workspace.slug}/invites`, {
-            emails: data.emails.filter(email => email.trim()),
+            emails: validEmails,
             workspaceId: workspace.id
           });
           const inviteData = await inviteResponse.json();
@@ -103,13 +104,25 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
       
       return workspace;
     },
-    onSuccess: (workspace: Workspace) => {
+    onSuccess: async (workspace: Workspace) => {
       toast({
         title: "Success!",
         description: "Your workspace is ready!"
       });
-      // Redirect to the new workspace
-      setLocation(`/workspaces/${workspace.slug}/dashboard`);
+      
+      // Switch to the new workspace
+      try {
+        await apiRequest("POST", "/api/workspaces/switch", { workspaceSlug: workspace.slug });
+        
+        // Invalidate all queries to refresh the app with new workspace data
+        queryClient.invalidateQueries();
+        
+        // Redirect to the new workspace
+        setLocation(`/workspaces/${workspace.slug}/dashboard`);
+      } catch (error) {
+        // Fallback to direct navigation if switch fails
+        setLocation(`/workspaces/${workspace.slug}/dashboard`);
+      }
     },
     onError: () => {
       toast({
