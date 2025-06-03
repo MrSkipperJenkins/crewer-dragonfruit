@@ -168,7 +168,8 @@ export default function EditShow() {
   useEffect(() => {
     if (requiredJobs.length > 0) {
       // Use Set to ensure unique job IDs only
-      const uniqueJobIds = [...new Set(requiredJobs.map((rj: any) => rj.jobId))];
+      const jobIds = requiredJobs.map((rj: any) => rj.jobId);
+      const uniqueJobIds = jobIds.filter((id, index) => jobIds.indexOf(id) === index);
       setSelectedJobs(uniqueJobIds);
     }
   }, [requiredJobs]);
@@ -385,6 +386,10 @@ export default function EditShow() {
       setSelectedJobs(selectedJobs.filter(id => id !== jobId));
       removeRequiredJobMutation.mutate(requiredJob.id);
     }
+  };
+
+  const handleRemoveRequiredJob = (requiredJobId: string) => {
+    removeRequiredJobMutation.mutate(requiredJobId);
   };
 
   const handleAddResource = (resourceId: string) => {
@@ -637,51 +642,32 @@ export default function EditShow() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Required Jobs */}
+              {/* Required Jobs & Crew Assignments */}
               <div>
-                <h3 className="text-lg font-medium mb-3">Required Jobs</h3>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {selectedJobs.map(jobId => {
-                    const job = (jobs as any[]).find(j => j.id === jobId);
-                    return job ? (
-                      <Badge key={jobId} variant="default" className="flex items-center">
-                        {job.title}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-0 ml-2"
-                          onClick={() => handleRemoveJob(jobId)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ) : null;
-                  })}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-medium">Required Jobs & Crew Assignments</h3>
+                  <Select onValueChange={handleAddJob}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Add required job" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(jobs as any[])
+                        .filter(job => !selectedJobs.includes(job.id))
+                        .map(job => (
+                          <SelectItem key={job.id} value={job.id}>
+                            {job.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select onValueChange={handleAddJob}>
-                  <SelectTrigger className="w-full md:w-64">
-                    <SelectValue placeholder="Add required job" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(jobs as any[])
-                      .filter(job => !selectedJobs.includes(job.id))
-                      .map(job => (
-                        <SelectItem key={job.id} value={job.id}>
-                          {job.title}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Crew Assignments */}
-              <div>
-                <h3 className="text-lg font-medium mb-3">Crew Assignments</h3>
+                
                 {hasUnsavedChanges && (
                   <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800">You have unsaved crew assignment changes. Click Save Changes to apply them.</p>
                   </div>
                 )}
+                
                 <div className="space-y-4">
                   {requiredJobs.map((requiredJob: any) => {
                     const job = (jobs as any[]).find(j => j.id === requiredJob.jobId);
@@ -690,49 +676,85 @@ export default function EditShow() {
                     
                     return job ? (
                       <div key={`required-job-${requiredJob.id}`} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h4 className="font-medium">{job.title}</h4>
-                            {requiredJob.notes && (
-                              <p className="text-sm text-gray-600">{requiredJob.notes}</p>
-                            )}
-                          </div>
-                          {!assignment && (
-                            <Select onValueChange={(crewMemberId) => handleLocalAssignCrew(crewMemberId, requiredJob.id)}>
-                              <SelectTrigger className="w-48">
-                                <SelectValue placeholder="Assign crew member" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {(crewMembers as any[]).map(crewMember => (
-                                  <SelectItem key={`req-${requiredJob.id}-crew-${crewMember.id}`} value={crewMember.id}>
-                                    {crewMember.name} - {crewMember.title}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          {assignment && assignedCrewMember ? (
-                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                              <span>{assignedCrewMember.name} - {assignedCrewMember.title}</span>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <Badge variant="outline" className="text-sm">
+                                {job.title}
+                              </Badge>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleLocalRemoveCrewAssignment(requiredJob.id)}
+                                className="h-auto p-1 text-gray-400 hover:text-red-600"
+                                onClick={() => handleRemoveRequiredJob(requiredJob.id)}
+                                title="Remove required job"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
-                          ) : (
-                            <p className="text-gray-500 text-sm">No crew member assigned</p>
-                          )}
+                            
+                            {requiredJob.notes && (
+                              <p className="text-sm text-gray-600 mb-3">{requiredJob.notes}</p>
+                            )}
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                {assignment && assignedCrewMember ? (
+                                  <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <span className="text-sm font-medium text-blue-700">
+                                          {assignedCrewMember.name.split(' ').map((n: string) => n[0]).join('')}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-sm">{assignedCrewMember.name}</p>
+                                        <p className="text-xs text-gray-600">{assignedCrewMember.title}</p>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleLocalRemoveCrewAssignment(requiredJob.id)}
+                                      className="text-gray-400 hover:text-red-600"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Select onValueChange={(crewMemberId) => handleLocalAssignCrew(crewMemberId, requiredJob.id)}>
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Assign crew member" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {(crewMembers as any[]).map(crewMember => (
+                                        <SelectItem key={`req-${requiredJob.id}-crew-${crewMember.id}`} value={crewMember.id}>
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                              <span className="text-xs font-medium text-blue-700">
+                                                {crewMember.name.split(' ').map((n: string) => n[0]).join('')}
+                                              </span>
+                                            </div>
+                                            <span>{crewMember.name} - {crewMember.title}</span>
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : null;
                   })}
                   {requiredJobs.length === 0 && (
-                    <p className="text-gray-500">Add required jobs to manage crew assignments</p>
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p>No required jobs added yet</p>
+                      <p className="text-sm">Add jobs above to manage crew assignments</p>
+                    </div>
                   )}
                 </div>
               </div>
