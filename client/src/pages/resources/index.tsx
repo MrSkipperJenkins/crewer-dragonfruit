@@ -443,7 +443,7 @@ export default function Resources() {
                           <FormLabel>Color</FormLabel>
                           <FormControl>
                             <ColorPicker
-                              value={field.value || "hsl(207 90% 54%)"}
+                              value={field.value || "#2094f3"}
                               onChange={field.onChange}
                             />
                           </FormControl>
@@ -547,7 +547,7 @@ export default function Resources() {
                           <FormLabel>Color</FormLabel>
                           <FormControl>
                             <ColorPicker
-                              value={field.value || "hsl(207 90% 54%)"}
+                              value={field.value || "#2094f3"}
                               onChange={field.onChange}
                             />
                           </FormControl>
