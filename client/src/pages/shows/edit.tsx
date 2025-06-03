@@ -329,6 +329,10 @@ export default function EditShow() {
     setHasUnsavedChanges(true);
   };
 
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+  };
+
   const onSubmit = async (data: EditShowFormValues) => {
     try {
       // First update the show details
@@ -547,20 +551,6 @@ export default function EditShow() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Color</FormLabel>
-                      <FormControl>
-                        <Input type="color" {...field} className="h-10" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <Select
@@ -572,7 +562,7 @@ export default function EditShow() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">No Category</SelectItem>
-                      {(categories as any[]).map(category => (
+                      {(categories as any[])?.map(category => (
                         <SelectItem key={category.id} value={category.id}>
                           <div className="flex items-center gap-2">
                             <div
