@@ -89,7 +89,9 @@ export default function ShowsListView() {
 
   // Function to handle row click
   const handleRowClick = (showId: string) => {
-    navigate(`/shows/${showId}/edit`);
+    if (currentWorkspace) {
+      navigate(`/workspaces/${currentWorkspace.slug}/shows/${showId}/edit`);
+    }
   };
 
   // Function to handle crew staffing click

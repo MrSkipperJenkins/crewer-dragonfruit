@@ -85,7 +85,7 @@ export default function EditShow() {
   const { data: show, isLoading: showLoading } = useQuery({
     queryKey: [`/api/shows/${showId}`],
     enabled: !!showId,
-  });
+  }) as { data: any, isLoading: boolean };
 
   // Fetch workspace data
   const { data: jobs = [] } = useQuery({
@@ -112,17 +112,17 @@ export default function EditShow() {
   const { data: requiredJobs = [] } = useQuery({
     queryKey: [`/api/shows/${showId}/required-jobs`],
     enabled: !!showId,
-  });
+  }) as { data: any[] };
 
   const { data: crewAssignments = [] } = useQuery({
     queryKey: [`/api/shows/${showId}/crew-assignments`],
     enabled: !!showId,
-  });
+  }) as { data: any[] };
 
   const { data: showResources = [] } = useQuery({
     queryKey: [`/api/shows/${showId}/resources`],
     enabled: !!showId,
-  });
+  }) as { data: any[] };
 
   // Initialize form
   const form = useForm<EditShowFormValues>({
@@ -633,7 +633,7 @@ export default function EditShow() {
                               {(crewMembers as any[])
                                 .filter(cm => !assignments.some((a: any) => a.crewMemberId === cm.id))
                                 .map(crewMember => (
-                                  <SelectItem key={crewMember.id} value={crewMember.id}>
+                                  <SelectItem key={`${jobId}-${crewMember.id}`} value={crewMember.id}>
                                     {crewMember.name} - {crewMember.title}
                                   </SelectItem>
                                 ))}
