@@ -80,7 +80,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
 
   // Create workspace mutation
   const createWorkspaceMutation = useMutation({
-    mutationFn: async (data: WorkspaceInfo & { region: string }) => {
+    mutationFn: async (data: WorkspaceInfo) => {
       return apiRequest("POST", "/api/workspaces", data);
     },
     onSuccess: (workspace: Workspace) => {
@@ -135,12 +135,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
   });
 
   const handleStep1Submit = (data: WorkspaceInfo) => {
-    // Add required region field with default value
-    const workspaceData = {
-      ...data,
-      region: "us-east-1" // Default region
-    };
-    createWorkspaceMutation.mutate(workspaceData);
+    createWorkspaceMutation.mutate(data);
   };
 
   const handleStep2Submit = (data: InviteTeammates) => {
