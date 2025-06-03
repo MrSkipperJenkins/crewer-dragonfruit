@@ -43,23 +43,32 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusIcon, SearchIcon, Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PlusIcon, SearchIcon, Pencil, Trash2, ArrowUpDown } from "lucide-react";
 
 // Extend the insert schema for form validation
 const formSchema = insertJobSchema.extend({
   title: z.string().min(3, {
     message: "Title must be at least 3 characters.",
   }),
+  color: z.string().min(1, "Color is required"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+type SortField = 'title' | 'description';
+type SortDirection = 'asc' | 'desc';
 
 export default function Jobs() {
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<SortField>('title');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
   // Fetch jobs
   const { data: jobs = [], isLoading } = useQuery({
@@ -73,6 +82,18 @@ export default function Jobs() {
     defaultValues: {
       title: "",
       description: "",
+      color: "#6366f1",
+      workspaceId: currentWorkspace?.id || "",
+    },
+  });
+
+  // Initialize edit form
+  const editForm = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      color: "#6366f1",
       workspaceId: currentWorkspace?.id || "",
     },
   });
@@ -87,7 +108,7 @@ export default function Jobs() {
         title: "Success",
         description: "Job created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces', currentWorkspace?.id, 'jobs'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
       form.reset();
       setIsDialogOpen(false);
     },
@@ -99,8 +120,84 @@ export default function Jobs() {
       });
     },
   });
+
+  // Update job mutation
+  const updateJobMutation = useMutation({
+    mutationFn: async (data: FormValues & { id: string }) => {
+      const { id, ...jobData } = data;
+      const response = await apiRequest("PUT", `/api/jobs/${id}`, jobData);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Job updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+      editForm.reset();
+      setIsEditDialogOpen(false);
+      setEditingJob(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update job",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete job mutation
+  const deleteJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      return apiRequest("DELETE", `/api/jobs/${jobId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Job deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete job",
+        variant: "destructive",
+      });
+    },
+  });
   
-  // Form submission handler
+  // Handle edit job
+  const handleEditJob = (job: any) => {
+    setEditingJob(job);
+    editForm.reset({
+      title: job.title,
+      description: job.description || "",
+      color: job.color || "#6366f1",
+      workspaceId: currentWorkspace?.id || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle delete job
+  const handleDeleteJob = (jobId: string) => {
+    if (window.confirm("Are you sure you want to delete this job? This action cannot be undone.")) {
+      deleteJobMutation.mutate(jobId);
+    }
+  };
+
+  // Handle sorting
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Form submission handlers
   const onSubmit = (data: FormValues) => {
     if (!currentWorkspace?.id) {
       toast({
@@ -111,22 +208,37 @@ export default function Jobs() {
       return;
     }
     
-    // Add workspaceId to the data
     data.workspaceId = currentWorkspace.id;
-    
-    // Submit mutation
     createJobMutation.mutate(data);
   };
-  
-  // Filter jobs based on search query
-  const filteredJobs = jobs.filter((job: any) => {
-    if (!searchQuery) return true;
+
+  const onEditSubmit = (data: FormValues) => {
+    if (!editingJob || !currentWorkspace?.id) return;
     
-    return (
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (job.description && job.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  });
+    data.workspaceId = currentWorkspace.id;
+    updateJobMutation.mutate({ ...data, id: editingJob.id });
+  };
+  
+  // Filter and sort jobs
+  const filteredAndSortedJobs = ((jobs as any[]) || [])
+    .filter((job: any) => {
+      if (!searchQuery) return true;
+      
+      return (
+        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (job.description && job.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    })
+    .sort((a: any, b: any) => {
+      const aValue = a[sortField] || '';
+      const bValue = b[sortField] || '';
+      
+      if (sortDirection === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    });
 
   return (
     <div className="space-y-6">

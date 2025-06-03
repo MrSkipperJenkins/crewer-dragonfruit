@@ -61,6 +61,7 @@ export const jobs = pgTable("jobs", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
+  color: text("color").default("#6366f1"), // Color for job visualization
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
