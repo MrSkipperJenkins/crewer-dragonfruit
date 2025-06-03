@@ -286,8 +286,35 @@ export default function Jobs() {
                             <Textarea 
                               placeholder="Describe the responsibilities of this job role" 
                               className="resize-none" 
-                              {...field} 
+                              {...field}
+                              value={field.value || ""}
                             />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Color</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center space-x-2">
+                              <Input
+                                type="color"
+                                className="w-16 h-10 p-1 border-2"
+                                {...field}
+                              />
+                              <Input
+                                type="text"
+                                placeholder="#6366f1"
+                                className="flex-1"
+                                {...field}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -300,6 +327,90 @@ export default function Jobs() {
                       disabled={createJobMutation.isPending}
                     >
                       {createJobMutation.isPending ? "Saving..." : "Save Job"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Job Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[500px]">
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(onEditSubmit)}>
+                  <DialogHeader>
+                    <DialogTitle>Edit Job Role</DialogTitle>
+                    <DialogDescription>
+                      Update the job role details.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <FormField
+                      control={editForm.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Job Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. Camera Operator" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={editForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Describe the responsibilities of this job role" 
+                              className="resize-none" 
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Color</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center space-x-2">
+                              <Input
+                                type="color"
+                                className="w-16 h-10 p-1 border-2"
+                                {...field}
+                              />
+                              <Input
+                                type="text"
+                                placeholder="#6366f1"
+                                className="flex-1"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button 
+                      type="submit" 
+                      disabled={updateJobMutation.isPending}
+                    >
+                      {updateJobMutation.isPending ? "Updating..." : "Update Job"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -323,15 +434,34 @@ export default function Jobs() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[250px]">Job Title</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead className="w-[250px]">
+                    <Button 
+                      variant="ghost" 
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                      onClick={() => handleSort('title')}
+                    >
+                      Job Title
+                      <ArrowUpDown className="ml-1 h-3 w-3" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button 
+                      variant="ghost" 
+                      className="h-auto p-0 font-semibold hover:bg-transparent"
+                      onClick={() => handleSort('description')}
+                    >
+                      Description
+                      <ArrowUpDown className="ml-1 h-3 w-3" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-[80px]">Color</TableHead>
                   <TableHead className="text-right w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8">
+                    <TableCell colSpan={4} className="text-center py-8">
                       <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                       </div>
@@ -339,26 +469,46 @@ export default function Jobs() {
                   </TableRow>
                 )}
 
-                {!isLoading && filteredJobs.length === 0 && (
+                {!isLoading && filteredAndSortedJobs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                       No jobs found
                     </TableCell>
                   </TableRow>
                 )}
 
-                {filteredJobs.map((job: any) => (
+                {filteredAndSortedJobs.map((job: any) => (
                   <TableRow key={job.id}>
                     <TableCell className="font-medium">{job.title}</TableCell>
                     <TableCell className="max-w-md truncate">
                       {job.description || "No description provided"}
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: job.color || "#6366f1" }}
+                        />
+                        <Badge variant="outline" style={{ borderColor: job.color || "#6366f1" }}>
+                          {job.color || "#6366f1"}
+                        </Badge>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="icon">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleEditJob(job)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleDeleteJob(job.id)}
+                          disabled={deleteJobMutation.isPending}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
