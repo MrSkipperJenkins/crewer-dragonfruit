@@ -33,7 +33,7 @@ interface WorkspaceWizardProps {
 
 export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [workspaceData, setWorkspaceData] = useState<Workspace | null>(null);
+  const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null);
   const [inviteLink, setInviteLink] = useState<string>("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -78,18 +78,38 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
     }
   });
 
-  // Create workspace mutation
+  // Create workspace mutation (now called in Step 2)
   const createWorkspaceMutation = useMutation({
-    mutationFn: async (data: WorkspaceInfo) => {
-      return apiRequest("POST", "/api/workspaces", data);
+    mutationFn: async (data: { workspaceInfo: WorkspaceInfo; emails: string[] }) => {
+      const workspaceResponse = await apiRequest("POST", "/api/workspaces", data.workspaceInfo);
+      const workspace = await workspaceResponse.json();
+      
+      // Send invites if there are emails
+      if (data.emails.length > 0 && data.emails[0].trim()) {
+        try {
+          const inviteResponse = await apiRequest("POST", `/api/workspaces/${workspace.slug}/invites`, {
+            emails: data.emails.filter(email => email.trim()),
+            workspaceId: workspace.id
+          });
+          const inviteData = await inviteResponse.json();
+          if (inviteData?.inviteLink) {
+            setInviteLink(inviteData.inviteLink);
+          }
+        } catch (error) {
+          // Continue even if invites fail
+          console.log("Invites failed, but workspace created successfully");
+        }
+      }
+      
+      return workspace;
     },
     onSuccess: (workspace: Workspace) => {
-      setWorkspaceData(workspace);
-      setCurrentStep(2);
       toast({
-        title: "Workspace created!",
-        description: "Now let's invite your teammates."
+        title: "Success!",
+        description: "Your workspace is ready!"
       });
+      // Redirect to the new workspace
+      setLocation(`/workspaces/${workspace.slug}/dashboard`);
     },
     onError: () => {
       toast({
@@ -100,46 +120,17 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
     }
   });
 
-  // Send invites mutation
-  const sendInvitesMutation = useMutation({
-    mutationFn: async (emails: string[]) => {
-      if (!workspaceData) throw new Error("No workspace data");
-      return apiRequest("POST", `/api/workspaces/${workspaceData.slug}/invites`, {
-        emails: emails.filter(email => email.trim()),
-        workspaceId: workspaceData.id
-      });
-    },
-    onSuccess: (response: any) => {
-      if (response?.inviteLink) {
-        setInviteLink(response.inviteLink);
-      }
-      toast({
-        title: "Success!",
-        description: "Your workspace is ready!"
-      });
-      // Redirect to the new workspace
-      if (workspaceData) {
-        setLocation(`/workspaces/${workspaceData.slug}/dashboard`);
-      }
-    },
-    onError: () => {
-      toast({
-        title: "Note",
-        description: "Workspace created successfully. You can invite teammates later.",
-        variant: "default"
-      });
-      if (workspaceData) {
-        setLocation(`/workspaces/${workspaceData.slug}/dashboard`);
-      }
-    }
-  });
-
   const handleStep1Submit = (data: WorkspaceInfo) => {
-    createWorkspaceMutation.mutate(data);
+    setWorkspaceInfo(data);
+    setCurrentStep(2);
   };
 
   const handleStep2Submit = (data: InviteTeammates) => {
-    sendInvitesMutation.mutate(data.emails);
+    if (!workspaceInfo) return;
+    createWorkspaceMutation.mutate({
+      workspaceInfo,
+      emails: data.emails
+    });
   };
 
   const addEmailField = () => {
@@ -267,10 +258,10 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
 
                 <Button
                   type="submit"
-                  disabled={!isStep1Valid || createWorkspaceMutation.isPending}
+                  disabled={!isStep1Valid}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
                 >
-                  {createWorkspaceMutation.isPending ? "Creating..." : "Create workspace"}
+                  Continue
                 </Button>
               </form>
             </>
@@ -354,10 +345,10 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                     
                     <Button
                       type="submit"
-                      disabled={sendInvitesMutation.isPending}
+                      disabled={createWorkspaceMutation.isPending}
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      {sendInvitesMutation.isPending ? "Creating..." : "Create workspace"}
+                      {createWorkspaceMutation.isPending ? "Creating..." : "Create workspace"}
                     </Button>
                   </div>
                 </div>
