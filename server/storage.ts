@@ -1326,24 +1326,33 @@ async function createEnhancedDemoData() {
     const allCrewMembers = await db.select().from(crewMembers).where(eq(crewMembers.workspaceId, workspace.id));
     
     // Create some crew assignments linked to required jobs
+    // First, get all existing assignments to avoid duplicates
+    const existingAssignments = await db.select().from(crewAssignments).where(eq(crewAssignments.workspaceId, workspace.id));
+    const assignedRequiredJobIds = new Set(existingAssignments.map(assignment => assignment.requiredJobId).filter(Boolean));
+    
     const crewAssignmentsData: any[] = [];
     
     for (let showIndex = 0; showIndex < allShows.length && showIndex < allCrewMembers.length; showIndex++) {
       const show = allShows[showIndex];
       const crewMember = allCrewMembers[showIndex % allCrewMembers.length];
       
-      // Get required jobs for this show
-      const showRequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show.id)).limit(1);
+      // Get required jobs for this show that are NOT already assigned
+      const showRequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show.id));
+      const unassignedRequiredJobs = showRequiredJobs.filter(rj => !assignedRequiredJobIds.has(rj.id));
       
-      if (showRequiredJobs.length > 0) {
+      if (unassignedRequiredJobs.length > 0) {
+        const requiredJob = unassignedRequiredJobs[0];
         crewAssignmentsData.push({
           showId: show.id,
           crewMemberId: crewMember.id,
           jobId: cameraJob.id,
-          requiredJobId: showRequiredJobs[0].id,
+          requiredJobId: requiredJob.id,
           status: 'confirmed',
           workspaceId: workspace.id
         });
+        
+        // Mark this required job as assigned to avoid double-assignment in this loop
+        assignedRequiredJobIds.add(requiredJob.id);
       }
     }
     
