@@ -4,6 +4,9 @@ export interface ShowStaffingStatus {
   assigned: number;
   required: number;
   isFullyStaffed: boolean;
+  pending: number;
+  declined: number;
+  confirmed: number;
 }
 
 export function useShowStaffing(showIds: string[]) {
@@ -57,12 +60,22 @@ export function useShowStaffing(showIds: string[]) {
     const showCrewAssignments = crewAssignmentQueries.data?.[showId] || [];
     
     const totalRequired = showRequiredJobs.length;
-    const totalAssigned = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
+    
+    // Count assignments by status
+    const confirmed = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
+    const pending = showCrewAssignments.filter((ca: any) => ca.status === 'pending').length;
+    const declined = showCrewAssignments.filter((ca: any) => ca.status === 'declined').length;
+    
+    // Total assigned is any crew member assigned regardless of status
+    const totalAssigned = showCrewAssignments.length;
     
     return {
       assigned: totalAssigned,
       required: totalRequired,
-      isFullyStaffed: totalAssigned >= totalRequired
+      isFullyStaffed: confirmed >= totalRequired,
+      pending,
+      declined,
+      confirmed
     };
   };
 

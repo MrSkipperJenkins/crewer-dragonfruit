@@ -306,11 +306,29 @@ export default function ShowsListView() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 h-auto p-1"
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 h-auto p-1 text-left"
                           onClick={(e) => handleCrewStaffingClick(e, show.id)}
                         >
                           <Users className="h-4 w-4 mr-1" />
-                          {staffingStatus.assigned} of {staffingStatus.required} Crew Members Assigned
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm font-medium">
+                              {staffingStatus.assigned} of {staffingStatus.required} Jobs Assigned
+                            </span>
+                            {(staffingStatus.pending > 0 || staffingStatus.declined > 0) && (
+                              <div className="text-xs space-x-2">
+                                {staffingStatus.pending > 0 && (
+                                  <span className="text-yellow-600 dark:text-yellow-400">
+                                    {staffingStatus.pending} pending
+                                  </span>
+                                )}
+                                {staffingStatus.declined > 0 && (
+                                  <span className="text-red-600 dark:text-red-400">
+                                    {staffingStatus.declined} declined
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </Button>
                       </TableCell>
                       <TableCell className="text-right">
