@@ -265,6 +265,10 @@ export default function EditShow() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/required-jobs`] });
+      // Invalidate shows list and staffing data
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/required-jobs-batch`] });
     },
   });
 
@@ -276,6 +280,10 @@ export default function EditShow() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/required-jobs`] });
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
+      // Invalidate shows list and staffing data
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/required-jobs-batch`] });
     },
   });
 
@@ -364,6 +372,12 @@ export default function EditShow() {
       if (hasUnsavedChanges) {
         await saveCrewAssignmentChanges();
       }
+      
+      // Invalidate shows list and related queries
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${show?.workspaceId}/shows`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/required-jobs-batch`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${show?.workspaceId}/show-category-assignments`] });
       
       toast({
         title: "Success",
