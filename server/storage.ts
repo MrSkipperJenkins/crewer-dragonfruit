@@ -933,6 +933,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteRequiredJob(id: string): Promise<boolean> {
+    // First delete any crew assignments for this required job
+    await db.delete(crewAssignments).where(eq(crewAssignments.requiredJobId, id));
+    
+    // Then delete the required job
     const result = await db.delete(requiredJobs).where(eq(requiredJobs.id, id));
     return (result.rowCount || 0) > 0;
   }
