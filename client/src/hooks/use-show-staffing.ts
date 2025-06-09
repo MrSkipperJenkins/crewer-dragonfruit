@@ -57,8 +57,7 @@ export function useShowStaffing(showIds: string[]) {
     const showCrewAssignments = crewAssignmentQueries.data?.[showId] || [];
     
     const totalRequired = showRequiredJobs.length;
-    // Count all crew assignments (regardless of status) that have a crew member assigned
-    const totalAssigned = showCrewAssignments.filter((ca: any) => ca.crewMemberId).length;
+    const totalAssigned = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
     
     return {
       assigned: totalAssigned,
