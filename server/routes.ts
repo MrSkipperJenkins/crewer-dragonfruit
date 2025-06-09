@@ -553,7 +553,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ message: "Failed to create required job" });
+      console.error("Failed to delete required job:", error);
+      res.status(500).json({ message: "Failed to delete required job" });
     }
   });
 
