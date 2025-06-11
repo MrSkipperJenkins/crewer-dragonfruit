@@ -170,15 +170,20 @@ export default function EditShow() {
     }
   }, [show, form]);
 
-  // Initialize selected category (only when show first loads)
+  // Initialize selected category and update when assignments change
   useEffect(() => {
-    if (show && categoryAssignments && selectedCategory === "") {
+    if (show && categoryAssignments) {
       const currentAssignment = (categoryAssignments as any[])?.find(
         (ca: any) => ca.showId === show.id
       );
-      setSelectedCategory(currentAssignment?.categoryId || "none");
+      const assignedCategoryId = currentAssignment?.categoryId || "none";
+      
+      // Only update if the current selection is different from what's in the database
+      if (selectedCategory !== assignedCategoryId) {
+        setSelectedCategory(assignedCategoryId);
+      }
     }
-  }, [show, categoryAssignments]);
+  }, [show, categoryAssignments, selectedCategory]);
 
   // Update selected jobs and resources when data loads
   useEffect(() => {
@@ -378,6 +383,9 @@ export default function EditShow() {
       queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
       queryClient.invalidateQueries({ queryKey: [`/api/required-jobs-batch`] });
       queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${show?.workspaceId}/show-category-assignments`] });
+      
+      // Also invalidate the show data to refresh category assignment display
+      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}`] });
       
       toast({
         title: "Success",

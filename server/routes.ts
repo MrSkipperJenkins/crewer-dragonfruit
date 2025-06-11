@@ -513,25 +513,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { showId } = req.params;
       const { categoryId, workspaceId } = req.body;
       
+      console.log(`Category assignment upsert request: showId=${showId}, categoryId=${categoryId}, workspaceId=${workspaceId}`);
+      
       if (!categoryId || !workspaceId) {
         return res.status(400).json({ message: "Missing required fields: categoryId, workspaceId" });
       }
 
       // Check if assignment already exists
       const existingAssignments = await storage.getShowCategoryAssignmentsByShow(showId);
+      console.log('Existing assignments for show:', existingAssignments);
       const existingAssignment = existingAssignments.find(a => a.showId === showId);
 
       let assignment;
       if (existingAssignment) {
+        console.log('Updating existing assignment:', existingAssignment.id);
         // Update existing assignment
         assignment = await storage.updateShowCategoryAssignment(existingAssignment.id, { categoryId });
+        console.log('Updated assignment result:', assignment);
       } else {
+        console.log('Creating new assignment');
         // Create new assignment
         assignment = await storage.createShowCategoryAssignment({
           showId,
           categoryId,
           workspaceId
         });
+        console.log('Created assignment result:', assignment);
       }
 
       res.json(assignment);
