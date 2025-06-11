@@ -622,7 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(assignment);
     } catch (error) {
       console.error("Error creating crew assignment:", error);
-      res.status(500).json({ message: "Failed to create crew assignment", error: error.message });
+      res.status(500).json({ message: "Failed to create crew assignment", error: error instanceof Error ? error.message : String(error) });
     }
   });
 

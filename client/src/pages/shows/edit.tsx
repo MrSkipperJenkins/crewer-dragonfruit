@@ -429,13 +429,20 @@ export default function EditShow() {
 
   const saveCrewAssignmentChanges = async () => {
     try {
-      // Delete all existing assignments for this show
-      for (const assignment of crewAssignments) {
+      // Delete all existing assignments for this show first
+      const existingAssignments = crewAssignments || [];
+      for (const assignment of existingAssignments) {
         await apiRequest("DELETE", `/api/crew-assignments/${assignment.id}`);
       }
 
-      // Create new assignments from local state (excluding temporary ones)
-      for (const assignment of localCrewAssignments) {
+      // Create new assignments from local state, ensuring only one assignment per required job
+      const uniqueAssignments = localCrewAssignments.reduce((acc, assignment) => {
+        // Only keep the latest assignment for each required job
+        acc[assignment.requiredJobId] = assignment;
+        return acc;
+      }, {} as Record<string, typeof localCrewAssignments[0]>);
+
+      for (const assignment of Object.values(uniqueAssignments)) {
         await apiRequest("POST", "/api/crew-assignments", {
           showId: assignment.showId,
           crewMemberId: assignment.crewMemberId,
@@ -458,6 +465,7 @@ export default function EditShow() {
         description: "Crew assignments saved successfully",
       });
     } catch (error) {
+      console.error("Save crew assignments error:", error);
       toast({
         title: "Error",
         description: "Failed to save crew assignments",
