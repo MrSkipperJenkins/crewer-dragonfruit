@@ -109,7 +109,7 @@ export function Breadcrumb() {
               {crumb.label}
             </button>
           ) : (
-            <span className={index === breadcrumbs.length - 1 ? "font-medium text-gray-900 dark:text-gray-100" : ""}>
+            <span className="font-medium text-gray-900 dark:text-gray-100 text-[15px]">
               {crumb.label}
             </span>
           )}
