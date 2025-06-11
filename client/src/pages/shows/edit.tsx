@@ -396,26 +396,13 @@ export default function EditShow() {
   };
 
   const saveCategoryAssignment = async () => {
-    if (!show) return;
+    if (!show || !selectedCategory) return;
     
-    // Check if assignment already exists
-    const existingAssignment = (categoryAssignments as any[])?.find(
-      (ca: any) => ca.showId === show.id
-    );
-    
-    if (existingAssignment) {
-      // Update existing assignment
-      await apiRequest("PATCH", `/api/show-category-assignments/${existingAssignment.id}`, {
-        categoryId: selectedCategory
-      });
-    } else {
-      // Create new assignment
-      await apiRequest("POST", "/api/show-category-assignments", {
-        showId: show.id,
-        categoryId: selectedCategory,
-        workspaceId: show.workspaceId
-      });
-    }
+    // Use the new upsert endpoint that handles create/update logic on the backend
+    await apiRequest("PUT", `/api/shows/${show.id}/category-assignment`, {
+      categoryId: selectedCategory,
+      workspaceId: show.workspaceId
+    });
   };
 
   const removeCategoryAssignment = async () => {

@@ -117,6 +117,7 @@ export interface IStorage {
   getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]>;
   getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]>;
   createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment>;
+  updateShowCategoryAssignment(id: string, assignment: Partial<InsertShowCategoryAssignment>): Promise<ShowCategoryAssignment | undefined>;
   deleteShowCategoryAssignment(id: string): Promise<boolean>;
 
   // Required Job CRUD

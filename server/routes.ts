@@ -508,6 +508,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/shows/:showId/category-assignment", async (req, res) => {
+    try {
+      const { showId } = req.params;
+      const { categoryId, workspaceId } = req.body;
+      
+      if (!categoryId || !workspaceId) {
+        return res.status(400).json({ message: "Missing required fields: categoryId, workspaceId" });
+      }
+
+      // Check if assignment already exists
+      const existingAssignments = await storage.getShowCategoryAssignmentsByShow(showId);
+      const existingAssignment = existingAssignments.find(a => a.showId === showId);
+
+      let assignment;
+      if (existingAssignment) {
+        // Update existing assignment
+        assignment = await storage.updateShowCategoryAssignment(existingAssignment.id, { categoryId });
+      } else {
+        // Create new assignment
+        assignment = await storage.createShowCategoryAssignment({
+          showId,
+          categoryId,
+          workspaceId
+        });
+      }
+
+      res.json(assignment);
+    } catch (error) {
+      console.error("Failed to upsert category assignment:", error);
+      res.status(500).json({ message: "Failed to update category assignment" });
+    }
+  });
+
   app.patch("/api/show-category-assignments/:id", async (req, res) => {
     try {
       const validation = insertShowCategoryAssignmentSchema.partial().safeParse(req.body);
