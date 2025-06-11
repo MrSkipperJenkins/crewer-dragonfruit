@@ -81,6 +81,13 @@ export default function EditShow() {
   const [localCrewAssignments, setLocalCrewAssignments] = useState<any[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [categoryInitialized, setCategoryInitialized] = useState(false);
+
+  // Debug wrapper for setSelectedCategory
+  const updateSelectedCategory = (value: string) => {
+    console.log(`Category selection changing from "${selectedCategory}" to "${value}"`);
+    setSelectedCategory(value);
+  };
 
   const showId = params.id;
 
@@ -170,20 +177,18 @@ export default function EditShow() {
     }
   }, [show, form]);
 
-  // Initialize selected category and update when assignments change
+  // Initialize selected category when show and assignments first load
   useEffect(() => {
-    if (show && categoryAssignments) {
-      const currentAssignment = (categoryAssignments as any[])?.find(
+    if (show && Array.isArray(categoryAssignments) && !categoryInitialized) {
+      const currentAssignment = categoryAssignments.find(
         (ca: any) => ca.showId === show.id
       );
       const assignedCategoryId = currentAssignment?.categoryId || "none";
       
-      // Only update if the current selection is different from what's in the database
-      if (selectedCategory !== assignedCategoryId) {
-        setSelectedCategory(assignedCategoryId);
-      }
+      updateSelectedCategory(assignedCategoryId);
+      setCategoryInitialized(true);
     }
-  }, [show, categoryAssignments, selectedCategory]);
+  }, [show, categoryAssignments, categoryInitialized]);
 
   // Update selected jobs and resources when data loads
   useEffect(() => {
@@ -358,7 +363,8 @@ export default function EditShow() {
   };
 
   const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategory(categoryId);
+    console.log(`User manually changing category to: ${categoryId}`);
+    updateSelectedCategory(categoryId);
   };
 
   const onSubmit = async (data: EditShowFormValues) => {
