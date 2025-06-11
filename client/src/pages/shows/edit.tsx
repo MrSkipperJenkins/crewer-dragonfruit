@@ -428,20 +428,14 @@ export default function EditShow() {
   };
 
   const saveCrewAssignmentChanges = async () => {
-    // Delete all existing assignments for this show
-    for (const assignment of crewAssignments) {
-      try {
+    try {
+      // Delete all existing assignments for this show
+      for (const assignment of crewAssignments) {
         await apiRequest("DELETE", `/api/crew-assignments/${assignment.id}`);
-      } catch (error) {
-        console.error("Failed to delete assignment:", error);
       }
-    }
 
-    // Create new assignments from local state
-    for (const assignment of localCrewAssignments) {
-      if (!assignment.isLocal) continue; // Skip existing assignments
-      
-      try {
+      // Create new assignments from local state (excluding temporary ones)
+      for (const assignment of localCrewAssignments) {
         await apiRequest("POST", "/api/crew-assignments", {
           showId: assignment.showId,
           crewMemberId: assignment.crewMemberId,
@@ -450,14 +444,26 @@ export default function EditShow() {
           status: assignment.status,
           workspaceId: assignment.workspaceId,
         });
-      } catch (error) {
-        console.error("Failed to create assignment:", error);
       }
-    }
 
-    // Refresh crew assignments data
-    queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
-    setHasUnsavedChanges(false);
+      // Refresh crew assignments data and shows list
+      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
+      
+      setHasUnsavedChanges(false);
+      
+      toast({
+        title: "Success",
+        description: "Crew assignments saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save crew assignments",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddJob = (jobId: string) => {
@@ -759,20 +765,32 @@ export default function EditShow() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-lg font-medium">Required Jobs & Crew Assignments</h3>
-                  <Select onValueChange={handleAddJob}>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder="Add required job" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(jobs as any[])
-                        .filter(job => !selectedJobs.includes(job.id))
-                        .map(job => (
-                          <SelectItem key={job.id} value={job.id}>
-                            {job.title}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-3">
+                    {hasUnsavedChanges && (
+                      <Button
+                        onClick={saveCrewAssignmentChanges}
+                        disabled={!hasUnsavedChanges}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Changes
+                      </Button>
+                    )}
+                    <Select onValueChange={handleAddJob}>
+                      <SelectTrigger className="w-64">
+                        <SelectValue placeholder="Add required job" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(jobs as any[])
+                          .filter(job => !selectedJobs.includes(job.id))
+                          .map(job => (
+                            <SelectItem key={job.id} value={job.id}>
+                              {job.title}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 
                 {hasUnsavedChanges && (
@@ -874,7 +892,15 @@ export default function EditShow() {
                                       <SelectValue placeholder="Assign crew member" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {(crewMembers as any[]).map(crewMember => (
+                                      {(crewMembers as any[])
+                                        .filter(crewMember => {
+                                          // Filter out crew members already assigned to other jobs in this show
+                                          const isAlreadyAssigned = localCrewAssignments.some(ca => 
+                                            ca.crewMemberId === crewMember.id && ca.requiredJobId !== requiredJob.id
+                                          );
+                                          return !isAlreadyAssigned;
+                                        })
+                                        .map(crewMember => (
                                         <SelectItem key={`req-${requiredJob.id}-crew-${crewMember.id}`} value={crewMember.id}>
                                           <div className="flex items-center gap-2">
                                             <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
