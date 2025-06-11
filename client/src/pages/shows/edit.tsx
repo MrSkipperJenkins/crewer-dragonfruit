@@ -198,8 +198,8 @@ export default function EditShow() {
       return apiRequest("PUT", `/api/shows/${showId}`, {
         ...showData,
         label: label === "none" ? null : label,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
+        startTime: startDateTime,
+        endTime: endDateTime,
       });
     },
     onSuccess: () => {

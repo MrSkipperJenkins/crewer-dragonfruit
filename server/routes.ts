@@ -271,20 +271,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/shows/:id", async (req, res) => {
     try {
-      console.log("PUT /api/shows/:id - Request body:", JSON.stringify(req.body, null, 2));
       const validation = insertShowSchema.partial().safeParse(req.body);
       if (!validation.success) {
-        console.log("Validation failed:", validation.error.errors);
         return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
       }
-      console.log("Validation passed, data:", validation.data);
       const show = await storage.updateShow(req.params.id, validation.data);
       if (!show) {
         return res.status(404).json({ message: "Show not found" });
       }
       res.json(show);
     } catch (error) {
-      console.error("PUT /api/shows/:id error:", error);
       res.status(500).json({ message: "Failed to update show" });
     }
   });
