@@ -383,6 +383,9 @@ export default function EditShow() {
         title: "Success",
         description: "Show updated successfully",
       });
+      
+      // Navigate back to the list view after successful save
+      navigate("/shows/list");
     } catch (error) {
       toast({
         title: "Error",
