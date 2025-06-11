@@ -123,7 +123,7 @@ export function WorkspaceSidebar({ currentWorkspace, className }: WorkspaceSideb
                     onClick={() => toggleSection(item.title)}
                     className="w-full justify-between px-3 py-2 h-9 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                   >
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </div>
