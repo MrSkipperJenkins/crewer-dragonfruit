@@ -362,6 +362,7 @@ export async function seedDemoData(): Promise<void> {
       notes: "Live broadcast - critical crew requirements",
       status: "scheduled",
       color: "#ff6b6b",
+      label: "News",
       workspaceId: workspace1.id,
     },
     {
@@ -373,6 +374,7 @@ export async function seedDemoData(): Promise<void> {
       notes: "Full day production - all departments required",
       status: "draft",
       color: "#4ecdc4",
+      label: "Drama",
       workspaceId: workspace1.id,
     },
     {
@@ -384,6 +386,7 @@ export async function seedDemoData(): Promise<void> {
       notes: "Outdoor location shoot",
       status: "scheduled",
       color: "#45b7d1",
+      label: "Documentary",
       workspaceId: workspace1.id,
     },
     {
@@ -395,17 +398,10 @@ export async function seedDemoData(): Promise<void> {
       notes: "Live audience - security required",
       status: "scheduled",
       color: "#f39c12",
+      label: "Taper",
       workspaceId: workspace1.id,
     }
   ]).returning();
-
-  // Create show category assignments
-  await db.insert(showCategoryAssignments).values([
-    { showId: show1.id, categoryId: category1.id, workspaceId: workspace1.id },
-    { showId: show2.id, categoryId: category2.id, workspaceId: workspace1.id },
-    { showId: show3.id, categoryId: category3.id, workspaceId: workspace1.id },
-    { showId: show4.id, categoryId: category2.id, workspaceId: workspace1.id },
-  ]);
 
   // Create required jobs for shows
   await db.insert(requiredJobs).values([

@@ -80,14 +80,6 @@ export default function EditShow() {
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [localCrewAssignments, setLocalCrewAssignments] = useState<any[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [categoryInitialized, setCategoryInitialized] = useState(false);
-
-  // Debug wrapper for setSelectedCategory
-  const updateSelectedCategory = (value: string) => {
-    console.log(`Category selection changing from "${selectedCategory}" to "${value}"`);
-    setSelectedCategory(value);
-  };
 
   const showId = params.id;
 
@@ -113,15 +105,8 @@ export default function EditShow() {
     enabled: !!currentWorkspace?.id,
   });
 
-  const { data: categories = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
-    enabled: !!currentWorkspace?.id,
-  });
-
-  const { data: categoryAssignments = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
-    enabled: !!currentWorkspace?.id,
-  });
+  // Labels are now handled directly in show data - no separate API calls needed
+  const SUGGESTED_LABELS = ["News", "Drama", "Documentary", "Taper", "External Hit", "Rehearsal"];
 
   // Fetch show-specific data
   const { data: requiredJobs = [] } = useQuery({

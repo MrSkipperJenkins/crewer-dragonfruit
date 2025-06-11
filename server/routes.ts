@@ -372,24 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Show Categories
-  app.get("/api/workspaces/:workspaceId/show-categories", async (req, res) => {
-    const categories = await storage.getShowCategories(req.params.workspaceId);
-    res.json(categories);
-  });
-
-  app.post("/api/show-categories", async (req, res) => {
-    try {
-      const validation = insertShowCategorySchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ message: "Invalid show category data", errors: validation.error.errors });
-      }
-      const category = await storage.createShowCategory(validation.data);
-      res.status(201).json(category);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create show category" });
-    }
-  });
+  // Labels are now handled directly in show data - no separate category endpoints needed
 
   // Shows
   app.get("/api/workspaces/:workspaceId/shows", async (req, res) => {
