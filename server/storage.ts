@@ -163,9 +163,7 @@ export async function clearDemoData(): Promise<void> {
   await db.delete(crewAssignments);
   await db.delete(showResources);
   await db.delete(requiredJobs);
-  await db.delete(showCategoryAssignments);
   await db.delete(shows);
-  await db.delete(showCategories);
   await db.delete(resources);
   await db.delete(crewMemberJobs);
   await db.delete(jobs);
@@ -345,12 +343,7 @@ export async function seedDemoData(): Promise<void> {
 
   const [resource1, resource2, resource3, resource4] = workspace1Resources;
 
-  // Create show categories
-  const [category1, category2, category3] = await db.insert(showCategories).values([
-    { name: "News", color: "#ff6b6b", workspaceId: workspace1.id },
-    { name: "Drama", color: "#4ecdc4", workspaceId: workspace1.id },
-    { name: "Documentary", color: "#45b7d1", workspaceId: workspace1.id },
-  ]).returning();
+  // Shows will now use simple labels instead of categories
 
   // Create shows
   const today = new Date();
@@ -791,34 +784,7 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
-  // Show Category CRUD
-  async getShowCategories(workspaceId: string): Promise<ShowCategory[]> {
-    return await db.select().from(showCategories).where(eq(showCategories.workspaceId, workspaceId));
-  }
 
-  async getShowCategory(id: string): Promise<ShowCategory | undefined> {
-    const [showCategory] = await db.select().from(showCategories).where(eq(showCategories.id, id));
-    return showCategory || undefined;
-  }
-
-  async createShowCategory(showCategory: InsertShowCategory): Promise<ShowCategory> {
-    const [newShowCategory] = await db.insert(showCategories).values(showCategory).returning();
-    return newShowCategory;
-  }
-
-  async updateShowCategory(id: string, showCategory: Partial<InsertShowCategory>): Promise<ShowCategory | undefined> {
-    const [updatedShowCategory] = await db
-      .update(showCategories)
-      .set(showCategory)
-      .where(eq(showCategories.id, id))
-      .returning();
-    return updatedShowCategory || undefined;
-  }
-
-  async deleteShowCategory(id: string): Promise<boolean> {
-    const result = await db.delete(showCategories).where(eq(showCategories.id, id));
-    return (result.rowCount || 0) > 0;
-  }
 
   // Show CRUD
   async getShows(workspaceId: string): Promise<Show[]> {
@@ -867,33 +833,7 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
-  // Show Category Assignment CRUD
-  async getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]> {
-    return await db.select().from(showCategoryAssignments).where(eq(showCategoryAssignments.workspaceId, workspaceId));
-  }
 
-  async getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]> {
-    return await db.select().from(showCategoryAssignments).where(eq(showCategoryAssignments.showId, showId));
-  }
-
-  async createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment> {
-    const [newAssignment] = await db.insert(showCategoryAssignments).values(assignment).returning();
-    return newAssignment;
-  }
-
-  async updateShowCategoryAssignment(id: string, assignment: Partial<InsertShowCategoryAssignment>): Promise<ShowCategoryAssignment | undefined> {
-    const [updatedAssignment] = await db
-      .update(showCategoryAssignments)
-      .set(assignment)
-      .where(eq(showCategoryAssignments.id, id))
-      .returning();
-    return updatedAssignment || undefined;
-  }
-
-  async deleteShowCategoryAssignment(id: string): Promise<boolean> {
-    const result = await db.delete(showCategoryAssignments).where(eq(showCategoryAssignments.id, id));
-    return (result.rowCount || 0) > 0;
-  }
 
   // Required Job CRUD
   async getRequiredJobs(workspaceId: string): Promise<RequiredJob[]> {
@@ -1143,13 +1083,11 @@ async function createEnhancedDemoData() {
     await db.delete(crewAssignments);
     await db.delete(showResources);
     await db.delete(requiredJobs);
-    await db.delete(showCategoryAssignments);
     await db.delete(crewMemberJobs); // Delete this before crew members
     await db.delete(shows);
     await db.delete(crewMembers);
     await db.delete(resources);
     await db.delete(jobs);
-    await db.delete(showCategories);
     await db.delete(users);
     await db.delete(workspaces);
     
