@@ -157,7 +157,7 @@ export default function EditShow() {
         endTime: format(endDate, "HH:mm"),
         status: show.status,
         color: show.color || "#2094f3",
-        label: show.label || "",
+        label: show.label || "none",
         workspaceId: show.workspaceId,
       });
     }
@@ -191,12 +191,13 @@ export default function EditShow() {
   // Update show mutation
   const updateShowMutation = useMutation({
     mutationFn: async (data: EditShowFormValues) => {
-      const { startDate, startTime, endDate, endTime, ...showData } = data;
+      const { startDate, startTime, endDate, endTime, label, ...showData } = data;
       const startDateTime = new Date(`${startDate}T${startTime}`);
       const endDateTime = new Date(`${endDate}T${endTime}`);
       
       return apiRequest("PUT", `/api/shows/${showId}`, {
         ...showData,
+        label: label === "none" ? null : label,
         startTime: startDateTime.toISOString(),
         endTime: endDateTime.toISOString(),
       });
@@ -582,7 +583,7 @@ export default function EditShow() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No Label</SelectItem>
+                          <SelectItem value="none">No Label</SelectItem>
                           {SUGGESTED_LABELS.map(label => (
                             <SelectItem key={label} value={label}>
                               {label}

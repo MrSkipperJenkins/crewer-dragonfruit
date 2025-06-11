@@ -26,6 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import {
   Tabs,
   TabsContent,
@@ -151,7 +152,7 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <FormLabel>Theme</FormLabel>
+                <Label>Theme</Label>
                 <div className="flex space-x-2">
                   <Button
                     variant={theme === "light" ? "default" : "outline"}
