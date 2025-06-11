@@ -34,6 +34,11 @@ export function Breadcrumb() {
       });
     }
 
+    // Debug logging
+    console.log('Current location:', location);
+    console.log('Show ID:', showId);
+    console.log('Show data:', show);
+
     if (location === "/dashboard") {
       breadcrumbs.push({ label: "Dashboard" });
     } else if (location.startsWith("/shows")) {
@@ -95,7 +100,7 @@ export function Breadcrumb() {
 
   const breadcrumbs = generateBreadcrumbs();
 
-  if (breadcrumbs.length <= 1) {
+  if (breadcrumbs.length === 0) {
     return null;
   }
 
