@@ -32,14 +32,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -48,9 +40,7 @@ import {
   PlusIcon, 
   MoonIcon, 
   SunIcon, 
-  MonitorIcon,
-  Pencil,
-  Trash2
+  MonitorIcon
 } from "lucide-react";
 
 // Workspace form schema
@@ -75,8 +65,6 @@ export default function Settings() {
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("general");
   
-  // Categories removed - shows now use simple labels
-  
   // Workspace form
   const workspaceForm = useForm<WorkspaceFormValues>({
     resolver: zodResolver(workspaceFormSchema),
@@ -84,8 +72,6 @@ export default function Settings() {
       name: currentWorkspace?.name || "",
     },
   });
-  
-  // Category mutations removed - shows now use simple labels
   
   // Update workspace mutation
   const updateWorkspaceMutation = useMutation({
@@ -108,21 +94,19 @@ export default function Settings() {
       });
     },
   });
-  
+
   // Create workspace mutation
   const createWorkspaceMutation = useMutation({
     mutationFn: async (data: WorkspaceFormValues) => {
       return apiRequest("POST", "/api/workspaces", data);
     },
-    onSuccess: (response) => {
-      response.json().then((workspace) => {
-        toast({
-          title: "Success",
-          description: "Workspace created successfully",
-        });
-        queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
-        // Workspace will be automatically selected by URL routing
+    onSuccess: (newWorkspace) => {
+      toast({
+        title: "Success",
+        description: "Workspace created successfully",
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
+      setLocation(`/workspaces/${newWorkspace.id}`);
     },
     onError: () => {
       toast({
@@ -132,25 +116,7 @@ export default function Settings() {
       });
     },
   });
-  
-  // Category form submission handler
-  const onCategorySubmit = (data: CategoryFormValues) => {
-    if (!currentWorkspace?.id) {
-      toast({
-        title: "Error",
-        description: "No workspace selected",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Add workspaceId to the data
-    data.workspaceId = currentWorkspace.id;
-    
-    // Submit mutation
-    createCategoryMutation.mutate(data);
-  };
-  
+
   // Workspace form submission handler
   const onWorkspaceSubmit = (data: WorkspaceFormValues) => {
     if (currentWorkspace?.id) {
@@ -170,9 +136,8 @@ export default function Settings() {
         onValueChange={setActiveTab}
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="categories">Show Categories</TabsTrigger>
           <TabsTrigger value="workspace">Workspace</TabsTrigger>
         </TabsList>
         
@@ -181,179 +146,81 @@ export default function Settings() {
             <CardHeader>
               <CardTitle>Appearance</CardTitle>
               <CardDescription>
-                Customize the appearance of the application
+                Customize how Crewer looks on your device
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <h3 className="text-sm font-medium">Theme</h3>
+                <FormLabel>Theme</FormLabel>
                 <div className="flex space-x-2">
                   <Button
                     variant={theme === "light" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setTheme("light")}
-                    className="flex items-center"
+                    className="flex items-center space-x-2"
                   >
-                    <SunIcon className="h-4 w-4 mr-1" />
-                    Light
+                    <SunIcon className="h-4 w-4" />
+                    <span>Light</span>
                   </Button>
                   <Button
                     variant={theme === "dark" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setTheme("dark")}
-                    className="flex items-center"
+                    className="flex items-center space-x-2"
                   >
-                    <MoonIcon className="h-4 w-4 mr-1" />
-                    Dark
+                    <MoonIcon className="h-4 w-4" />
+                    <span>Dark</span>
                   </Button>
                   <Button
                     variant={theme === "system" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setTheme("system")}
-                    className="flex items-center"
+                    className="flex items-center space-x-2"
                   >
-                    <MonitorIcon className="h-4 w-4 mr-1" />
-                    System
+                    <MonitorIcon className="h-4 w-4" />
+                    <span>System</span>
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
-              <CardTitle>Notifications</CardTitle>
+              <CardTitle>Show Labels</CardTitle>
               <CardDescription>
-                Configure how you receive notifications
+                Shows now use simple labels instead of complex categories
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Notification settings would go here */}
-              <p className="text-sm text-gray-500">Notification settings are coming soon.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="categories" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Show Categories</CardTitle>
-              <CardDescription>
-                Create and manage categories for your shows
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <Form {...categoryForm}>
-                <form onSubmit={categoryForm.handleSubmit(onCategorySubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <FormField
-                      control={categoryForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem className="sm:col-span-2">
-                          <FormLabel>Category Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g. News, Sports, Entertainment" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={categoryForm.control}
-                      name="color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Color</FormLabel>
-                          <div className="flex items-center space-x-2">
-                            <div 
-                              className="w-6 h-6 rounded-full border"
-                              style={{ backgroundColor: field.value }}
-                            />
-                            <FormControl>
-                              <Input type="text" {...field} />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <Button type="submit" disabled={createCategoryMutation.isPending}>
-                    <PlusIcon className="h-4 w-4 mr-1" />
-                    {createCategoryMutation.isPending ? "Adding..." : "Add Category"}
-                  </Button>
-                </form>
-              </Form>
-              
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Color</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoadingCategories ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center py-4">
-                          <div className="flex justify-center">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : categories.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center py-4 text-gray-500">
-                          No categories found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      categories.map((category: any) => (
-                        <TableRow key={category.id}>
-                          <TableCell className="font-medium">{category.name}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <div 
-                                className="w-4 h-4 rounded-full"
-                                style={{ backgroundColor: category.color }}
-                              />
-                              <span>{category.color}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end space-x-2">
-                              <Button variant="ghost" size="icon">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Available labels for categorizing shows:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {["News", "Drama", "Documentary", "Taper", "External Hit", "Rehearsal"].map(label => (
+                    <Badge key={label} variant="secondary">
+                      {label}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Labels can be assigned when creating or editing shows. Custom labels can also be entered manually.
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="workspace" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Workspace Settings</CardTitle>
               <CardDescription>
-                Manage workspace information and settings
+                Manage your workspace preferences and information
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               <Form {...workspaceForm}>
                 <form onSubmit={workspaceForm.handleSubmit(onWorkspaceSubmit)} className="space-y-4">
                   <FormField
@@ -363,60 +230,58 @@ export default function Settings() {
                       <FormItem>
                         <FormLabel>Workspace Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. My Production Company" {...field} />
+                          <Input placeholder="Enter workspace name" {...field} />
                         </FormControl>
                         <FormDescription>
-                          This is the name of your workspace as it appears throughout the app.
+                          This is the display name for your workspace.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
                   <Button 
-                    type="submit" 
+                    type="submit"
                     disabled={updateWorkspaceMutation.isPending || createWorkspaceMutation.isPending}
                   >
-                    {currentWorkspace?.id ? "Update Workspace" : "Create Workspace"}
+                    {updateWorkspaceMutation.isPending || createWorkspaceMutation.isPending
+                      ? "Saving..." 
+                      : currentWorkspace?.id ? "Update Workspace" : "Create Workspace"
+                    }
                   </Button>
                 </form>
               </Form>
             </CardContent>
           </Card>
-          
-          {workspaces.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Workspaces</CardTitle>
-                <CardDescription>
-                  Select a workspace to work with
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {workspaces.map((workspace: any) => (
-                    <div 
-                      key={workspace.id}
-                      className={`flex items-center justify-between p-3 rounded-md border ${
-                        currentWorkspace?.id === workspace.id 
-                          ? "bg-primary-50 border-primary-200" 
-                          : "hover:bg-gray-50 cursor-pointer"
-                      }`}
-                      onClick={() => setLocation(`/workspaces/${workspace.slug}`)}
-                    >
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Workspaces</CardTitle>
+              <CardDescription>
+                All workspaces you have access to
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Array.isArray(workspaces) && workspaces.length > 0 ? (
+                  workspaces.map((workspace: any) => (
+                    <div key={workspace.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <h3 className="font-medium">{workspace.name}</h3>
-                        <p className="text-sm text-gray-500">Created: {new Date(workspace.createdAt).toLocaleString()}</p>
+                        <p className="font-medium">{workspace.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Created: {new Date(workspace.createdAt).toLocaleDateString()}
+                        </p>
                       </div>
-                      {currentWorkspace?.id === workspace.id && (
+                      {workspace.id === currentWorkspace?.id && (
                         <Badge>Current</Badge>
                       )}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No workspaces found</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
