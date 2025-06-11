@@ -101,14 +101,20 @@ export default function Jobs() {
   // Create job mutation
   const createJobMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      return apiRequest("POST", "/api/jobs", data);
+      console.log('Creating job with data:', data);
+      const response = await apiRequest("POST", "/api/jobs", data);
+      console.log('Job creation response:', response);
+      return response;
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Job created successfully",
       });
+      // Invalidate and refetch job queries
       queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
+      queryClient.refetchQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
       form.reset();
       setIsDialogOpen(false);
     },
@@ -125,8 +131,7 @@ export default function Jobs() {
   const updateJobMutation = useMutation({
     mutationFn: async (data: FormValues & { id: string }) => {
       const { id, ...jobData } = data;
-      const response = await apiRequest("PUT", `/api/jobs/${id}`, jobData);
-      return response.json();
+      return apiRequest("PUT", `/api/jobs/${id}`, jobData);
     },
     onSuccess: () => {
       toast({
@@ -157,7 +162,11 @@ export default function Jobs() {
         title: "Success",
         description: "Job deleted successfully",
       });
+      // Invalidate all job-related queries
       queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
+      // Force refetch of jobs data
+      queryClient.refetchQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
     },
     onError: () => {
       toast({

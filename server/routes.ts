@@ -276,6 +276,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/jobs/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteJob(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete job" });
+    }
+  });
+
   // Crew Member Jobs
   app.get("/api/crew-members/:crewMemberId/jobs", async (req, res) => {
     const crewMemberJobs = await storage.getCrewMemberJobsByCrewMember(req.params.crewMemberId);
