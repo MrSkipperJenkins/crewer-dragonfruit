@@ -271,7 +271,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/shows/:id", async (req, res) => {
     try {
-      const validation = insertShowSchema.partial().safeParse(req.body);
+      // Create a custom schema for update that handles string dates
+      const updateShowSchema = insertShowSchema.partial().extend({
+        startTime: z.union([z.date(), z.string().transform(str => new Date(str))]).optional(),
+        endTime: z.union([z.date(), z.string().transform(str => new Date(str))]).optional(),
+      });
+      
+      const validation = updateShowSchema.safeParse(req.body);
       if (!validation.success) {
         return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
       }
