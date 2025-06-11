@@ -101,10 +101,7 @@ export default function Jobs() {
   // Create job mutation
   const createJobMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      console.log('Creating job with data:', data);
-      const response = await apiRequest("POST", "/api/jobs", data);
-      console.log('Job creation response:', response);
-      return response;
+      return apiRequest("POST", "/api/jobs", data);
     },
     onSuccess: () => {
       toast({

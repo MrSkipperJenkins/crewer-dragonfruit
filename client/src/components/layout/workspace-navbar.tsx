@@ -15,6 +15,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { MobileNavDrawer } from "./mobile-nav-drawer";
+import { Breadcrumb } from "./breadcrumb";
 import type { Workspace } from "@shared/schema";
 
 interface WorkspaceNavbarProps {
@@ -198,13 +199,9 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
               </DropdownMenu>
             </div>
 
-            {/* Desktop Page Title */}
+            {/* Desktop Breadcrumb Navigation */}
             <div className="hidden lg:block">
-              {pageTitle && (
-                <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {pageTitle}
-                </h1>
-              )}
+              <Breadcrumb />
             </div>
           </div>
 
