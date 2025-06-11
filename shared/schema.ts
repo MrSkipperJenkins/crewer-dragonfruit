@@ -105,20 +105,6 @@ export const insertResourceSchema = createInsertSchema(resources).omit({
   createdAt: true,
 });
 
-// Show Category
-export const showCategories = pgTable("show_categories", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
-  color: text("color").notNull(), // Color code for the category
-  workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const insertShowCategorySchema = createInsertSchema(showCategories).omit({
-  id: true,
-  createdAt: true,
-});
-
 // Show - A scheduled event
 export const shows = pgTable("shows", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -130,29 +116,12 @@ export const shows = pgTable("shows", {
   notes: text("notes"),
   status: text("status").notNull().default("draft"), // draft, scheduled, in_progress, completed, cancelled
   color: text("color").default("#3b82f6"), // Event color for calendar display
+  label: text("label"), // Simple label for tagging shows (News, Drama, Documentary, etc.)
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertShowSchema = createInsertSchema(shows).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Show Category Assignment - Links shows to categories (tags)
-export const showCategoryAssignments = pgTable("show_category_assignments", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  showId: uuid("show_id").references(() => shows.id).notNull(),
-  categoryId: uuid("category_id").references(() => showCategories.id).notNull(),
-  workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (table) => {
-  return {
-    uniq: unique().on(table.showId, table.categoryId),
-  };
-});
-
-export const insertShowCategoryAssignmentSchema = createInsertSchema(showCategoryAssignments).omit({
   id: true,
   createdAt: true,
 });
@@ -278,14 +247,8 @@ export type InsertCrewMemberJob = z.infer<typeof insertCrewMemberJobSchema>;
 export type Resource = typeof resources.$inferSelect;
 export type InsertResource = z.infer<typeof insertResourceSchema>;
 
-export type ShowCategory = typeof showCategories.$inferSelect;
-export type InsertShowCategory = z.infer<typeof insertShowCategorySchema>;
-
 export type Show = typeof shows.$inferSelect;
 export type InsertShow = z.infer<typeof insertShowSchema>;
-
-export type ShowCategoryAssignment = typeof showCategoryAssignments.$inferSelect;
-export type InsertShowCategoryAssignment = z.infer<typeof insertShowCategoryAssignmentSchema>;
 
 export type RequiredJob = typeof requiredJobs.$inferSelect;
 export type InsertRequiredJob = z.infer<typeof insertRequiredJobSchema>;
@@ -311,7 +274,6 @@ export const workspaceRelations = relations(workspaces, ({ many }) => ({
   crewMembers: many(crewMembers),
   jobs: many(jobs),
   resources: many(resources),
-  showCategories: many(showCategories),
   shows: many(shows),
 }));
 
@@ -367,38 +329,14 @@ export const resourceRelations = relations(resources, ({ one, many }) => ({
   showResources: many(showResources),
 }));
 
-export const showCategoryRelations = relations(showCategories, ({ one, many }) => ({
-  workspace: one(workspaces, {
-    fields: [showCategories.workspaceId],
-    references: [workspaces.id],
-  }),
-  showCategoryAssignments: many(showCategoryAssignments),
-}));
-
 export const showRelations = relations(shows, ({ one, many }) => ({
   workspace: one(workspaces, {
     fields: [shows.workspaceId],
     references: [workspaces.id],
   }),
-  showCategoryAssignments: many(showCategoryAssignments),
   requiredJobs: many(requiredJobs),
   showResources: many(showResources),
   crewAssignments: many(crewAssignments),
-}));
-
-export const showCategoryAssignmentRelations = relations(showCategoryAssignments, ({ one }) => ({
-  show: one(shows, {
-    fields: [showCategoryAssignments.showId],
-    references: [shows.id],
-  }),
-  category: one(showCategories, {
-    fields: [showCategoryAssignments.categoryId],
-    references: [showCategories.id],
-  }),
-  workspace: one(workspaces, {
-    fields: [showCategoryAssignments.workspaceId],
-    references: [workspaces.id],
-  }),
 }));
 
 export const requiredJobRelations = relations(requiredJobs, ({ one, many }) => ({

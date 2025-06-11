@@ -12,12 +12,8 @@ import type {
   InsertCrewMemberJob,
   Resource,
   InsertResource,
-  ShowCategory,
-  InsertShowCategory,
   Show,
   InsertShow,
-  ShowCategoryAssignment,
-  InsertShowCategoryAssignment,
   RequiredJob,
   InsertRequiredJob,
   ShowResource,
@@ -38,9 +34,7 @@ import {
   jobs,
   crewMemberJobs,
   resources,
-  showCategories,
   shows,
-  showCategoryAssignments,
   requiredJobs,
   showResources,
   crewAssignments,
@@ -98,12 +92,7 @@ export interface IStorage {
   updateResource(id: string, resource: Partial<InsertResource>): Promise<Resource | undefined>;
   deleteResource(id: string): Promise<boolean>;
 
-  // Show Category CRUD
-  getShowCategories(workspaceId: string): Promise<ShowCategory[]>;
-  getShowCategory(id: string): Promise<ShowCategory | undefined>;
-  createShowCategory(showCategory: InsertShowCategory): Promise<ShowCategory>;
-  updateShowCategory(id: string, showCategory: Partial<InsertShowCategory>): Promise<ShowCategory | undefined>;
-  deleteShowCategory(id: string): Promise<boolean>;
+
 
   // Show CRUD
   getShows(workspaceId: string): Promise<Show[]>;
@@ -113,12 +102,7 @@ export interface IStorage {
   updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined>;
   deleteShow(id: string): Promise<boolean>;
 
-  // Show Category Assignment CRUD
-  getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]>;
-  getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]>;
-  createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment>;
-  updateShowCategoryAssignment(id: string, assignment: Partial<InsertShowCategoryAssignment>): Promise<ShowCategoryAssignment | undefined>;
-  deleteShowCategoryAssignment(id: string): Promise<boolean>;
+
 
   // Required Job CRUD
   getRequiredJobs(workspaceId: string): Promise<RequiredJob[]>;
