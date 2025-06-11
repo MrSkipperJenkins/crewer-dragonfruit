@@ -489,6 +489,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Show Categories Assignments
+  app.get("/api/workspaces/:workspaceId/show-category-assignments", async (req, res) => {
+    const assignments = await storage.getShowCategoryAssignments(req.params.workspaceId);
+    res.json(assignments);
+  });
+
   app.get("/api/shows/:showId/categories", async (req, res) => {
     const assignments = await storage.getShowCategoryAssignmentsByShow(req.params.showId);
     res.json(assignments);
