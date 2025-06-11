@@ -139,6 +139,7 @@ export interface IStorage {
   createCrewAssignment(crewAssignment: InsertCrewAssignment): Promise<CrewAssignment>;
   updateCrewAssignment(id: string, crewAssignment: Partial<InsertCrewAssignment>): Promise<CrewAssignment | undefined>;
   deleteCrewAssignment(id: string): Promise<boolean>;
+  replaceCrewAssignments(showId: string, assignments: InsertCrewAssignment[]): Promise<void>;
 
   // Crew Schedule CRUD
   getCrewSchedules(workspaceId: string): Promise<CrewSchedule[]>;
@@ -990,6 +991,30 @@ export class DatabaseStorage implements IStorage {
   async deleteCrewAssignment(id: string): Promise<boolean> {
     const result = await db.delete(crewAssignments).where(eq(crewAssignments.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  async replaceCrewAssignments(showId: string, assignments: InsertCrewAssignment[]): Promise<void> {
+    // Use a transaction to ensure atomicity
+    await db.transaction(async (tx) => {
+      // First, delete all existing assignments for this show
+      await tx.delete(crewAssignments).where(eq(crewAssignments.showId, showId));
+      
+      // Then insert the new assignments
+      if (assignments.length > 0) {
+        // Filter to ensure only one assignment per required job
+        const uniqueAssignments = assignments.reduce((acc, assignment) => {
+          if (assignment.requiredJobId) {
+            acc[assignment.requiredJobId] = assignment;
+          }
+          return acc;
+        }, {} as Record<string, InsertCrewAssignment>);
+        
+        const finalAssignments = Object.values(uniqueAssignments);
+        if (finalAssignments.length > 0) {
+          await tx.insert(crewAssignments).values(finalAssignments);
+        }
+      }
+    });
   }
 
   // Crew Schedule CRUD

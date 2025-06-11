@@ -429,29 +429,16 @@ export default function EditShow() {
 
   const saveCrewAssignmentChanges = async () => {
     try {
-      // Delete all existing assignments for this show first
-      const existingAssignments = crewAssignments || [];
-      for (const assignment of existingAssignments) {
-        await apiRequest("DELETE", `/api/crew-assignments/${assignment.id}`);
-      }
-
-      // Create new assignments from local state, ensuring only one assignment per required job
-      const uniqueAssignments = localCrewAssignments.reduce((acc, assignment) => {
-        // Only keep the latest assignment for each required job
-        acc[assignment.requiredJobId] = assignment;
-        return acc;
-      }, {} as Record<string, typeof localCrewAssignments[0]>);
-
-      for (const assignment of Object.values(uniqueAssignments)) {
-        await apiRequest("POST", "/api/crew-assignments", {
-          showId: assignment.showId,
+      // Use a batch API call to handle the atomic replacement of all assignments
+      await apiRequest("PUT", `/api/shows/${showId}/crew-assignments`, {
+        assignments: localCrewAssignments.map(assignment => ({
           crewMemberId: assignment.crewMemberId,
           jobId: assignment.jobId,
           requiredJobId: assignment.requiredJobId,
           status: assignment.status,
           workspaceId: assignment.workspaceId,
-        });
-      }
+        }))
+      });
 
       // Refresh crew assignments data and shows list
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });

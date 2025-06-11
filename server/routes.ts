@@ -642,6 +642,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Batch update crew assignments for a show
+  app.put("/api/shows/:showId/crew-assignments", async (req, res) => {
+    try {
+      const { showId } = req.params;
+      const { assignments } = req.body;
+      
+      if (!Array.isArray(assignments)) {
+        return res.status(400).json({ message: "Assignments must be an array" });
+      }
+
+      // Validate each assignment
+      for (const assignment of assignments) {
+        const validation = insertCrewAssignmentSchema.omit({ showId: true }).safeParse(assignment);
+        if (!validation.success) {
+          return res.status(400).json({ message: "Invalid assignment data", errors: validation.error.errors });
+        }
+      }
+
+      // Replace all assignments for this show
+      await storage.replaceCrewAssignments(showId, assignments.map(a => ({ ...a, showId })));
+      
+      res.json({ message: "Crew assignments updated successfully" });
+    } catch (error) {
+      console.error("Error updating crew assignments:", error);
+      res.status(500).json({ message: "Failed to update crew assignments" });
+    }
+  });
+
   // Crew Schedules
   app.get("/api/crew-members/:crewMemberId/schedules", async (req, res) => {
     const schedules = await storage.getCrewSchedulesByCrewMember(req.params.crewMemberId);
