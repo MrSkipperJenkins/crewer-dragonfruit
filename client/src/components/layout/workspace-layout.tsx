@@ -57,7 +57,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         
         {/* Main Content */}
         <main className="flex-1 overflow-auto bg-white dark:bg-gray-900">
-          <div className="p-6 min-h-full">
+          <div className="p-6 h-full">
             {children}
           </div>
         </main>
