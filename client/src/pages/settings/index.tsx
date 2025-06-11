@@ -101,13 +101,15 @@ export default function Settings() {
     mutationFn: async (data: WorkspaceFormValues) => {
       return apiRequest("POST", "/api/workspaces", data);
     },
-    onSuccess: (newWorkspace) => {
+    onSuccess: (newWorkspace: any) => {
       toast({
         title: "Success",
         description: "Workspace created successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
-      setLocation(`/workspaces/${newWorkspace.id}`);
+      if (newWorkspace?.id) {
+        setLocation(`/workspaces/${newWorkspace.id}`);
+      }
     },
     onError: () => {
       toast({
