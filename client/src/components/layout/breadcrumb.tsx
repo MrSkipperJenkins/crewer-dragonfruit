@@ -79,6 +79,10 @@ export function Breadcrumb() {
       breadcrumbs.push({ 
         label: "Analytics"
       });
+    } else if (location.includes("/reports")) {
+      breadcrumbs.push({ 
+        label: "Reports"
+      });
     }
 
     return breadcrumbs;
