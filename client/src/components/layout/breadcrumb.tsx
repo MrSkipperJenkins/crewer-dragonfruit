@@ -26,22 +26,9 @@ export function Breadcrumb() {
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
     const breadcrumbs: BreadcrumbItem[] = [];
 
-    // Always start with workspace name
-    if (currentWorkspace) {
-      breadcrumbs.push({
-        label: currentWorkspace.name,
-        href: `/workspaces/${currentWorkspace.slug}`
-      });
-    }
-
-    // Debug logging
-    console.log('Current location:', location);
-    console.log('Show ID:', showId);
-    console.log('Show data:', show);
-
-    if (location === "/dashboard") {
+    if (location.includes("/dashboard") || location === "/") {
       breadcrumbs.push({ label: "Dashboard" });
-    } else if (location.startsWith("/shows")) {
+    } else if (location.includes("/shows")) {
       breadcrumbs.push({ 
         label: "Shows",
         href: "/shows/list"
@@ -51,7 +38,7 @@ export function Breadcrumb() {
         breadcrumbs.push({ label: "List View" });
       } else if (location.includes("/calendar")) {
         breadcrumbs.push({ label: "Calendar View" });
-      } else if (location.includes("/create")) {
+      } else if (location.includes("/builder") || location.includes("/create")) {
         breadcrumbs.push({ label: "Create Show" });
       } else if (showId && show) {
         // Show edit page with detailed info
@@ -68,30 +55,29 @@ export function Breadcrumb() {
           label: "Loading..."
         });
       }
-    } else if (location.startsWith("/crew")) {
+    } else if (location.includes("/crew-schedule")) {
       breadcrumbs.push({ 
-        label: "Crew",
-        href: "/crew"
+        label: "Crew Schedule"
       });
-    } else if (location.startsWith("/resources")) {
+    } else if (location.includes("/crew")) {
       breadcrumbs.push({ 
-        label: "Resources",
-        href: "/resources"
+        label: "Crew Members"
       });
-    } else if (location.startsWith("/jobs")) {
+    } else if (location.includes("/resources")) {
       breadcrumbs.push({ 
-        label: "Job Roles",
-        href: "/jobs"
+        label: "Resources"
       });
-    } else if (location.startsWith("/settings")) {
+    } else if (location.includes("/jobs")) {
       breadcrumbs.push({ 
-        label: "Settings",
-        href: "/settings"
+        label: "Job Roles"
       });
-    } else if (location.startsWith("/analytics")) {
+    } else if (location.includes("/settings")) {
       breadcrumbs.push({ 
-        label: "Analytics",
-        href: "/analytics"
+        label: "Settings"
+      });
+    } else if (location.includes("/analytics")) {
+      breadcrumbs.push({ 
+        label: "Analytics"
       });
     }
 
