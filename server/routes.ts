@@ -599,8 +599,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/crew-assignments", async (req, res) => {
     try {
+      console.log("Creating crew assignment with data:", req.body);
+      
       const validation = insertCrewAssignmentSchema.safeParse(req.body);
       if (!validation.success) {
+        console.log("Validation failed:", validation.error.errors);
         return res.status(400).json({ message: "Invalid crew assignment data", errors: validation.error.errors });
       }
       
@@ -609,13 +612,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasConflict = await storage.detectCrewConflicts(showId, crewMemberId);
       
       if (hasConflict) {
+        console.log("Crew conflict detected for:", { showId, crewMemberId });
         return res.status(409).json({ message: "Crew member has scheduling conflict" });
       }
       
+      console.log("About to create assignment with validated data:", validation.data);
       const assignment = await storage.createCrewAssignment(validation.data);
+      console.log("Assignment created successfully:", assignment);
       res.status(201).json(assignment);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create crew assignment" });
+      console.error("Error creating crew assignment:", error);
+      res.status(500).json({ message: "Failed to create crew assignment", error: error.message });
     }
   });
 
