@@ -1093,7 +1093,12 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    return conflictingAssignments.length > 0;
+    // Filter out assignments for the current show
+    const filteredConflicts = conflictingAssignments.filter(
+      conflict => conflict.shows.id !== showId
+    );
+
+    return filteredConflicts.length > 0;
   }
 
   async detectResourceConflicts(showId: string, resourceId: string): Promise<boolean> {
