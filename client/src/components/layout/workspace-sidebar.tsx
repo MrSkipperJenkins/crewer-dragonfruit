@@ -105,11 +105,11 @@ export function WorkspaceSidebar({ currentWorkspace, className }: WorkspaceSideb
 
   return (
     <div className={cn(
-      "w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col",
+      "w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-screen",
       className
     )}>
       {/* Main Navigation */}
-      <div className="flex-1 py-4">
+      <div className="flex-1 py-4 overflow-y-auto">
         <nav className="space-y-1 px-3">
           {navigationItems.map((item) => {
             if (item.items) {
@@ -184,7 +184,9 @@ export function WorkspaceSidebar({ currentWorkspace, className }: WorkspaceSideb
           })}
         </nav>
 
-        <Separator className="my-4 mx-3" />
+        <div className="mx-3 my-4">
+          <Separator />
+        </div>
 
         {/* Quick Actions */}
         <div className="px-3 space-y-1">

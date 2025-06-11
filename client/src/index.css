@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent over-scrolling and ensure proper height constraints */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+#root {
+  height: 100%;
+  min-height: 100vh;
+}
+
 /* FullCalendar Custom Styles */
 .fc {
   /* Override FullCalendar CSS variables */
