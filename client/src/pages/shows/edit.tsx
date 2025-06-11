@@ -80,6 +80,7 @@ export default function EditShow() {
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [localCrewAssignments, setLocalCrewAssignments] = useState<any[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   const showId = params.id;
 
@@ -105,8 +106,15 @@ export default function EditShow() {
     enabled: !!currentWorkspace?.id,
   });
 
-  // Labels are now handled directly in show data - no separate API calls needed
-  const SUGGESTED_LABELS = ["News", "Drama", "Documentary", "Taper", "External Hit", "Rehearsal"];
+  const { data: categories = [] } = useQuery({
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
+    enabled: !!currentWorkspace?.id,
+  });
+
+  const { data: categoryAssignments = [] } = useQuery({
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
+    enabled: !!currentWorkspace?.id,
+  });
 
   // Fetch show-specific data
   const { data: requiredJobs = [] } = useQuery({
@@ -157,13 +165,20 @@ export default function EditShow() {
         endTime: format(endDate, "HH:mm"),
         status: show.status,
         color: show.color || "#2094f3",
-        label: show.label || "none",
         workspaceId: show.workspaceId,
       });
     }
   }, [show, form]);
 
-  // Labels are now handled directly in the show data - no separate initialization needed
+  // Initialize selected category (only when show first loads)
+  useEffect(() => {
+    if (show && categoryAssignments && selectedCategory === "") {
+      const currentAssignment = (categoryAssignments as any[])?.find(
+        (ca: any) => ca.showId === show.id
+      );
+      setSelectedCategory(currentAssignment?.categoryId || "none");
+    }
+  }, [show, categoryAssignments]);
 
   // Update selected jobs and resources when data loads
   useEffect(() => {
@@ -191,15 +206,14 @@ export default function EditShow() {
   // Update show mutation
   const updateShowMutation = useMutation({
     mutationFn: async (data: EditShowFormValues) => {
-      const { startDate, startTime, endDate, endTime, label, ...showData } = data;
+      const { startDate, startTime, endDate, endTime, ...showData } = data;
       const startDateTime = new Date(`${startDate}T${startTime}`);
       const endDateTime = new Date(`${endDate}T${endTime}`);
       
       return apiRequest("PUT", `/api/shows/${showId}`, {
         ...showData,
-        label: label === "none" ? null : label,
-        startTime: startDateTime,
-        endTime: endDateTime,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
       });
     },
     onSuccess: () => {
@@ -338,14 +352,23 @@ export default function EditShow() {
     setHasUnsavedChanges(true);
   };
 
-  // Labels are now handled directly through the form - no separate handler needed
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+  };
 
   const onSubmit = async (data: EditShowFormValues) => {
     try {
       // First update the show details
       await updateShowMutation.mutateAsync(data);
       
-      // Save crew assignment changes if any
+      // Save category assignment
+      if (selectedCategory !== "none") {
+        await saveCategoryAssignment();
+      } else {
+        await removeCategoryAssignment();
+      }
+      
+      // Then save crew assignment changes if any
       if (hasUnsavedChanges) {
         await saveCrewAssignmentChanges();
       }
@@ -354,9 +377,7 @@ export default function EditShow() {
       queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${show?.workspaceId}/shows`] });
       queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
       queryClient.invalidateQueries({ queryKey: [`/api/required-jobs-batch`] });
-      
-      // Also invalidate the show data to refresh display
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${show?.workspaceId}/show-category-assignments`] });
       
       toast({
         title: "Success",
@@ -374,7 +395,40 @@ export default function EditShow() {
     }
   };
 
-  // Labels are now handled directly in show data - no separate save functions needed
+  const saveCategoryAssignment = async () => {
+    if (!show) return;
+    
+    // Check if assignment already exists
+    const existingAssignment = (categoryAssignments as any[])?.find(
+      (ca: any) => ca.showId === show.id
+    );
+    
+    if (existingAssignment) {
+      // Update existing assignment
+      await apiRequest("PATCH", `/api/show-category-assignments/${existingAssignment.id}`, {
+        categoryId: selectedCategory
+      });
+    } else {
+      // Create new assignment
+      await apiRequest("POST", "/api/show-category-assignments", {
+        showId: show.id,
+        categoryId: selectedCategory,
+        workspaceId: show.workspaceId
+      });
+    }
+  };
+
+  const removeCategoryAssignment = async () => {
+    if (!show) return;
+    
+    const existingAssignment = (categoryAssignments as any[])?.find(
+      (ca: any) => ca.showId === show.id
+    );
+    
+    if (existingAssignment) {
+      await apiRequest("DELETE", `/api/show-category-assignments/${existingAssignment.id}`);
+    }
+  };
 
   const saveCrewAssignmentChanges = async () => {
     try {
@@ -570,34 +624,31 @@ export default function EditShow() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="label"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Label</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a label (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">No Label</SelectItem>
-                          {SUGGESTED_LABELS.map(label => (
-                            <SelectItem key={label} value={label}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Choose a label to categorize your show
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={handleCategoryChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Category</SelectItem>
+                      {(categories as any[])?.map(category => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            {category.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
               </div>
 
               <FormField

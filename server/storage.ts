@@ -12,8 +12,12 @@ import type {
   InsertCrewMemberJob,
   Resource,
   InsertResource,
+  ShowCategory,
+  InsertShowCategory,
   Show,
   InsertShow,
+  ShowCategoryAssignment,
+  InsertShowCategoryAssignment,
   RequiredJob,
   InsertRequiredJob,
   ShowResource,
@@ -34,7 +38,9 @@ import {
   jobs,
   crewMemberJobs,
   resources,
+  showCategories,
   shows,
+  showCategoryAssignments,
   requiredJobs,
   showResources,
   crewAssignments,
@@ -92,7 +98,12 @@ export interface IStorage {
   updateResource(id: string, resource: Partial<InsertResource>): Promise<Resource | undefined>;
   deleteResource(id: string): Promise<boolean>;
 
-
+  // Show Category CRUD
+  getShowCategories(workspaceId: string): Promise<ShowCategory[]>;
+  getShowCategory(id: string): Promise<ShowCategory | undefined>;
+  createShowCategory(showCategory: InsertShowCategory): Promise<ShowCategory>;
+  updateShowCategory(id: string, showCategory: Partial<InsertShowCategory>): Promise<ShowCategory | undefined>;
+  deleteShowCategory(id: string): Promise<boolean>;
 
   // Show CRUD
   getShows(workspaceId: string): Promise<Show[]>;
@@ -102,7 +113,11 @@ export interface IStorage {
   updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined>;
   deleteShow(id: string): Promise<boolean>;
 
-
+  // Show Category Assignment CRUD
+  getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]>;
+  getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]>;
+  createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment>;
+  deleteShowCategoryAssignment(id: string): Promise<boolean>;
 
   // Required Job CRUD
   getRequiredJobs(workspaceId: string): Promise<RequiredJob[]>;
@@ -163,7 +178,9 @@ export async function clearDemoData(): Promise<void> {
   await db.delete(crewAssignments);
   await db.delete(showResources);
   await db.delete(requiredJobs);
+  await db.delete(showCategoryAssignments);
   await db.delete(shows);
+  await db.delete(showCategories);
   await db.delete(resources);
   await db.delete(crewMemberJobs);
   await db.delete(jobs);
@@ -343,7 +360,12 @@ export async function seedDemoData(): Promise<void> {
 
   const [resource1, resource2, resource3, resource4] = workspace1Resources;
 
-  // Shows will now use simple labels instead of categories
+  // Create show categories
+  const [category1, category2, category3] = await db.insert(showCategories).values([
+    { name: "News", color: "#ff6b6b", workspaceId: workspace1.id },
+    { name: "Drama", color: "#4ecdc4", workspaceId: workspace1.id },
+    { name: "Documentary", color: "#45b7d1", workspaceId: workspace1.id },
+  ]).returning();
 
   // Create shows
   const today = new Date();
@@ -362,7 +384,6 @@ export async function seedDemoData(): Promise<void> {
       notes: "Live broadcast - critical crew requirements",
       status: "scheduled",
       color: "#ff6b6b",
-      label: "News",
       workspaceId: workspace1.id,
     },
     {
@@ -374,7 +395,6 @@ export async function seedDemoData(): Promise<void> {
       notes: "Full day production - all departments required",
       status: "draft",
       color: "#4ecdc4",
-      label: "Drama",
       workspaceId: workspace1.id,
     },
     {
@@ -386,7 +406,6 @@ export async function seedDemoData(): Promise<void> {
       notes: "Outdoor location shoot",
       status: "scheduled",
       color: "#45b7d1",
-      label: "Documentary",
       workspaceId: workspace1.id,
     },
     {
@@ -398,10 +417,17 @@ export async function seedDemoData(): Promise<void> {
       notes: "Live audience - security required",
       status: "scheduled",
       color: "#f39c12",
-      label: "Taper",
       workspaceId: workspace1.id,
     }
   ]).returning();
+
+  // Create show category assignments
+  await db.insert(showCategoryAssignments).values([
+    { showId: show1.id, categoryId: category1.id, workspaceId: workspace1.id },
+    { showId: show2.id, categoryId: category2.id, workspaceId: workspace1.id },
+    { showId: show3.id, categoryId: category3.id, workspaceId: workspace1.id },
+    { showId: show4.id, categoryId: category2.id, workspaceId: workspace1.id },
+  ]);
 
   // Create required jobs for shows
   await db.insert(requiredJobs).values([
@@ -780,7 +806,34 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
+  // Show Category CRUD
+  async getShowCategories(workspaceId: string): Promise<ShowCategory[]> {
+    return await db.select().from(showCategories).where(eq(showCategories.workspaceId, workspaceId));
+  }
 
+  async getShowCategory(id: string): Promise<ShowCategory | undefined> {
+    const [showCategory] = await db.select().from(showCategories).where(eq(showCategories.id, id));
+    return showCategory || undefined;
+  }
+
+  async createShowCategory(showCategory: InsertShowCategory): Promise<ShowCategory> {
+    const [newShowCategory] = await db.insert(showCategories).values(showCategory).returning();
+    return newShowCategory;
+  }
+
+  async updateShowCategory(id: string, showCategory: Partial<InsertShowCategory>): Promise<ShowCategory | undefined> {
+    const [updatedShowCategory] = await db
+      .update(showCategories)
+      .set(showCategory)
+      .where(eq(showCategories.id, id))
+      .returning();
+    return updatedShowCategory || undefined;
+  }
+
+  async deleteShowCategory(id: string): Promise<boolean> {
+    const result = await db.delete(showCategories).where(eq(showCategories.id, id));
+    return (result.rowCount || 0) > 0;
+  }
 
   // Show CRUD
   async getShows(workspaceId: string): Promise<Show[]> {
@@ -829,7 +882,33 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
+  // Show Category Assignment CRUD
+  async getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]> {
+    return await db.select().from(showCategoryAssignments).where(eq(showCategoryAssignments.workspaceId, workspaceId));
+  }
 
+  async getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]> {
+    return await db.select().from(showCategoryAssignments).where(eq(showCategoryAssignments.showId, showId));
+  }
+
+  async createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment> {
+    const [newAssignment] = await db.insert(showCategoryAssignments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async updateShowCategoryAssignment(id: string, assignment: Partial<InsertShowCategoryAssignment>): Promise<ShowCategoryAssignment | undefined> {
+    const [updatedAssignment] = await db
+      .update(showCategoryAssignments)
+      .set(assignment)
+      .where(eq(showCategoryAssignments.id, id))
+      .returning();
+    return updatedAssignment || undefined;
+  }
+
+  async deleteShowCategoryAssignment(id: string): Promise<boolean> {
+    const result = await db.delete(showCategoryAssignments).where(eq(showCategoryAssignments.id, id));
+    return (result.rowCount || 0) > 0;
+  }
 
   // Required Job CRUD
   async getRequiredJobs(workspaceId: string): Promise<RequiredJob[]> {
@@ -1079,11 +1158,13 @@ async function createEnhancedDemoData() {
     await db.delete(crewAssignments);
     await db.delete(showResources);
     await db.delete(requiredJobs);
+    await db.delete(showCategoryAssignments);
     await db.delete(crewMemberJobs); // Delete this before crew members
     await db.delete(shows);
     await db.delete(crewMembers);
     await db.delete(resources);
     await db.delete(jobs);
+    await db.delete(showCategories);
     await db.delete(users);
     await db.delete(workspaces);
     
