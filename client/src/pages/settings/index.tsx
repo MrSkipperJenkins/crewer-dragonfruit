@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertShowCategorySchema, insertWorkspaceSchema } from "@shared/schema";
+import { insertWorkspaceSchema } from "@shared/schema";
 
 import {
   Card,
@@ -53,16 +53,6 @@ import {
   Trash2
 } from "lucide-react";
 
-// Category form schema
-const categoryFormSchema = insertShowCategorySchema.extend({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  color: z.string().regex(/^#([0-9A-F]{6})$/i, {
-    message: "Color must be a valid hex color code (e.g. #3B82F6)",
-  }),
-});
-
 // Workspace form schema
 const workspaceFormSchema = insertWorkspaceSchema.extend({
   name: z.string().min(2, {
@@ -70,7 +60,6 @@ const workspaceFormSchema = insertWorkspaceSchema.extend({
   }),
 });
 
-type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
 
 export default function Settings() {
@@ -86,21 +75,7 @@ export default function Settings() {
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("general");
   
-  // Fetch show categories
-  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
-    enabled: !!currentWorkspace?.id,
-  });
-  
-  // Category form
-  const categoryForm = useForm<CategoryFormValues>({
-    resolver: zodResolver(categoryFormSchema),
-    defaultValues: {
-      name: "",
-      color: "#3B82F6",
-      workspaceId: currentWorkspace?.id || "",
-    },
-  });
+  // Categories removed - shows now use simple labels
   
   // Workspace form
   const workspaceForm = useForm<WorkspaceFormValues>({
@@ -110,31 +85,7 @@ export default function Settings() {
     },
   });
   
-  // Create category mutation
-  const createCategoryMutation = useMutation({
-    mutationFn: async (data: CategoryFormValues) => {
-      return apiRequest("POST", "/api/show-categories", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Category created successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`] });
-      categoryForm.reset({
-        name: "",
-        color: "#3B82F6",
-        workspaceId: currentWorkspace?.id || "",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create category",
-        variant: "destructive",
-      });
-    },
-  });
+  // Category mutations removed - shows now use simple labels
   
   // Update workspace mutation
   const updateWorkspaceMutation = useMutation({
