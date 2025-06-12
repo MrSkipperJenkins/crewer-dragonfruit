@@ -46,7 +46,6 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         currentWorkspace={currentWorkspace || undefined}
         pageTitle={getPageTitle()}
       />
-      
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Hidden on mobile, visible on desktop */}
         <div className="hidden lg:block">
@@ -57,7 +56,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         
         {/* Main Content */}
         <main className="flex-1 overflow-auto bg-white dark:bg-gray-900 main-content">
-          <div className="p-6 h-full">
+          <div className="p-6 h-full bg-[#fafafa]">
             {children}
           </div>
         </main>
