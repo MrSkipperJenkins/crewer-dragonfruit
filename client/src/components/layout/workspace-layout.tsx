@@ -40,13 +40,13 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   }
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overscroll-none">
       {/* Top Navbar */}
       <WorkspaceNavbar 
         currentWorkspace={currentWorkspace || undefined}
         pageTitle={getPageTitle()}
       />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden overscroll-none">
         {/* Sidebar - Hidden on mobile, visible on desktop */}
         <div className="hidden lg:block">
           <WorkspaceSidebar 
