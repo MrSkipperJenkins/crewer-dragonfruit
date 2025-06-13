@@ -16,6 +16,7 @@
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/list": "^6.1.17",
     "@fullcalendar/react": "^6.1.17",
+    "@fullcalendar/resource-timegrid": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",

@@ -33,6 +33,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid';
 import { cn } from "@/lib/utils";
 
 type ViewType = 'daily' | 'weekly';
@@ -42,6 +43,7 @@ type ShiftEvent = {
   start: string;
   end: string;
   backgroundColor?: string;
+  resourceId?: string;
   extendedProps?: {
     crewMember: string;
     show?: string;
@@ -115,7 +117,7 @@ export default function CrewSchedulePage() {
     }
   }, [currentView]);
 
-  // Generate events from crew schedules only (filtered by selected crew member)
+  // Generate events from crew schedules with resource assignment
   const generateEventsFromData = (): ShiftEvent[] => {
     const events: ShiftEvent[] = [];
 
@@ -153,10 +155,11 @@ export default function CrewSchedulePage() {
             
             events.push({
               id: `schedule-${schedule.id}-${date.toISOString().split('T')[0]}`,
-              title: `${crewMember.name} - Available`,
+              title: `Available`,
               start: eventStart.toISOString(),
               end: eventEnd.toISOString(),
               backgroundColor: '#10b981',
+              resourceId: crewMember.id,
               extendedProps: {
                 crewMember: crewMember.name,
                 type: 'shift',
@@ -169,6 +172,21 @@ export default function CrewSchedulePage() {
     });
 
     return events;
+  };
+
+  // Generate resources for the calendar (crew members as columns)
+  const generateResources = () => {
+    const filteredMembers = selectedCrewMember 
+      ? (crewMembers as any[]).filter((member: any) => member.id === selectedCrewMember)
+      : (crewMembers as any[]);
+
+    return filteredMembers.map((member: any) => ({
+      id: member.id,
+      title: member.name,
+      extendedProps: {
+        position: member.title
+      }
+    }));
   };
 
   const events = generateEventsFromData();
@@ -198,10 +216,13 @@ export default function CrewSchedulePage() {
 
   // View configuration
   const getCalendarView = () => {
-    if (currentView === 'daily') {
-      return 'timeGridDay';
+    const resources = generateResources();
+    if (resources.length > 1) {
+      // Use resource view when multiple crew members
+      return currentView === 'daily' ? 'resourceTimeGridDay' : 'resourceTimeGridWeek';
     } else {
-      return 'timeGridWeek';
+      // Use regular time grid for single crew member
+      return currentView === 'daily' ? 'timeGridDay' : 'timeGridWeek';
     }
   };
 
@@ -442,7 +463,7 @@ export default function CrewSchedulePage() {
               <div className="h-[600px]">
                 <FullCalendar
                   ref={calendarRef}
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, resourceTimeGridPlugin]}
                   initialView={getCalendarView()}
                   headerToolbar={{
                     left: 'prev,next today',
@@ -450,6 +471,7 @@ export default function CrewSchedulePage() {
                     right: ''
                   }}
                   events={events}
+                  resources={generateResources()}
                   eventClick={handleEventClick}
                   dateClick={handleDateClick}
                   eventDrop={handleEventDrop}
@@ -463,12 +485,19 @@ export default function CrewSchedulePage() {
                   slotDuration="01:00:00"
                   slotLabelInterval="01:00:00"
                   eventMinHeight={30}
+                  resourceAreaHeaderContent="Crew Members"
+                  resourceAreaWidth="150px"
+                  resourceLabelContent={(resourceInfo) => (
+                    <div className="p-2">
+                      <div className="font-medium text-sm">{resourceInfo.resource.title}</div>
+                      <div className="text-xs text-gray-500">{resourceInfo.resource.extendedProps?.position}</div>
+                    </div>
+                  )}
                   eventContent={(eventInfo) => (
                     <div className="p-1">
                       <div className="font-medium text-xs">{eventInfo.event.title}</div>
                       <div className="text-xs opacity-75">
-                        {eventInfo.event.extendedProps?.show || 
-                         eventInfo.event.extendedProps?.type === 'shift' ? 'Available' :
+                        {eventInfo.event.extendedProps?.type === 'shift' ? 'Available' :
                          eventInfo.event.extendedProps?.type === 'timeoff' ? 'Time Off' : 'Event'}
                       </div>
                     </div>
