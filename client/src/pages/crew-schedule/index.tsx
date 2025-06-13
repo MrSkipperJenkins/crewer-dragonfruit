@@ -117,6 +117,13 @@ export default function CrewSchedulePage() {
     }
   }, [currentView]);
 
+  // Effect to default to first crew member
+  useEffect(() => {
+    if ((crewMembers as any[]).length > 0 && selectedCrewMembers.length === 0) {
+      setSelectedCrewMembers([(crewMembers as any[])[0].id]);
+    }
+  }, [crewMembers, selectedCrewMembers.length]);
+
   // Generate events from crew schedules with resource assignment
   const generateEventsFromData = (): ShiftEvent[] => {
     const events: ShiftEvent[] = [];
@@ -133,7 +140,9 @@ export default function CrewSchedulePage() {
       if (crewMember) {
         // Generate events for the current week based on dayOfWeek
         const today = new Date();
-        const currentWeekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+        const currentWeekStart = new Date(today);
+        currentWeekStart.setDate(today.getDate() - today.getDay());
+        currentWeekStart.setHours(0, 0, 0, 0);
         
         for (let i = 0; i < 7; i++) {
           const date = new Date(currentWeekStart);
@@ -143,15 +152,16 @@ export default function CrewSchedulePage() {
           const dayName = dayNames[date.getDay()];
           
           if (dayName === schedule.dayOfWeek) {
-            const startTime = new Date(schedule.startTime);
-            const endTime = new Date(schedule.endTime);
+            // Extract time from the stored timestamps
+            const storedStartTime = new Date(schedule.startTime);
+            const storedEndTime = new Date(schedule.endTime);
             
-            // Combine date with time
+            // Create events for the current week with proper times
             const eventStart = new Date(date);
-            eventStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+            eventStart.setHours(storedStartTime.getHours(), storedStartTime.getMinutes(), 0, 0);
             
             const eventEnd = new Date(date);
-            eventEnd.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+            eventEnd.setHours(storedEndTime.getHours(), storedEndTime.getMinutes(), 0, 0);
             
             events.push({
               id: `schedule-${schedule.id}-${date.toISOString().split('T')[0]}`,
