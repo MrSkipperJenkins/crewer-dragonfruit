@@ -55,6 +55,7 @@ export default function CrewSchedulePage() {
   const [currentView, setCurrentView] = useState<ViewType>('daily');
   const [selectedEvent, setSelectedEvent] = useState<ShiftEvent | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedCrewMember, setSelectedCrewMember] = useState<string | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
 
   // Fetch crew members
@@ -114,34 +115,17 @@ export default function CrewSchedulePage() {
     }
   }, [currentView]);
 
-  // Generate events from crew schedules, time off, and show assignments
+  // Generate events from crew schedules only (filtered by selected crew member)
   const generateEventsFromData = (): ShiftEvent[] => {
     const events: ShiftEvent[] = [];
 
-    // Add show assignments as events
-    (crewAssignments as any[]).forEach((assignment: any) => {
-      const show = (shows as any[]).find((s: any) => s.id === assignment.showId);
-      const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === assignment.crewMemberId);
-      
-      if (show && crewMember) {
-        events.push({
-          id: `assignment-${assignment.id}`,
-          title: `${show.title} - ${crewMember.name}`,
-          start: show.startTime,
-          end: show.endTime,
-          backgroundColor: show.color || '#3b82f6',
-          extendedProps: {
-            crewMember: crewMember.name,
-            show: show.title,
-            type: 'show',
-            notes: show.notes || ''
-          }
-        });
-      }
-    });
+    // Filter crew schedules based on selected crew member
+    const filteredSchedules = selectedCrewMember 
+      ? (crewSchedules as any[]).filter((schedule: any) => schedule.crewMemberId === selectedCrewMember)
+      : (crewSchedules as any[]);
 
     // Add regular crew schedules as recurring availability blocks
-    (crewSchedules as any[]).forEach((schedule: any) => {
+    filteredSchedules.forEach((schedule: any) => {
       const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === schedule.crewMemberId);
       
       if (crewMember) {
@@ -169,7 +153,7 @@ export default function CrewSchedulePage() {
             
             events.push({
               id: `schedule-${schedule.id}-${date.toISOString().split('T')[0]}`,
-              title: `Available - ${crewMember.name}`,
+              title: `${crewMember.name} - Available`,
               start: eventStart.toISOString(),
               end: eventEnd.toISOString(),
               backgroundColor: '#10b981',
@@ -181,26 +165,6 @@ export default function CrewSchedulePage() {
             });
           }
         }
-      }
-    });
-
-    // Add time off events
-    (crewTimeOff as any[]).forEach((timeOff: any) => {
-      const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === timeOff.crewMemberId);
-      
-      if (crewMember) {
-        events.push({
-          id: `timeoff-${timeOff.id}`,
-          title: `${crewMember.name} - Time Off`,
-          start: timeOff.startTime,
-          end: timeOff.endTime,
-          backgroundColor: '#ef4444',
-          extendedProps: {
-            crewMember: crewMember.name,
-            type: 'timeoff',
-            notes: timeOff.reason || 'Time off'
-          }
-        });
       }
     });
 
@@ -339,12 +303,30 @@ export default function CrewSchedulePage() {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Users className="h-5 w-5 mr-2" />
-                Crew Members
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Users className="h-5 w-5 mr-2" />
+                  Crew Members
+                </div>
+                {selectedCrewMember && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCrewMember(null)}
+                    className="text-xs text-gray-600 hover:text-gray-900"
+                  >
+                    View All
+                  </Button>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
+              {!selectedCrewMember && (crewMembers as any[]).length > 0 && (
+                <div className="p-4 bg-blue-50 border-b border-blue-100">
+                  <p className="text-xs text-blue-700 font-medium mb-1">Click any crew member to view their schedule</p>
+                  <p className="text-xs text-blue-600">Shows data from crew_schedules table only</p>
+                </div>
+              )}
               <div className="max-h-[600px] overflow-y-auto">
                 {(crewMembers as any[]).map((member: any) => {
                   const memberSchedules = (crewSchedules as any[]).filter(
@@ -357,22 +339,43 @@ export default function CrewSchedulePage() {
                     (a: any) => a.crewMemberId === member.id
                   );
 
+                  const isSelected = selectedCrewMember === member.id;
+                  
                   return (
-                    <div key={member.id} className="p-4 border-b border-gray-100 hover:bg-gray-50">
+                    <div 
+                      key={member.id} 
+                      className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
+                        isSelected ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => setSelectedCrewMember(isSelected ? null : member.id)}
+                    >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-700">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isSelected ? 'bg-blue-200' : 'bg-blue-100'
+                        }`}>
+                          <span className={`text-sm font-medium ${
+                            isSelected ? 'text-blue-800' : 'text-blue-700'
+                          }`}>
                             {member.name.split(' ').map((n: string) => n[0]).join('')}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className={`text-sm font-medium truncate ${
+                            isSelected ? 'text-blue-900' : 'text-gray-900'
+                          }`}>
                             {member.name}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
                             {member.title}
                           </p>
                         </div>
+                        {isSelected && (
+                          <div className="text-blue-600">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="mt-3 space-y-2">
@@ -410,16 +413,27 @@ export default function CrewSchedulePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>{currentView === 'daily' ? 'Daily View' : 'Weekly View'}</span>
+                <div className="flex items-center space-x-3">
+                  <span>{currentView === 'daily' ? 'Daily View' : 'Weekly View'}</span>
+                  {selectedCrewMember && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                      {(crewMembers as any[]).find(m => m.id === selectedCrewMember)?.name || 'Selected Member'}
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex items-center space-x-2">
+                  {selectedCrewMember && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedCrewMember(null)}
+                      className="text-xs"
+                    >
+                      View All Members
+                    </Button>
+                  )}
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    Available
-                  </Badge>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    Shows
-                  </Badge>
-                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                    Time Off
+                    Schedules
                   </Badge>
                 </div>
               </CardTitle>
