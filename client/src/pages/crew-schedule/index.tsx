@@ -113,18 +113,28 @@ export default function CrewSchedulePage() {
 
   // Effect to handle view changes
   useEffect(() => {
-    if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi();
-      calendarApi.changeView(getCalendarView());
-    }
+    const updateView = () => {
+      if (calendarRef.current) {
+        const calendarApi = calendarRef.current.getApi();
+        calendarApi.changeView(getCalendarView());
+      }
+    };
+    
+    // Use requestAnimationFrame to avoid flushSync warning
+    requestAnimationFrame(updateView);
   }, [currentView]);
 
   // Effect to handle crew member selection changes
   useEffect(() => {
-    if (calendarRef.current && selectedCrewMembers.length > 0) {
-      const calendarApi = calendarRef.current.getApi();
-      calendarApi.changeView(getCalendarView());
-    }
+    const updateView = () => {
+      if (calendarRef.current && selectedCrewMembers.length > 0) {
+        const calendarApi = calendarRef.current.getApi();
+        calendarApi.changeView(getCalendarView());
+      }
+    };
+    
+    // Use requestAnimationFrame to avoid flushSync warning
+    requestAnimationFrame(updateView);
   }, [selectedCrewMembers]);
 
   // Generate events from crew schedules with resource assignment
@@ -545,9 +555,9 @@ export default function CrewSchedulePage() {
                     resourceAreaHeaderContent="Crew Members"
                     resourceAreaWidth="200px"
                     resourceLabelContent={(resourceInfo) => (
-                      <div className="p-2 text-center">
-                        <div className="font-medium text-sm truncate">{resourceInfo.resource.title}</div>
-                        <div className="text-xs text-gray-500 truncate">{resourceInfo.resource.extendedProps?.position}</div>
+                      <div className="p-2 text-center min-w-0 max-w-full">
+                        <div className="font-medium text-sm truncate leading-tight">{resourceInfo.resource.title}</div>
+                        <div className="text-xs text-gray-500 truncate leading-tight">{resourceInfo.resource.extendedProps?.position}</div>
                       </div>
                     )}
                     eventContent={(eventInfo) => (
@@ -570,12 +580,7 @@ export default function CrewSchedulePage() {
                         </div>
                       </div>
                     )}
-                    viewDidMount={() => {
-                      // Update view when calendar mounts
-                      if (calendarRef.current) {
-                        calendarRef.current.getApi().changeView(getCalendarView());
-                      }
-                    }}
+
                   />
                 )}
               </div>

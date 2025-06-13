@@ -168,7 +168,12 @@ html, body {
   font-size: 0.75rem;
   letter-spacing: 0.025em;
   color: #6b7280;
-  padding: 0.75rem 0.5rem;
+  padding: 0.75rem 0.25rem;
+  min-width: 150px;
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .fc .fc-daygrid-day {
@@ -255,6 +260,31 @@ html, body {
   white-space: normal;
   word-wrap: break-word;
   flex: 1;
+}
+
+/* Resource Area Styling */
+.fc .fc-resource-area-header {
+  background-color: #f9fafb;
+  border-color: var(--fc-border-color);
+  font-weight: 600;
+  color: #6b7280;
+  padding: 0.75rem 0.5rem;
+  min-width: 200px;
+  text-align: center;
+}
+
+.fc .fc-resource-cell {
+  padding: 0.5rem;
+  border-color: var(--fc-border-color);
+  min-width: 150px;
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fc .fc-resource-datagrid-area {
+  min-width: 200px;
 }
 
 /* Time Grid Styling */
