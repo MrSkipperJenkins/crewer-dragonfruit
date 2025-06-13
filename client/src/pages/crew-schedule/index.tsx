@@ -69,6 +69,18 @@ export default function CrewSchedulePage() {
     enabled: !!currentWorkspace?.id,
   });
 
+  // Fetch crew schedules (regular availability)
+  const { data: crewSchedules = [], isLoading: isLoadingSchedules } = useQuery({
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-schedules`],
+    enabled: !!currentWorkspace?.id,
+  });
+
+  // Fetch crew time off
+  const { data: crewTimeOff = [], isLoading: isLoadingTimeOff } = useQuery({
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-time-off`],
+    enabled: !!currentWorkspace?.id,
+  });
+
   // Fetch all crew assignments for the workspace
   const fetchAllCrewAssignments = async () => {
     if (!currentWorkspace?.id) return [];
@@ -102,10 +114,11 @@ export default function CrewSchedulePage() {
     }
   }, [currentView]);
 
-  // Generate events from real crew assignments and shows
+  // Generate events from crew schedules, time off, and show assignments
   const generateEventsFromData = (): ShiftEvent[] => {
     const events: ShiftEvent[] = [];
 
+    // Add show assignments as events
     (crewAssignments as any[]).forEach((assignment: any) => {
       const show = (shows as any[]).find((s: any) => s.id === assignment.showId);
       const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === assignment.crewMemberId);
@@ -122,6 +135,70 @@ export default function CrewSchedulePage() {
             show: show.title,
             type: 'show',
             notes: show.notes || ''
+          }
+        });
+      }
+    });
+
+    // Add regular crew schedules as recurring availability blocks
+    (crewSchedules as any[]).forEach((schedule: any) => {
+      const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === schedule.crewMemberId);
+      
+      if (crewMember) {
+        // Generate events for the current week based on dayOfWeek
+        const today = new Date();
+        const currentWeekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+        
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(currentWeekStart);
+          date.setDate(currentWeekStart.getDate() + i);
+          
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const dayName = dayNames[date.getDay()];
+          
+          if (dayName === schedule.dayOfWeek) {
+            const startTime = new Date(schedule.startTime);
+            const endTime = new Date(schedule.endTime);
+            
+            // Combine date with time
+            const eventStart = new Date(date);
+            eventStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+            
+            const eventEnd = new Date(date);
+            eventEnd.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+            
+            events.push({
+              id: `schedule-${schedule.id}-${date.toISOString().split('T')[0]}`,
+              title: `Available - ${crewMember.name}`,
+              start: eventStart.toISOString(),
+              end: eventEnd.toISOString(),
+              backgroundColor: '#10b981',
+              extendedProps: {
+                crewMember: crewMember.name,
+                type: 'shift',
+                notes: `Regular availability on ${schedule.dayOfWeek}`
+              }
+            });
+          }
+        }
+      }
+    });
+
+    // Add time off events
+    (crewTimeOff as any[]).forEach((timeOff: any) => {
+      const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === timeOff.crewMemberId);
+      
+      if (crewMember) {
+        events.push({
+          id: `timeoff-${timeOff.id}`,
+          title: `${crewMember.name} - Time Off`,
+          start: timeOff.startTime,
+          end: timeOff.endTime,
+          backgroundColor: '#ef4444',
+          extendedProps: {
+            crewMember: crewMember.name,
+            type: 'timeoff',
+            notes: timeOff.reason || 'Time off'
           }
         });
       }
@@ -164,7 +241,7 @@ export default function CrewSchedulePage() {
     }
   };
 
-  if (isLoadingCrew || isLoadingShows || isLoadingAssignments) {
+  if (isLoadingCrew || isLoadingShows || isLoadingAssignments || isLoadingSchedules || isLoadingTimeOff) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

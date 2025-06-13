@@ -688,6 +688,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Crew Schedules
+  app.get("/api/workspaces/:workspaceId/crew-schedules", async (req, res) => {
+    const schedules = await storage.getCrewSchedules(req.params.workspaceId);
+    res.json(schedules);
+  });
+
   app.get("/api/crew-members/:crewMemberId/schedules", async (req, res) => {
     const schedules = await storage.getCrewSchedulesByCrewMember(req.params.crewMemberId);
     res.json(schedules);
@@ -706,7 +711,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/crew-schedules/:id", async (req, res) => {
+    try {
+      const validation = insertCrewScheduleSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid crew schedule data", errors: validation.error.errors });
+      }
+      const schedule = await storage.updateCrewSchedule(req.params.id, validation.data);
+      if (!schedule) {
+        return res.status(404).json({ message: "Crew schedule not found" });
+      }
+      res.json(schedule);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update crew schedule" });
+    }
+  });
+
+  app.delete("/api/crew-schedules/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteCrewSchedule(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Crew schedule not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete crew schedule" });
+    }
+  });
+
   // Crew Time Off
+  app.get("/api/workspaces/:workspaceId/crew-time-off", async (req, res) => {
+    const timeOffs = await storage.getCrewTimeOffs(req.params.workspaceId);
+    res.json(timeOffs);
+  });
+
   app.get("/api/crew-members/:crewMemberId/time-off", async (req, res) => {
     const timeOffs = await storage.getCrewTimeOffsByCrewMember(req.params.crewMemberId);
     res.json(timeOffs);
@@ -716,12 +754,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertCrewTimeOffSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid time off data", errors: validation.error.errors });
+        return res.status(400).json({ message: "Invalid crew time off data", errors: validation.error.errors });
       }
       const timeOff = await storage.createCrewTimeOff(validation.data);
       res.status(201).json(timeOff);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create time off" });
+      res.status(500).json({ message: "Failed to create crew time off" });
+    }
+  });
+
+  app.put("/api/crew-time-off/:id", async (req, res) => {
+    try {
+      const validation = insertCrewTimeOffSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid crew time off data", errors: validation.error.errors });
+      }
+      const timeOff = await storage.updateCrewTimeOff(req.params.id, validation.data);
+      if (!timeOff) {
+        return res.status(404).json({ message: "Crew time off not found" });
+      }
+      res.json(timeOff);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update crew time off" });
+    }
+  });
+
+  app.delete("/api/crew-time-off/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteCrewTimeOff(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Crew time off not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete crew time off" });
     }
   });
 
