@@ -49,6 +49,8 @@ type ShiftEvent = {
     show?: string;
     type: 'shift' | 'show' | 'timeoff';
     notes?: string;
+    duration?: string;
+    assignmentCount?: number;
   };
 };
 
@@ -139,12 +141,6 @@ export default function CrewSchedulePage() {
       const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === schedule.crewMemberId);
       
       if (crewMember) {
-        console.log('Processing schedule for', crewMember.name, ':', {
-          dayOfWeek: schedule.dayOfWeek,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime
-        });
-
         // Generate events for the current week based on dayOfWeek
         const today = new Date();
         const currentWeekStart = new Date(today.setDate(today.getDate() - today.getDay()));
@@ -160,15 +156,6 @@ export default function CrewSchedulePage() {
             const startTime = new Date(schedule.startTime);
             const endTime = new Date(schedule.endTime);
             
-            console.log('Raw times from DB:', {
-              startTime: schedule.startTime,
-              endTime: schedule.endTime,
-              parsedStart: startTime,
-              parsedEnd: endTime,
-              startHours: startTime.getHours(),
-              endHours: endTime.getHours()
-            });
-            
             // Combine date with time - use UTC hours to avoid timezone conversion
             const eventStart = new Date(date);
             eventStart.setHours(startTime.getUTCHours(), startTime.getUTCMinutes(), 0, 0);
@@ -176,9 +163,23 @@ export default function CrewSchedulePage() {
             const eventEnd = new Date(date);
             eventEnd.setHours(endTime.getUTCHours(), endTime.getUTCMinutes(), 0, 0);
             
-            console.log('Final event times:', {
-              eventStart: eventStart.toISOString(),
-              eventEnd: eventEnd.toISOString()
+            // Calculate duration in hours and minutes
+            const durationMs = eventEnd.getTime() - eventStart.getTime();
+            const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+            const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            // Count overlapping show assignments for this crew member during this time period
+            const overlappingAssignments = (crewAssignments as any[]).filter((assignment: any) => {
+              if (assignment.crewMemberId !== crewMember.id) return false;
+              
+              const show = (shows as any[]).find((s: any) => s.id === assignment.showId);
+              if (!show) return false;
+              
+              const showStart = new Date(show.startTime);
+              const showEnd = new Date(show.endTime);
+              
+              // Check if show overlaps with this availability block
+              return (showStart < eventEnd && showEnd > eventStart);
             });
             
             events.push({
@@ -190,10 +191,12 @@ export default function CrewSchedulePage() {
               resourceId: crewMember.id,
               extendedProps: {
                 crewMember: crewMember.name,
-                type: 'shift',
+                type: 'shift' as const,
+                duration: `${durationHours}h ${durationMinutes}m`,
+                assignmentCount: overlappingAssignments.length,
                 notes: `Regular availability on ${schedule.dayOfWeek}`
               }
-            });
+            } as ShiftEvent);
           }
         }
       }
@@ -548,11 +551,22 @@ export default function CrewSchedulePage() {
                       </div>
                     )}
                     eventContent={(eventInfo) => (
-                      <div className="p-1">
-                        <div className="font-medium text-xs">{eventInfo.event.title}</div>
-                        <div className="text-xs opacity-75">
-                          {eventInfo.event.extendedProps?.type === 'shift' ? 'Available' :
-                           eventInfo.event.extendedProps?.type === 'timeoff' ? 'Time Off' : 'Event'}
+                      <div className="p-1 w-full h-full overflow-hidden">
+                        <div className="font-medium text-xs text-white break-words leading-tight">
+                          {eventInfo.event.title}
+                        </div>
+                        <div className="text-xs text-white opacity-90 break-words leading-tight mt-1">
+                          {eventInfo.event.extendedProps?.duration && (
+                            <div>{eventInfo.event.extendedProps.duration}</div>
+                          )}
+                          {eventInfo.event.extendedProps?.assignmentCount !== undefined && (
+                            <div>
+                              {eventInfo.event.extendedProps.assignmentCount === 0 
+                                ? 'No shows' 
+                                : `${eventInfo.event.extendedProps.assignmentCount} show${eventInfo.event.extendedProps.assignmentCount > 1 ? 's' : ''}`
+                              }
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
