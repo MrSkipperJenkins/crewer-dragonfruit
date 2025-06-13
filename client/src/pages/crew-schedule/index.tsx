@@ -176,9 +176,10 @@ export default function CrewSchedulePage() {
 
   // Generate resources for the calendar (crew members as columns)
   const generateResources = () => {
+    // Only show columns for selected crew members
     const filteredMembers = selectedCrewMembers.length > 0
       ? (crewMembers as any[]).filter((member: any) => selectedCrewMembers.includes(member.id))
-      : (crewMembers as any[]);
+      : [];
 
     return filteredMembers.map((member: any) => ({
       id: member.id,
@@ -475,55 +476,66 @@ export default function CrewSchedulePage() {
             </CardHeader>
             <CardContent>
               <div className="h-[600px]">
-                <FullCalendar
-                  schedulerLicenseKey='CC-Attribution-NonCommercial-NoDerivatives'
-                  ref={calendarRef}
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, resourceTimeGridPlugin]}
-                  initialView={getCalendarView()}
-                  headerToolbar={{
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: ''
-                  }}
-                  events={events}
-                  resources={generateResources()}
-                  eventClick={handleEventClick}
-                  dateClick={handleDateClick}
-                  eventDrop={handleEventDrop}
-                  editable={true}
-                  droppable={true}
-                  selectable={true}
-                  slotMinTime="06:00:00"
-                  slotMaxTime="24:00:00"
-                  allDaySlot={false}
-                  height="100%"
-                  slotDuration="01:00:00"
-                  slotLabelInterval="01:00:00"
-                  eventMinHeight={30}
-                  resourceAreaHeaderContent="Crew Members"
-                  resourceAreaWidth="200px"
-                  resourceLabelContent={(resourceInfo) => (
-                    <div className="p-2 text-center">
-                      <div className="font-medium text-sm truncate">{resourceInfo.resource.title}</div>
-                      <div className="text-xs text-gray-500 truncate">{resourceInfo.resource.extendedProps?.position}</div>
+                {selectedCrewMembers.length === 0 ? (
+                  <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg">
+                    <div className="text-center p-8">
+                      <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Crew Members Selected</h3>
+                      <p className="text-gray-600 mb-4">Select crew members from the sidebar to view their schedules</p>
+                      <p className="text-sm text-gray-500">Click on crew member names to toggle their schedule columns</p>
                     </div>
-                  )}
-                  eventContent={(eventInfo) => (
-                    <div className="p-1">
-                      <div className="font-medium text-xs">{eventInfo.event.title}</div>
-                      <div className="text-xs opacity-75">
-                        {eventInfo.event.extendedProps?.type === 'shift' ? 'Available' :
-                         eventInfo.event.extendedProps?.type === 'timeoff' ? 'Time Off' : 'Event'}
+                  </div>
+                ) : (
+                  <FullCalendar
+                    schedulerLicenseKey='CC-Attribution-NonCommercial-NoDerivatives'
+                    ref={calendarRef}
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, resourceTimeGridPlugin]}
+                    initialView={getCalendarView()}
+                    headerToolbar={{
+                      left: 'prev,next today',
+                      center: 'title',
+                      right: ''
+                    }}
+                    events={events}
+                    resources={generateResources()}
+                    eventClick={handleEventClick}
+                    dateClick={handleDateClick}
+                    eventDrop={handleEventDrop}
+                    editable={true}
+                    droppable={true}
+                    selectable={true}
+                    slotMinTime="06:00:00"
+                    slotMaxTime="24:00:00"
+                    allDaySlot={false}
+                    height="100%"
+                    slotDuration="01:00:00"
+                    slotLabelInterval="01:00:00"
+                    eventMinHeight={30}
+                    resourceAreaHeaderContent="Crew Members"
+                    resourceAreaWidth="200px"
+                    resourceLabelContent={(resourceInfo) => (
+                      <div className="p-2 text-center">
+                        <div className="font-medium text-sm truncate">{resourceInfo.resource.title}</div>
+                        <div className="text-xs text-gray-500 truncate">{resourceInfo.resource.extendedProps?.position}</div>
                       </div>
-                    </div>
-                  )}
-                  viewDidMount={() => {
-                    // Update view when calendar mounts
-                    if (calendarRef.current) {
-                      calendarRef.current.getApi().changeView(getCalendarView());
-                    }
-                  }}
-                />
+                    )}
+                    eventContent={(eventInfo) => (
+                      <div className="p-1">
+                        <div className="font-medium text-xs">{eventInfo.event.title}</div>
+                        <div className="text-xs opacity-75">
+                          {eventInfo.event.extendedProps?.type === 'shift' ? 'Available' :
+                           eventInfo.event.extendedProps?.type === 'timeoff' ? 'Time Off' : 'Event'}
+                        </div>
+                      </div>
+                    )}
+                    viewDidMount={() => {
+                      // Update view when calendar mounts
+                      if (calendarRef.current) {
+                        calendarRef.current.getApi().changeView(getCalendarView());
+                      }
+                    }}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
