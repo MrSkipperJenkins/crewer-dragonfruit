@@ -139,6 +139,12 @@ export default function CrewSchedulePage() {
       const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === schedule.crewMemberId);
       
       if (crewMember) {
+        console.log('Processing schedule for', crewMember.name, ':', {
+          dayOfWeek: schedule.dayOfWeek,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime
+        });
+
         // Generate events for the current week based on dayOfWeek
         const today = new Date();
         const currentWeekStart = new Date(today.setDate(today.getDate() - today.getDay()));
@@ -154,12 +160,26 @@ export default function CrewSchedulePage() {
             const startTime = new Date(schedule.startTime);
             const endTime = new Date(schedule.endTime);
             
-            // Combine date with time
+            console.log('Raw times from DB:', {
+              startTime: schedule.startTime,
+              endTime: schedule.endTime,
+              parsedStart: startTime,
+              parsedEnd: endTime,
+              startHours: startTime.getHours(),
+              endHours: endTime.getHours()
+            });
+            
+            // Combine date with time - use UTC hours to avoid timezone conversion
             const eventStart = new Date(date);
-            eventStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+            eventStart.setHours(startTime.getUTCHours(), startTime.getUTCMinutes(), 0, 0);
             
             const eventEnd = new Date(date);
-            eventEnd.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+            eventEnd.setHours(endTime.getUTCHours(), endTime.getUTCMinutes(), 0, 0);
+            
+            console.log('Final event times:', {
+              eventStart: eventStart.toISOString(),
+              eventEnd: eventEnd.toISOString()
+            });
             
             events.push({
               id: `schedule-${schedule.id}-${date.toISOString().split('T')[0]}`,
