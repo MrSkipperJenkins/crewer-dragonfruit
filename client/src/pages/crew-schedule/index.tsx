@@ -117,6 +117,14 @@ export default function CrewSchedulePage() {
     }
   }, [currentView]);
 
+  // Effect to handle crew member selection changes
+  useEffect(() => {
+    if (calendarRef.current && selectedCrewMembers.length > 0) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.changeView(getCalendarView());
+    }
+  }, [selectedCrewMembers]);
+
   // Generate events from crew schedules with resource assignment
   const generateEventsFromData = (): ShiftEvent[] => {
     const events: ShiftEvent[] = [];
@@ -232,11 +240,11 @@ export default function CrewSchedulePage() {
   // View configuration
   const getCalendarView = () => {
     const resources = generateResources();
-    if (resources.length > 1) {
-      // Use resource view when multiple crew members
+    if (resources.length >= 1) {
+      // Use resource view when any crew members are selected
       return currentView === 'daily' ? 'resourceTimeGridDay' : 'resourceTimeGridWeek';
     } else {
-      // Use regular time grid for single crew member
+      // Use regular time grid when no crew members selected
       return currentView === 'daily' ? 'timeGridDay' : 'timeGridWeek';
     }
   };
