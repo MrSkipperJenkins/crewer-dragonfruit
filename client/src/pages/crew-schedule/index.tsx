@@ -57,7 +57,7 @@ export default function CrewSchedulePage() {
   const [currentView, setCurrentView] = useState<ViewType>('daily');
   const [selectedEvent, setSelectedEvent] = useState<ShiftEvent | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedCrewMember, setSelectedCrewMember] = useState<string | null>(null);
+  const [selectedCrewMembers, setSelectedCrewMembers] = useState<string[]>([]);
   const calendarRef = useRef<FullCalendar>(null);
 
   // Fetch crew members
@@ -121,9 +121,9 @@ export default function CrewSchedulePage() {
   const generateEventsFromData = (): ShiftEvent[] => {
     const events: ShiftEvent[] = [];
 
-    // Filter crew schedules based on selected crew member
-    const filteredSchedules = selectedCrewMember 
-      ? (crewSchedules as any[]).filter((schedule: any) => schedule.crewMemberId === selectedCrewMember)
+    // Filter crew schedules based on selected crew members
+    const filteredSchedules = selectedCrewMembers.length > 0
+      ? (crewSchedules as any[]).filter((schedule: any) => selectedCrewMembers.includes(schedule.crewMemberId))
       : (crewSchedules as any[]);
 
     // Add regular crew schedules as recurring availability blocks
@@ -176,8 +176,8 @@ export default function CrewSchedulePage() {
 
   // Generate resources for the calendar (crew members as columns)
   const generateResources = () => {
-    const filteredMembers = selectedCrewMember 
-      ? (crewMembers as any[]).filter((member: any) => member.id === selectedCrewMember)
+    const filteredMembers = selectedCrewMembers.length > 0
+      ? (crewMembers as any[]).filter((member: any) => selectedCrewMembers.includes(member.id))
       : (crewMembers as any[]);
 
     return filteredMembers.map((member: any) => ({
@@ -187,6 +187,20 @@ export default function CrewSchedulePage() {
         position: member.title
       }
     }));
+  };
+
+  // Toggle crew member selection
+  const toggleCrewMember = (memberId: string) => {
+    setSelectedCrewMembers(prev => 
+      prev.includes(memberId) 
+        ? prev.filter(id => id !== memberId)
+        : [...prev, memberId]
+    );
+  };
+
+  // Clear all selections
+  const clearAllSelections = () => {
+    setSelectedCrewMembers([]);
   };
 
   const events = generateEventsFromData();
@@ -329,22 +343,22 @@ export default function CrewSchedulePage() {
                   <Users className="h-5 w-5 mr-2" />
                   Crew Members
                 </div>
-                {selectedCrewMember && (
+                {selectedCrewMembers.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedCrewMember(null)}
+                    onClick={clearAllSelections}
                     className="text-xs text-gray-600 hover:text-gray-900"
                   >
-                    View All
+                    Clear All
                   </Button>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {!selectedCrewMember && (crewMembers as any[]).length > 0 && (
+              {selectedCrewMembers.length === 0 && (crewMembers as any[]).length > 0 && (
                 <div className="p-4 bg-blue-50 border-b border-blue-100">
-                  <p className="text-xs text-blue-700 font-medium mb-1">Click any crew member to view their schedule</p>
+                  <p className="text-xs text-blue-700 font-medium mb-1">Click crew members to toggle their schedule columns</p>
                   <p className="text-xs text-blue-600">Shows data from crew_schedules table only</p>
                 </div>
               )}
@@ -360,7 +374,7 @@ export default function CrewSchedulePage() {
                     (a: any) => a.crewMemberId === member.id
                   );
 
-                  const isSelected = selectedCrewMember === member.id;
+                  const isSelected = selectedCrewMembers.includes(member.id);
                   
                   return (
                     <div 
@@ -368,7 +382,7 @@ export default function CrewSchedulePage() {
                       className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
                         isSelected ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => setSelectedCrewMember(isSelected ? null : member.id)}
+                      onClick={() => toggleCrewMember(member.id)}
                     >
                       <div className="flex items-center space-x-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -436,21 +450,21 @@ export default function CrewSchedulePage() {
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <span>{currentView === 'daily' ? 'Daily View' : 'Weekly View'}</span>
-                  {selectedCrewMember && (
+                  {selectedCrewMembers.length > 0 && (
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                      {(crewMembers as any[]).find(m => m.id === selectedCrewMember)?.name || 'Selected Member'}
+                      {selectedCrewMembers.length} member{selectedCrewMembers.length > 1 ? 's' : ''} selected
                     </Badge>
                   )}
                 </div>
                 <div className="flex items-center space-x-2">
-                  {selectedCrewMember && (
+                  {selectedCrewMembers.length > 0 && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setSelectedCrewMember(null)}
+                      onClick={clearAllSelections}
                       className="text-xs"
                     >
-                      View All Members
+                      Clear Selection
                     </Button>
                   )}
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -462,6 +476,7 @@ export default function CrewSchedulePage() {
             <CardContent>
               <div className="h-[600px]">
                 <FullCalendar
+                  schedulerLicenseKey='CC-Attribution-NonCommercial-NoDerivatives'
                   ref={calendarRef}
                   plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, resourceTimeGridPlugin]}
                   initialView={getCalendarView()}
@@ -486,11 +501,11 @@ export default function CrewSchedulePage() {
                   slotLabelInterval="01:00:00"
                   eventMinHeight={30}
                   resourceAreaHeaderContent="Crew Members"
-                  resourceAreaWidth="150px"
+                  resourceAreaWidth="200px"
                   resourceLabelContent={(resourceInfo) => (
-                    <div className="p-2">
-                      <div className="font-medium text-sm">{resourceInfo.resource.title}</div>
-                      <div className="text-xs text-gray-500">{resourceInfo.resource.extendedProps?.position}</div>
+                    <div className="p-2 text-center">
+                      <div className="font-medium text-sm truncate">{resourceInfo.resource.title}</div>
+                      <div className="text-xs text-gray-500 truncate">{resourceInfo.resource.extendedProps?.position}</div>
                     </div>
                   )}
                   eventContent={(eventInfo) => (
