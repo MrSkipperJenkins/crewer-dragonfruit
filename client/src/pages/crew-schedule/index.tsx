@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
 import { 
-  ChevronLeftIcon, 
-  ChevronRightIcon, 
-  PlusIcon 
+  Calendar as CalendarIcon,
+  Users,
+  Clock,
+  Plus,
+  Edit
 } from "lucide-react";
 import { 
   Dialog,
@@ -16,291 +18,402 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  format,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  addDays,
-  getDay,
-  isSameDay,
-  addWeeks,
-  subWeeks,
-  addMonths,
-  parseISO,
-} from "date-fns";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
 import { cn } from "@/lib/utils";
 
-const hours = Array.from({ length: 13 }, (_, i) => i + 7); // 7 AM to 7 PM
+type ViewType = 'daily' | 'weekly';
+type ShiftEvent = {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  backgroundColor?: string;
+  extendedProps?: {
+    crewMember: string;
+    show?: string;
+    type: 'shift' | 'show' | 'timeoff';
+    notes?: string;
+  };
+};
 
 export default function CrewSchedulePage() {
   const { currentWorkspace } = useCurrentWorkspace();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedCrewMember, setSelectedCrewMember] = useState<string | null>(null);
-  
-  // Get dates for the current week
-  const weekDates = eachDayOfInterval({
-    start: startOfWeek(selectedDate, { weekStartsOn: 0 }),
-    end: endOfWeek(selectedDate, { weekStartsOn: 0 })
-  });
-  
-  // Format week range for display
-  const weekRangeText = `${format(weekDates[0], 'MMM d')} - ${format(weekDates[6], 'MMM d, yyyy')}`;
-  
+  const [currentView, setCurrentView] = useState<ViewType>('daily');
+  const [selectedEvent, setSelectedEvent] = useState<ShiftEvent | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const calendarRef = useRef<FullCalendar>(null);
+
   // Fetch crew members
   const { data: crewMembers = [], isLoading: isLoadingCrew } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'crew-members'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
     enabled: !!currentWorkspace?.id,
   });
   
-  // Fetch shows
+  // Fetch shows for real data
   const { data: shows = [], isLoading: isLoadingShows } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'shows'],
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
   });
-  
-  // Fetch crew assignments
-  const { data: crewAssignments = [], isLoading: isLoadingAssignments } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'crew-assignments'],
-    enabled: !!currentWorkspace?.id,
-  });
-  
-  // Fetch crew time off
-  const { data: crewTimeOffs = [], isLoading: isLoadingTimeOffs } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'crew-time-offs'],
-    enabled: !!currentWorkspace?.id,
-  });
-  
-  // Navigation functions
-  const goToToday = () => setSelectedDate(new Date());
-  const goToPreviousWeek = () => setSelectedDate(subWeeks(selectedDate, 1));
-  const goToNextWeek = () => setSelectedDate(addWeeks(selectedDate, 1));
-  
-  // Function to determine if a crew member has an assignment on a given day and hour
-  const getAssignmentForDateHour = (crewMemberId: string, date: Date, hour: number) => {
-    if (!crewMemberId) return null;
+
+  // Fetch all crew assignments for the workspace
+  const fetchAllCrewAssignments = async () => {
+    if (!currentWorkspace?.id) return [];
     
-    const assignmentsForCrew = crewAssignments.filter(
-      (assignment: any) => assignment.crewMemberId === crewMemberId
-    );
-    
-    for (const assignment of assignmentsForCrew) {
-      const show = shows.find((s: any) => s.id === assignment.showId);
-      if (!show) continue;
-      
-      const showStart = parseISO(show.startTime);
-      const showEnd = parseISO(show.endTime);
-      
-      const showStartHour = showStart.getHours();
-      const showEndHour = showEnd.getHours();
-      
-      // Check if show is on this day
-      if (isSameDay(date, showStart) && hour >= showStartHour && hour < showEndHour) {
-        return { show, assignment };
+    const allAssignments: any[] = [];
+    for (const show of (shows as any[])) {
+      try {
+        const response = await fetch(`/api/shows/${show.id}/crew-assignments`);
+        if (response.ok) {
+          const assignments = await response.json();
+          allAssignments.push(...assignments.map((a: any) => ({ ...a, showId: show.id })));
+        }
+      } catch (error) {
+        console.error(`Failed to fetch assignments for show ${show.id}:`, error);
       }
     }
-    
-    return null;
+    return allAssignments;
   };
-  
-  // Check if crew member has time off on a given day
-  const hasTimeOff = (crewMemberId: string, date: Date) => {
-    if (!crewMemberId) return false;
-    
-    return crewTimeOffs.some((timeOff: any) => {
-      if (timeOff.crewMemberId !== crewMemberId) return false;
+
+  const { data: crewAssignments = [], isLoading: isLoadingAssignments } = useQuery({
+    queryKey: [`/api/crew-assignments-all`, currentWorkspace?.id, shows],
+    queryFn: fetchAllCrewAssignments,
+    enabled: !!currentWorkspace?.id && (shows as any[]).length > 0,
+  });
+
+  // Effect to handle view changes
+  useEffect(() => {
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.changeView(getCalendarView());
+    }
+  }, [currentView]);
+
+  // Generate events from real crew assignments and shows
+  const generateEventsFromData = (): ShiftEvent[] => {
+    const events: ShiftEvent[] = [];
+
+    (crewAssignments as any[]).forEach((assignment: any) => {
+      const show = (shows as any[]).find((s: any) => s.id === assignment.showId);
+      const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === assignment.crewMemberId);
       
-      const timeOffStart = parseISO(timeOff.startTime);
-      const timeOffEnd = parseISO(timeOff.endTime);
-      
-      return date >= timeOffStart && date <= timeOffEnd;
+      if (show && crewMember) {
+        events.push({
+          id: `assignment-${assignment.id}`,
+          title: `${show.title} - ${crewMember.name}`,
+          start: show.startTime,
+          end: show.endTime,
+          backgroundColor: show.color || '#3b82f6',
+          extendedProps: {
+            crewMember: crewMember.name,
+            show: show.title,
+            type: 'show',
+            notes: show.notes || ''
+          }
+        });
+      }
     });
+
+    return events;
   };
-  
-  // Determine if a date is in the current month
-  const isInCurrentMonth = (date: Date) => {
-    const currentMonth = selectedDate.getMonth();
-    return date.getMonth() === currentMonth;
+
+  const events = generateEventsFromData();
+
+  // Event handlers
+  const handleEventClick = (eventInfo: any) => {
+    setSelectedEvent({
+      id: eventInfo.event.id,
+      title: eventInfo.event.title,
+      start: eventInfo.event.startStr,
+      end: eventInfo.event.endStr,
+      backgroundColor: eventInfo.event.backgroundColor,
+      extendedProps: eventInfo.event.extendedProps
+    });
+    setIsEditModalOpen(true);
   };
+
+  const handleDateClick = (dateInfo: any) => {
+    // Handle clicking on empty time slots
+    console.log('Date clicked:', dateInfo);
+  };
+
+  const handleEventDrop = (eventInfo: any) => {
+    // Handle drag and drop (can be implemented later)
+    console.log('Event dropped:', eventInfo);
+  };
+
+  // View configuration
+  const getCalendarView = () => {
+    if (currentView === 'daily') {
+      return 'timeGridDay';
+    } else {
+      return 'timeGridWeek';
+    }
+  };
+
+  if (isLoadingCrew || isLoadingShows || isLoadingAssignments) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between py-4">
-            <CardTitle className="text-xl">Weekly Schedule</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToPreviousWeek}
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium">{weekRangeText}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToNextWeek}
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                onClick={goToToday}
-              >
-                Today
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border overflow-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                      Time
-                    </th>
-                    {weekDates.map((date, i) => (
-                      <th 
-                        key={i}
-                        className={cn(
-                          "px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider",
-                          isSameDay(date, new Date()) && "bg-primary-50 text-primary-700"
-                        )}
-                      >
-                        {format(date, 'EEE')}<br />
-                        {format(date, 'MMM d')}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {hours.map((hour) => (
-                    <tr key={hour} className="divide-x divide-gray-200">
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 bg-gray-50">
-                        {hour % 12 === 0 ? 12 : hour % 12} {hour >= 12 ? 'PM' : 'AM'}
-                      </td>
-                      {weekDates.map((date, dayIndex) => {
-                        const assignment = selectedCrewMember 
-                          ? getAssignmentForDateHour(selectedCrewMember, date, hour)
-                          : null;
-                        
-                        const timeOff = selectedCrewMember 
-                          ? hasTimeOff(selectedCrewMember, date)
-                          : false;
-                        
-                        return (
-                          <td 
-                            key={dayIndex}
-                            className={cn(
-                              "px-1 py-2 h-14 relative",
-                              isSameDay(date, new Date()) && "bg-primary-50/30"
-                            )}
-                          >
-                            {assignment && (
-                              <div className="absolute inset-1 rounded-sm p-1 text-xs bg-green-100 border-l-2 border-green-500">
-                                <div className="font-medium truncate">{assignment.show.title}</div>
-                                <div className="truncate text-gray-500">
-                                  {format(parseISO(assignment.show.startTime), 'h:mm a')} - {format(parseISO(assignment.show.endTime), 'h:mm a')}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {timeOff && !assignment && (
-                              <div className="absolute inset-1 rounded-sm p-1 text-xs bg-gray-100 border-l-2 border-gray-500 flex items-center justify-center">
-                                Time Off
-                              </div>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+            <Users className="h-6 w-6 mr-2" />
+            Crew Schedule
+          </h1>
+          <p className="text-gray-500">Manage crew member schedules and assignments</p>
+        </div>
+        
+        {/* View Toggle */}
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={currentView === 'daily' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('daily')}
+            size="sm"
+          >
+            <CalendarIcon className="h-4 w-4 mr-2" />
+            Daily
+          </Button>
+          <Button
+            variant={currentView === 'weekly' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('weekly')}
+            size="sm"
+          >
+            <Clock className="h-4 w-4 mr-2" />
+            Weekly
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total Crew</p>
+                <p className="text-2xl font-bold">{(crewMembers as any[]).length}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between py-4">
-              <CardTitle className="text-md">Select Crew Member</CardTitle>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <PlusIcon className="h-4 w-4 mr-1" />
-                    Add Time Off
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Request Time Off</DialogTitle>
-                    <DialogDescription>
-                      Submit a time off request for a crew member.
-                    </DialogDescription>
-                  </DialogHeader>
-                  {/* Time off form would go here */}
-                  <DialogFooter>
-                    <Button>Submit Request</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              <div className="max-h-64 overflow-y-auto space-y-2">
-                {isLoadingCrew ? (
-                  <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                  </div>
-                ) : (
-                  crewMembers.map((crewMember: any) => (
-                    <div 
-                      key={crewMember.id}
-                      className={cn(
-                        "px-3 py-2 rounded-md cursor-pointer",
-                        selectedCrewMember === crewMember.id
-                          ? "bg-primary-100 text-primary-800"
-                          : "hover:bg-gray-100"
-                      )}
-                      onClick={() => setSelectedCrewMember(crewMember.id)}
-                    >
-                      <div className="font-medium">{crewMember.name}</div>
-                      <div className="text-sm text-gray-500">{crewMember.title}</div>
-                    </div>
-                  ))
-                )}
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <CalendarIcon className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Active Shows</p>
+                <p className="text-2xl font-bold">{(shows as any[]).length}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="py-4">
-              <CardTitle className="text-md">Calendar</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                className="rounded-md border"
-                disabled={(date) => false}
-                modifiers={{
-                  inRange: (date) => isInCurrentMonth(date),
-                }}
-                modifiersStyles={{
-                  inRange: { fontWeight: 'normal' },
-                  outside: { color: '#ccc' },
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <Clock className="h-8 w-8 text-orange-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Assignments</p>
+                <p className="text-2xl font-bold">{(crewAssignments as any[]).length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <Plus className="h-8 w-8 text-purple-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">This Period</p>
+                <p className="text-2xl font-bold">{events.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Calendar */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>{currentView === 'daily' ? 'Daily View' : 'Weekly View'}</span>
+            <Badge variant="outline">
+              {(crewMembers as any[]).length} crew members
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[600px]">
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView={getCalendarView()}
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: ''
+              }}
+              events={events}
+              eventClick={handleEventClick}
+              dateClick={handleDateClick}
+              eventDrop={handleEventDrop}
+              editable={true}
+              droppable={true}
+              selectable={true}
+              slotMinTime="06:00:00"
+              slotMaxTime="24:00:00"
+              allDaySlot={false}
+              height="100%"
+              slotDuration="01:00:00"
+              slotLabelInterval="01:00:00"
+              eventMinHeight={30}
+              eventContent={(eventInfo) => (
+                <div className="p-1">
+                  <div className="font-medium text-xs">{eventInfo.event.title}</div>
+                  <div className="text-xs opacity-75">
+                    {eventInfo.event.extendedProps?.show || 'Shift'}
+                  </div>
+                </div>
+              )}
+              viewDidMount={() => {
+                // Update view when calendar mounts
+                if (calendarRef.current) {
+                  calendarRef.current.getApi().changeView(getCalendarView());
+                }
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Event Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Edit className="h-5 w-5 mr-2" />
+              Edit Schedule Event
+            </DialogTitle>
+            <DialogDescription>
+              Modify shift details or assignment information.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedEvent && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={selectedEvent.title}
+                  onChange={(e) => setSelectedEvent({
+                    ...selectedEvent,
+                    title: e.target.value
+                  })}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start">Start Time</Label>
+                  <Input
+                    id="start"
+                    type="datetime-local"
+                    value={selectedEvent.start?.slice(0, 16)}
+                    onChange={(e) => setSelectedEvent({
+                      ...selectedEvent,
+                      start: e.target.value
+                    })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end">End Time</Label>
+                  <Input
+                    id="end"
+                    type="datetime-local"
+                    value={selectedEvent.end?.slice(0, 16)}
+                    onChange={(e) => setSelectedEvent({
+                      ...selectedEvent,
+                      end: e.target.value
+                    })}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="crew-member">Crew Member</Label>
+                <Select value={selectedEvent.extendedProps?.crewMember || ''}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(crewMembers as any[]).map((member: any) => (
+                      <SelectItem key={member.id} value={member.name}>
+                        {member.name} - {member.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Additional notes..."
+                  value={selectedEvent.extendedProps?.notes || ''}
+                  onChange={(e) => setSelectedEvent({
+                    ...selectedEvent,
+                    extendedProps: {
+                      ...selectedEvent.extendedProps,
+                      crewMember: selectedEvent.extendedProps?.crewMember || '',
+                      type: selectedEvent.extendedProps?.type || 'shift',
+                      notes: e.target.value
+                    }
+                  })}
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              // Handle save logic here
+              console.log('Saving event:', selectedEvent);
+              setIsEditModalOpen(false);
+            }}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
