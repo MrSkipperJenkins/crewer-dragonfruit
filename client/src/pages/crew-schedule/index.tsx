@@ -333,59 +333,144 @@ export default function CrewSchedulePage() {
         </Card>
       </div>
 
-      {/* Calendar */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>{currentView === 'daily' ? 'Daily View' : 'Weekly View'}</span>
-            <Badge variant="outline">
-              {(crewMembers as any[]).length} crew members
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[600px]">
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView={getCalendarView()}
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: ''
-              }}
-              events={events}
-              eventClick={handleEventClick}
-              dateClick={handleDateClick}
-              eventDrop={handleEventDrop}
-              editable={true}
-              droppable={true}
-              selectable={true}
-              slotMinTime="06:00:00"
-              slotMaxTime="24:00:00"
-              allDaySlot={false}
-              height="100%"
-              slotDuration="01:00:00"
-              slotLabelInterval="01:00:00"
-              eventMinHeight={30}
-              eventContent={(eventInfo) => (
-                <div className="p-1">
-                  <div className="font-medium text-xs">{eventInfo.event.title}</div>
-                  <div className="text-xs opacity-75">
-                    {eventInfo.event.extendedProps?.show || 'Shift'}
-                  </div>
+      {/* Main Content Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Crew Members Sidebar */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Crew Members
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="max-h-[600px] overflow-y-auto">
+                {(crewMembers as any[]).map((member: any) => {
+                  const memberSchedules = (crewSchedules as any[]).filter(
+                    (s: any) => s.crewMemberId === member.id
+                  );
+                  const memberTimeOff = (crewTimeOff as any[]).filter(
+                    (t: any) => t.crewMemberId === member.id
+                  );
+                  const memberAssignments = (crewAssignments as any[]).filter(
+                    (a: any) => a.crewMemberId === member.id
+                  );
+
+                  return (
+                    <div key={member.id} className="p-4 border-b border-gray-100 hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-medium text-blue-700">
+                            {member.name.split(' ').map((n: string) => n[0]).join('')}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {member.name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {member.title}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">Schedules:</span>
+                          <Badge variant="outline" className="text-xs">
+                            {memberSchedules.length}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">Assignments:</span>
+                          <Badge variant="outline" className="text-xs">
+                            {memberAssignments.length}
+                          </Badge>
+                        </div>
+                        {memberTimeOff.length > 0 && (
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">Time Off:</span>
+                            <Badge variant="destructive" className="text-xs">
+                              {memberTimeOff.length}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Calendar */}
+        <div className="lg:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>{currentView === 'daily' ? 'Daily View' : 'Weekly View'}</span>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    Available
+                  </Badge>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Shows
+                  </Badge>
+                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                    Time Off
+                  </Badge>
                 </div>
-              )}
-              viewDidMount={() => {
-                // Update view when calendar mounts
-                if (calendarRef.current) {
-                  calendarRef.current.getApi().changeView(getCalendarView());
-                }
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[600px]">
+                <FullCalendar
+                  ref={calendarRef}
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView={getCalendarView()}
+                  headerToolbar={{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: ''
+                  }}
+                  events={events}
+                  eventClick={handleEventClick}
+                  dateClick={handleDateClick}
+                  eventDrop={handleEventDrop}
+                  editable={true}
+                  droppable={true}
+                  selectable={true}
+                  slotMinTime="06:00:00"
+                  slotMaxTime="24:00:00"
+                  allDaySlot={false}
+                  height="100%"
+                  slotDuration="01:00:00"
+                  slotLabelInterval="01:00:00"
+                  eventMinHeight={30}
+                  eventContent={(eventInfo) => (
+                    <div className="p-1">
+                      <div className="font-medium text-xs">{eventInfo.event.title}</div>
+                      <div className="text-xs opacity-75">
+                        {eventInfo.event.extendedProps?.show || 
+                         eventInfo.event.extendedProps?.type === 'shift' ? 'Available' :
+                         eventInfo.event.extendedProps?.type === 'timeoff' ? 'Time Off' : 'Event'}
+                      </div>
+                    </div>
+                  )}
+                  viewDidMount={() => {
+                    // Update view when calendar mounts
+                    if (calendarRef.current) {
+                      calendarRef.current.getApi().changeView(getCalendarView());
+                    }
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Edit Event Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
