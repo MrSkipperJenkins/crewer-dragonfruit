@@ -48,7 +48,7 @@ export const crewMembers = pgTable("crew_members", {
   phone: text("phone"),
   title: text("title").notNull(),
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const insertCrewMemberSchema = createInsertSchema(crewMembers).omit({
