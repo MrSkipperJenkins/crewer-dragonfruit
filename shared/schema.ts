@@ -8,8 +8,8 @@ export const workspaces = pgTable("workspaces", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
-  lastAccessedAt: timestamp("last_accessed_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastAccessedAt: timestamp("last_accessed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const insertWorkspaceSchema = createInsertSchema(workspaces).omit({
@@ -32,7 +32,7 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   role: text("role").notNull(),
   workspaceId: uuid("workspace_id").references(() => workspaces.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -124,14 +124,14 @@ export const shows = pgTable("shows", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time").notNull(),
+  startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+  endTime: timestamp("end_time", { withTimezone: true }).notNull(),
   recurringPattern: text("recurring_pattern"), // Optional pattern for recurring shows
   notes: text("notes"),
   status: text("status").notNull().default("draft"), // draft, scheduled, in_progress, completed, cancelled
   color: text("color").default("#3b82f6"), // Event color for calendar display
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const insertShowSchema = createInsertSchema(shows).omit({
@@ -212,10 +212,10 @@ export const crewSchedules = pgTable("crew_schedules", {
   id: uuid("id").defaultRandom().primaryKey(),
   crewMemberId: uuid("crew_member_id").references(() => crewMembers.id).notNull(),
   dayOfWeek: text("day_of_week").notNull(), // Monday, Tuesday, etc.
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time").notNull(),
+  startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+  endTime: timestamp("end_time", { withTimezone: true }).notNull(),
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const insertCrewScheduleSchema = createInsertSchema(crewSchedules).omit({
@@ -227,11 +227,11 @@ export const insertCrewScheduleSchema = createInsertSchema(crewSchedules).omit({
 export const crewTimeOff = pgTable("crew_time_off", {
   id: uuid("id").defaultRandom().primaryKey(),
   crewMemberId: uuid("crew_member_id").references(() => crewMembers.id).notNull(),
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time").notNull(),
+  startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+  endTime: timestamp("end_time", { withTimezone: true }).notNull(),
   reason: text("reason"),
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const insertCrewTimeOffSchema = createInsertSchema(crewTimeOff).omit({
@@ -250,7 +250,7 @@ export const notifications = pgTable("notifications", {
   relatedEntityType: text("related_entity_type"), // show, crew_member, resource
   relatedEntityId: uuid("related_entity_id"),
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
