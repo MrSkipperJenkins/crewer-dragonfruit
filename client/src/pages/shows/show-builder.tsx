@@ -169,6 +169,14 @@ export default function ShowBuilder() {
       // Extract resource IDs and job IDs for separate API calls
       const { selectedResources, selectedJobs, categoryId, recurringDays, ...showData } = data;
       
+      // Convert datetime-local values to proper UTC ISO strings
+      if (showData.startTime) {
+        showData.startTime = new Date(showData.startTime).toISOString();
+      }
+      if (showData.endTime) {
+        showData.endTime = new Date(showData.endTime).toISOString();
+      }
+      
       // Process recurring pattern if days are selected
       if (recurringDays && recurringDays.length > 0) {
         showData.recurringPattern = `WEEKLY:${recurringDays.join(',')}`;
