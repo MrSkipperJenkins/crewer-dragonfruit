@@ -553,11 +553,14 @@ export default function CrewSchedulePage() {
                     slotLabelInterval="01:00:00"
                     eventMinHeight={30}
                     resourceAreaHeaderContent="Crew Members"
-                    resourceAreaWidth="200px"
+                    resourceAreaWidth="250px"
                     resourceLabelContent={(resourceInfo) => (
-                      <div className="p-2 text-center min-w-0 max-w-full">
-                        <div className="font-medium text-sm truncate leading-tight">{resourceInfo.resource.title}</div>
-                        <div className="text-xs text-gray-500 truncate leading-tight">{resourceInfo.resource.extendedProps?.position}</div>
+                      <div 
+                        className="p-2 text-center min-w-0 max-w-full cursor-help"
+                        title={`${resourceInfo.resource.title} - ${resourceInfo.resource.extendedProps?.position}`}
+                      >
+                        <div className="font-medium text-sm leading-tight break-words">{resourceInfo.resource.title}</div>
+                        <div className="text-xs text-gray-500 leading-tight break-words mt-1">{resourceInfo.resource.extendedProps?.position}</div>
                       </div>
                     )}
                     eventContent={(eventInfo) => (
