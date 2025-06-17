@@ -894,8 +894,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(shows.workspaceId, workspaceId),
-          // Only get shows that have a recurring pattern
-          sql`${shows.recurringPattern} IS NOT NULL AND ${shows.recurringPattern} != ''`
+          isNotNull(shows.recurringPattern)
         )
       );
   }
@@ -907,9 +906,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(shows.workspaceId, workspaceId),
-          // Get shows that are exceptions (have a parentId and are marked as exceptions)
-          sql`${shows.parentId} IS NOT NULL`,
-          sql`${shows.isException} = true`,
+          isNotNull(shows.parentId),
+          eq(shows.isException, true),
           gte(shows.startTime, startDate),
           lte(shows.endTime, endDate)
         )

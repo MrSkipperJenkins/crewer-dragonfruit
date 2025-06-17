@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { RRule } from "rrule";
+import RRule from "rrule";
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -438,8 +438,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!show.recurringPattern) continue;
         
         try {
-          // Parse RRULE string
-          const rule = RRule.fromString(show.recurringPattern);
+          // Parse RRULE string with dtstart
+          const ruleOptions = RRule.parseString(show.recurringPattern);
+          const rule = new RRule({
+            ...ruleOptions,
+            dtstart: new Date(show.startTime)
+          });
           
           // Generate occurrences in the date range
           const occurrences = rule.between(startDate, endDate, true);
@@ -460,7 +464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: show.status,
               color: show.color,
               workspaceId: show.workspaceId,
-              recurringPattern: show.recurringPattern,
+              recurringPattern: show.recurringPattern || '',
               isRecurrence: true,
               notes: show.notes
             };
@@ -476,7 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get any exceptions (individual edits to recurring events)
       const exceptions = await storage.getShowExceptions(workspaceId as string, startDate, endDate);
       
-      // Replace occurrences with exceptions where they exist
+      // Filter out occurrences that have exceptions
       const finalOccurrences = expandedOccurrences.filter(occurrence => {
         return !exceptions.some(exception => 
           exception.parentId === occurrence.parentId && 
@@ -484,8 +488,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       });
       
-      // Add the exceptions to the final list
-      finalOccurrences.push(...exceptions);
+      // Transform exceptions to match the expected format and add them
+      for (const exception of exceptions) {
+        finalOccurrences.push({
+          id: exception.id,
+          parentId: exception.parentId || '',
+          title: exception.title,
+          description: exception.description,
+          startTime: exception.startTime.toISOString(),
+          endTime: exception.endTime.toISOString(),
+          status: exception.status,
+          color: exception.color,
+          workspaceId: exception.workspaceId,
+          recurringPattern: exception.recurringPattern || '',
+          isRecurrence: false,
+          notes: exception.notes
+        });
+      }
       
       res.json(finalOccurrences);
     } catch (error) {
