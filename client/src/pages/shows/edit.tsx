@@ -199,7 +199,18 @@ export default function EditShow() {
   // Initialize local crew assignments when data loads
   useEffect(() => {
     if (crewAssignments.length > 0) {
-      setLocalCrewAssignments([...crewAssignments]);
+      // Ensure unique assignments per required job to avoid duplicate keys
+      const uniqueAssignments = crewAssignments.reduce((acc: any[], assignment: any) => {
+        const existingIndex = acc.findIndex(a => a.requiredJobId === assignment.requiredJobId);
+        if (existingIndex === -1) {
+          acc.push(assignment);
+        } else {
+          // Keep the most recent assignment if duplicates exist
+          acc[existingIndex] = assignment;
+        }
+        return acc;
+      }, []);
+      setLocalCrewAssignments(uniqueAssignments);
     }
   }, [crewAssignments]);
 
