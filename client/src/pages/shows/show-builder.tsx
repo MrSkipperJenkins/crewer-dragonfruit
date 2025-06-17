@@ -64,9 +64,10 @@ const formSchema = insertShowSchema.extend({
   selectedJobs: z.array(z.string()).optional(),
   recurringDays: z.array(z.string()).optional(),
   // Recurrence fields
-  recurrenceType: z.enum(["none", "daily", "weekly", "monthly"]).default("none"),
+  recurrenceType: z.enum(["none", "daily", "weekly", "monthly", "custom"]).default("none"),
   recurrenceInterval: z.number().min(1).default(1),
   recurrenceWeekdays: z.array(z.string()).optional(),
+  recurrenceMonthlyType: z.enum(["day", "weekday"]).optional(),
   recurrenceEndType: z.enum(["never", "date", "count"]).default("never"),
   recurrenceEndDate: z.string().optional(),
   recurrenceEndCount: z.number().min(1).optional(),
@@ -79,7 +80,7 @@ export default function ShowBuilder() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState<"details" | "resources" | "crew" | "recurrence">("details");
+  const [step, setStep] = useState<"details" | "resources" | "crew">("details");
 
   // Helper function to get next 15-minute interval in local time
   const getNext15MinuteSlot = () => {
@@ -138,6 +139,7 @@ export default function ShowBuilder() {
     recurrenceType: "none",
     recurrenceInterval: 1,
     recurrenceWeekdays: [],
+    recurrenceMonthlyType: "day",
     recurrenceEndType: "never",
     recurrenceEndDate: "",
     recurrenceEndCount: 1,
@@ -319,7 +321,7 @@ export default function ShowBuilder() {
   // Form submission handler
   const onSubmit = (data: FormValues) => {
     // Only proceed with show creation if we're on the final step
-    if (step !== "recurrence") {
+    if (step !== "crew") {
       return;
     }
     
@@ -352,11 +354,10 @@ export default function ShowBuilder() {
       <Card>
         <CardHeader>
           <Tabs defaultValue="details" className="w-full" value={step} onValueChange={(value) => setStep(value as any)}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="details">Show Details</TabsTrigger>
               <TabsTrigger value="resources">Resources</TabsTrigger>
               <TabsTrigger value="crew">Crew Requirements</TabsTrigger>
-              <TabsTrigger value="recurrence">Recurrence</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
@@ -509,37 +510,216 @@ export default function ShowBuilder() {
                   )}
                 />
                 
-                <div className="space-y-2">
-                  <Label>Recurring Schedule</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
-                      <FormField
-                        key={day}
-                        control={form.control}
-                        name="recurringDays"
-                        render={({ field }) => (
-                          <FormItem key={day} className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(day) || false}
-                                onCheckedChange={(checked) => {
-                                  const currentValue = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...currentValue, day]);
-                                  } else {
-                                    field.onChange(currentValue.filter((value: string) => value !== day));
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              {day.slice(0, 3)}
-                            </FormLabel>
-                          </FormItem>
+                {/* Recurrence Section */}
+                <div className="space-y-4 border-t pt-4">
+                  <Label className="text-base font-medium">Recurring Schedule</Label>
+                  
+                  <FormField
+                    control={form.control}
+                    name="recurrenceType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Repeat</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Does not repeat" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Does not repeat</SelectItem>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Custom Recurrence Options */}
+                  {form.watch("recurrenceType") !== "none" && (
+                    <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
+                      
+                      {/* Interval Selection */}
+                      {(form.watch("recurrenceType") === "custom" || form.watch("recurrenceType") === "daily" || form.watch("recurrenceType") === "weekly" || form.watch("recurrenceType") === "monthly") && (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm">Repeat every</span>
+                          <FormField
+                            control={form.control}
+                            name="recurrenceInterval"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="999"
+                                    className="w-20"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <span className="text-sm">
+                            {form.watch("recurrenceType") === "daily" && (form.watch("recurrenceInterval") === 1 ? "day" : "days")}
+                            {form.watch("recurrenceType") === "weekly" && (form.watch("recurrenceInterval") === 1 ? "week" : "weeks")}
+                            {form.watch("recurrenceType") === "monthly" && (form.watch("recurrenceInterval") === 1 ? "month" : "months")}
+                            {form.watch("recurrenceType") === "custom" && ""}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Weekly Options */}
+                      {(form.watch("recurrenceType") === "weekly" || form.watch("recurrenceType") === "custom") && (
+                        <div className="space-y-2">
+                          <Label className="text-sm">Repeat on</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {["SU", "MO", "TU", "WE", "TH", "FR", "SA"].map((day, index) => {
+                              const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                              const fullDayName = dayNames[index];
+                              return (
+                                <FormField
+                                  key={day}
+                                  control={form.control}
+                                  name="recurrenceWeekdays"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Button
+                                          type="button"
+                                          variant={field.value?.includes(day) ? "default" : "outline"}
+                                          size="sm"
+                                          className="w-10 h-10 p-0"
+                                          onClick={() => {
+                                            const currentValue = field.value || [];
+                                            if (currentValue.includes(day)) {
+                                              field.onChange(currentValue.filter((d: string) => d !== day));
+                                            } else {
+                                              field.onChange([...currentValue, day]);
+                                            }
+                                          }}
+                                        >
+                                          {day}
+                                        </Button>
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Monthly Options */}
+                      {(form.watch("recurrenceType") === "monthly" || form.watch("recurrenceType") === "custom") && (
+                        <FormField
+                          control={form.control}
+                          name="recurrenceMonthlyType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm">Monthly repeat type</FormLabel>
+                              <Select 
+                                onValueChange={field.onChange} 
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="day">On the same day each month</SelectItem>
+                                  <SelectItem value="weekday">On the same weekday each month</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {/* End Options */}
+                      <div className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="recurrenceEndType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm">Ends</FormLabel>
+                              <Select 
+                                onValueChange={field.onChange} 
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="never">Never</SelectItem>
+                                  <SelectItem value="date">On date</SelectItem>
+                                  <SelectItem value="count">After occurrences</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {form.watch("recurrenceEndType") === "date" && (
+                          <FormField
+                            control={form.control}
+                            name="recurrenceEndDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="date"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         )}
-                      />
-                    ))}
-                  </div>
+
+                        {form.watch("recurrenceEndType") === "count" && (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm">After</span>
+                            <FormField
+                              control={form.control}
+                              name="recurrenceEndCount"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      max="999"
+                                      className="w-20"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <span className="text-sm">occurrences</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
