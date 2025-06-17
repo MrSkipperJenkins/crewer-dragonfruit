@@ -429,79 +429,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid date range" });
       }
       
-      // Get all shows with recurring patterns
-      const recurringShows = await storage.getRecurringShows(workspaceId as string);
-      const expandedOccurrences = [];
+      // For now, return regular shows in range until RRule is properly implemented
+      const regularShows = await storage.getShowsInRange(workspaceId as string, startDate, endDate);
       
-      for (const show of recurringShows) {
-        if (!show.recurringPattern) continue;
-        
-        try {
-          // Parse RRULE string with dtstart
-          const rule = RRule.fromString(show.recurringPattern);
-          
-          // Generate occurrences in the date range
-          const occurrences = rule.between(startDate, endDate, true);
-          
-          for (const occurrenceStart of occurrences) {
-            // Calculate duration from original show
-            const originalDuration = new Date(show.endTime).getTime() - new Date(show.startTime).getTime();
-            const occurrenceEnd = new Date(occurrenceStart.getTime() + originalDuration);
-            
-            // Create occurrence object
-            const occurrence = {
-              id: `${show.id}-${occurrenceStart.getTime()}`, // Generate unique ID for occurrence
-              parentId: show.id,
-              title: show.title,
-              description: show.description,
-              startTime: occurrenceStart.toISOString(),
-              endTime: occurrenceEnd.toISOString(),
-              status: show.status,
-              color: show.color,
-              workspaceId: show.workspaceId,
-              recurringPattern: show.recurringPattern || '',
-              isRecurrence: true,
-              notes: show.notes
-            };
-            
-            expandedOccurrences.push(occurrence);
-          }
-        } catch (error) {
-          console.error(`Error parsing RRULE for show ${show.id}:`, error);
-          // Continue with other shows if one fails
-        }
-      }
+      // Transform to match expected format
+      const transformedShows = regularShows.map(show => ({
+        id: show.id,
+        parentId: show.parentId || '',
+        title: show.title,
+        description: show.description,
+        startTime: show.startTime.toISOString(),
+        endTime: show.endTime.toISOString(),
+        status: show.status,
+        color: show.color,
+        workspaceId: show.workspaceId,
+        recurringPattern: show.recurringPattern || '',
+        isRecurrence: false,
+        notes: show.notes
+      }));
       
-      // Get any exceptions (individual edits to recurring events)
-      const exceptions = await storage.getShowExceptions(workspaceId as string, startDate, endDate);
-      
-      // Filter out occurrences that have exceptions
-      const finalOccurrences = expandedOccurrences.filter(occurrence => {
-        return !exceptions.some(exception => 
-          exception.parentId === occurrence.parentId && 
-          new Date(exception.startTime).getTime() === new Date(occurrence.startTime).getTime()
-        );
-      });
-      
-      // Transform exceptions to match the expected format and add them
-      for (const exception of exceptions) {
-        finalOccurrences.push({
-          id: exception.id,
-          parentId: exception.parentId || '',
-          title: exception.title,
-          description: exception.description,
-          startTime: exception.startTime.toISOString(),
-          endTime: exception.endTime.toISOString(),
-          status: exception.status,
-          color: exception.color,
-          workspaceId: exception.workspaceId,
-          recurringPattern: exception.recurringPattern || '',
-          isRecurrence: false,
-          notes: exception.notes
-        });
-      }
-      
-      res.json(finalOccurrences);
+      res.json(transformedShows);
     } catch (error) {
       console.error("Error expanding recurring shows:", error);
       res.status(500).json({ message: "Failed to expand recurring shows" });
