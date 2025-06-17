@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import { RRule } from "rrule";
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -411,6 +412,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     const shows = await storage.getShows(req.params.workspaceId);
     res.json(shows);
+  });
+
+  // Expand recurring shows into individual occurrences
+  app.get("/api/shows/expand-recurring", async (req, res) => {
+    try {
+      const { start, end, workspaceId } = req.query;
+      
+      if (!start || !end || !workspaceId) {
+        return res.status(400).json({ message: "start, end, and workspaceId parameters are required" });
+      }
+      
+      const startDate = new Date(start as string);
+      const endDate = new Date(end as string);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).json({ message: "Invalid date range" });
+      }
+      
+      // Get all shows with recurring patterns
+      const recurringShows = await storage.getRecurringShows(workspaceId as string);
+      const expandedOccurrences = [];
+      
+      for (const show of recurringShows) {
+        if (!show.recurringPattern) continue;
+        
+        try {
+          // Parse RRULE string
+          const rule = RRule.fromString(show.recurringPattern);
+          
+          // Generate occurrences in the date range
+          const occurrences = rule.between(startDate, endDate, true);
+          
+          for (const occurrenceStart of occurrences) {
+            // Calculate duration from original show
+            const originalDuration = new Date(show.endTime).getTime() - new Date(show.startTime).getTime();
+            const occurrenceEnd = new Date(occurrenceStart.getTime() + originalDuration);
+            
+            // Create occurrence object
+            const occurrence = {
+              id: `${show.id}-${occurrenceStart.getTime()}`, // Generate unique ID for occurrence
+              parentId: show.id,
+              title: show.title,
+              description: show.description,
+              startTime: occurrenceStart.toISOString(),
+              endTime: occurrenceEnd.toISOString(),
+              status: show.status,
+              color: show.color,
+              workspaceId: show.workspaceId,
+              recurringPattern: show.recurringPattern,
+              isRecurrence: true,
+              notes: show.notes
+            };
+            
+            expandedOccurrences.push(occurrence);
+          }
+        } catch (error) {
+          console.error(`Error parsing RRULE for show ${show.id}:`, error);
+          // Continue with other shows if one fails
+        }
+      }
+      
+      // Get any exceptions (individual edits to recurring events)
+      const exceptions = await storage.getShowExceptions(workspaceId as string, startDate, endDate);
+      
+      // Replace occurrences with exceptions where they exist
+      const finalOccurrences = expandedOccurrences.filter(occurrence => {
+        return !exceptions.some(exception => 
+          exception.parentId === occurrence.parentId && 
+          new Date(exception.startTime).getTime() === new Date(occurrence.startTime).getTime()
+        );
+      });
+      
+      // Add the exceptions to the final list
+      finalOccurrences.push(...exceptions);
+      
+      res.json(finalOccurrences);
+    } catch (error) {
+      console.error("Error expanding recurring shows:", error);
+      res.status(500).json({ message: "Failed to expand recurring shows" });
+    }
   });
 
   app.get("/api/shows/:id", async (req, res) => {

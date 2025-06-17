@@ -113,6 +113,10 @@ export interface IStorage {
   updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined>;
   deleteShow(id: string): Promise<boolean>;
 
+  // Recurring Show Methods
+  getRecurringShows(workspaceId: string): Promise<Show[]>;
+  getShowExceptions(workspaceId: string, startDate: Date, endDate: Date): Promise<Show[]>;
+
   // Show Category Assignment CRUD
   getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]>;
   getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]>;
