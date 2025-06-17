@@ -2,7 +2,6 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import RRule from "rrule";
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -439,11 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           // Parse RRULE string with dtstart
-          const ruleOptions = RRule.parseString(show.recurringPattern);
-          const rule = new RRule({
-            ...ruleOptions,
-            dtstart: new Date(show.startTime)
-          });
+          const rule = RRule.fromString(show.recurringPattern);
           
           // Generate occurrences in the date range
           const occurrences = rule.between(startDate, endDate, true);
