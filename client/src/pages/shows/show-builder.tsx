@@ -46,6 +46,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { ColorPicker } from "@/components/ui/color-picker";
+import { RRule } from "rrule";
 
 // Extend the insertShowSchema with validation rules
 const formSchema = insertShowSchema.extend({
@@ -62,6 +63,13 @@ const formSchema = insertShowSchema.extend({
   selectedResources: z.array(z.string()).optional(),
   selectedJobs: z.array(z.string()).optional(),
   recurringDays: z.array(z.string()).optional(),
+  // Recurrence fields
+  recurrenceType: z.enum(["none", "daily", "weekly", "monthly"]).default("none"),
+  recurrenceInterval: z.number().min(1).default(1),
+  recurrenceWeekdays: z.array(z.string()).optional(),
+  recurrenceEndType: z.enum(["never", "date", "count"]).default("never"),
+  recurrenceEndDate: z.string().optional(),
+  recurrenceEndCount: z.number().min(1).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -71,7 +79,7 @@ export default function ShowBuilder() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState<"details" | "resources" | "crew">("details");
+  const [step, setStep] = useState<"details" | "resources" | "crew" | "recurrence">("details");
 
   // Helper function to get next 15-minute interval in local time
   const getNext15MinuteSlot = () => {
@@ -127,6 +135,12 @@ export default function ShowBuilder() {
     recurringDays: [],
     startTime: defaultStartTime,
     endTime: defaultEndTime,
+    recurrenceType: "none",
+    recurrenceInterval: 1,
+    recurrenceWeekdays: [],
+    recurrenceEndType: "never",
+    recurrenceEndDate: "",
+    recurrenceEndCount: 1,
   };
 
   // Use form hook with schema validation
@@ -163,11 +177,41 @@ export default function ShowBuilder() {
     return acc;
   }, {});
 
+  // Helper function to generate RRULE string
+  const generateRRule = (data: FormValues): string | null => {
+    if (data.recurrenceType === "none") return null;
+    
+    const options: any = {
+      freq: data.recurrenceType === "daily" ? RRule.DAILY :
+            data.recurrenceType === "weekly" ? RRule.WEEKLY :
+            data.recurrenceType === "monthly" ? RRule.MONTHLY : RRule.DAILY,
+      interval: data.recurrenceInterval,
+    };
+    
+    // Add weekdays for weekly recurrence
+    if (data.recurrenceType === "weekly" && data.recurrenceWeekdays?.length) {
+      const weekdayMap: { [key: string]: number } = {
+        'SU': RRule.SU.weekday, 'MO': RRule.MO.weekday, 'TU': RRule.TU.weekday,
+        'WE': RRule.WE.weekday, 'TH': RRule.TH.weekday, 'FR': RRule.FR.weekday, 'SA': RRule.SA.weekday
+      };
+      options.byweekday = data.recurrenceWeekdays.map(day => weekdayMap[day]).filter(Boolean);
+    }
+    
+    // Add end conditions
+    if (data.recurrenceEndType === "date" && data.recurrenceEndDate) {
+      options.until = new Date(data.recurrenceEndDate);
+    } else if (data.recurrenceEndType === "count" && data.recurrenceEndCount) {
+      options.count = data.recurrenceEndCount;
+    }
+    
+    return new RRule(options).toString();
+  };
+
   // Create show mutation
   const createShowMutation = useMutation({
     mutationFn: async (data: FormValues) => {
       // Extract resource IDs and job IDs for separate API calls
-      const { selectedResources, selectedJobs, categoryId, recurringDays, ...showData } = data;
+      const { selectedResources, selectedJobs, categoryId, recurringDays, recurrenceType, recurrenceInterval, recurrenceWeekdays, recurrenceEndType, recurrenceEndDate, recurrenceEndCount, ...showData } = data;
       
       // Convert datetime-local values to proper UTC ISO strings
       if (showData.startTime) {
@@ -177,7 +221,13 @@ export default function ShowBuilder() {
         showData.endTime = new Date(showData.endTime).toISOString();
       }
       
-      // Process recurring pattern if days are selected
+      // Generate RRULE string from recurrence fields
+      const rruleString = generateRRule(data);
+      if (rruleString) {
+        showData.recurringPattern = rruleString;
+      }
+      
+      // Legacy support: Process recurring pattern if days are selected
       if (recurringDays && recurringDays.length > 0) {
         showData.recurringPattern = `WEEKLY:${recurringDays.join(',')}`;
       }
@@ -269,7 +319,7 @@ export default function ShowBuilder() {
   // Form submission handler
   const onSubmit = (data: FormValues) => {
     // Only proceed with show creation if we're on the final step
-    if (step !== "crew") {
+    if (step !== "recurrence") {
       return;
     }
     

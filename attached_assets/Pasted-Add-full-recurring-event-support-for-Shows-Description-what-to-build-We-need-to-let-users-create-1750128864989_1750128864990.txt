@@ -1,0 +1,74 @@
+Add full recurring‐event support for Shows
+
+Description (what to build):
+We need to let users create Shows that repeat on a schedule, and have those repeat instances render on the calendar (with exceptions for one-off edits). Specifically:
+
+UI in ShowBuilder
+
+Add a new “Recurrence” tab or section after “Crew Requirements.”
+
+Let people choose:
+
+Recurrence type: None / Daily / Weekly / Monthly
+
+Interval: every N days/weeks/months
+
+By-weekday: checkboxes Mon–Sun (only for weekly)
+
+End: never / end date (date picker) / after N occurrences
+
+Use shadcn/ui components: <Tabs>, <Select>, <Input type="number">, <DatePicker>, <Checkbox> etc.
+
+On submit, serialize the rule into a standard RRULE string (e.g. FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE,FR;UNTIL=20251231T000000Z) and send it as recurringPattern on the POST/PUT /api/shows.
+
+Backend storage & API
+
+In shows table you already have a recurringPattern column—no schema changes.
+
+Implement a new controller /api/shows/expand-recurring?start=&end=&workspaceId= that:
+
+Fetches all shows with a non-null recurringPattern in the workspace
+
+Uses the rrule JS library to generate all occurrences (excluding exceptions) between start and end
+
+Fetches any “exceptions” (rows where parentId = show.id AND isException = true) and replaces those occurrences
+
+Returns a flat array of { id, parentId, startTime, endTime, title, … }
+
+Calendar integration
+
+In your FullCalendarView component, call both:
+
+/api/workspaces/:id/shows (one-off events)
+
+/api/shows/expand-recurring?start=&end=&workspaceId=
+
+Merge the two result sets into a single events array, marking generated recurrences with a flag so you can style them differently.
+
+Clicking an occurrence should open a “Edit occurrence” modal that PATCHes /api/shows/:occurrenceId with { isException: true, parentId: originalId, ... }
+
+In the ShowBuilder “Recurrence” section, allow editing the series (updating the recurringPattern) or deleting individual occurrences (creating exceptions).
+
+Edge cases & styling
+
+Dark/light mode: ensure checkboxes and inputs follow existing Tailwind CSS variables.
+
+Validate that end date ≥ start date, interval ≥ 1, weekday list non-empty for weekly.
+
+Show a summary text like “Repeats weekly on Mon, Wed, Fri until Jun 1, 2026” below the form.
+
+Write unit tests for the recurrence expansion logic (happy path + exceptions).
+
+Deliverables:
+
+Updated ShowBuilder.tsx with the Recurrence UI
+
+New endpoint expand-recurring and service in storage.ts using rrule
+
+Updated calendar page to fetch & merge both APIs
+
+CRUD support for exceptions (editing single occurrences)
+
+Demo screenshots of weekly recurrence on the calendar
+
+Tests for rule parsing & expansion
