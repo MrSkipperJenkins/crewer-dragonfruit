@@ -806,66 +806,51 @@ export default function ShowBuilder() {
                 </div>
               </div>
             )}
-
-            {step === "recurrence" && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium">Recurrence Settings</h3>
-                  <p className="text-sm text-gray-500">Configure if this show repeats on a schedule</p>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="recurrenceType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Recurrence Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select recurrence" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">No Recurrence</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch("recurrenceType") !== "none" && (
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="recurrenceInterval"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Repeat every {form.watch("recurrenceType") === "daily" ? "day(s)" : 
-                                         form.watch("recurrenceType") === "weekly" ? "week(s)" : "month(s)"}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="1"
-                              {...field}
-                              value={field.value || 1}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {form.watch("recurrenceType") === "weekly" && (
-                      <FormField
-                        control={form.control}
+          </Form>
+        </CardContent>
+        
+        <CardFooter className="flex justify-between border-t px-6 py-4">
+          {step === "details" ? (
+            <div></div>
+          ) : (
+            <Button type="button" variant="outline" onClick={() => {
+              const steps = ["details", "resources", "crew"];
+              const currentIndex = steps.indexOf(step);
+              if (currentIndex > 0) {
+                setStep(steps[currentIndex - 1] as any);
+              }
+            }}>
+              Back
+            </Button>
+          )}
+          
+          {step === "crew" ? (
+            <Button 
+              type="button" 
+              disabled={createShowMutation.isPending}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {createShowMutation.isPending ? "Creating..." : "Create Show"}
+            </Button>
+          ) : (
+            <Button 
+              type="button" 
+              onClick={() => {
+                const steps = ["details", "resources", "crew"];
+                const currentIndex = steps.indexOf(step);
+                if (currentIndex < steps.length - 1) {
+                  setStep(steps[currentIndex + 1] as any);
+                }
+              }}
+            >
+              Continue
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}
                         name="recurrenceWeekdays"
                         render={({ field }) => (
                           <FormItem>
@@ -1012,7 +997,7 @@ export default function ShowBuilder() {
             <div></div>
           ) : (
             <Button type="button" variant="outline" onClick={() => {
-              const steps = ["details", "resources", "crew", "recurrence"];
+              const steps = ["details", "resources", "crew"];
               const currentIndex = steps.indexOf(step);
               if (currentIndex > 0) {
                 setStep(steps[currentIndex - 1] as any);
@@ -1022,7 +1007,7 @@ export default function ShowBuilder() {
             </Button>
           )}
           
-          {step === "recurrence" ? (
+          {step === "crew" ? (
             <Button 
               type="button" 
               disabled={createShowMutation.isPending}
@@ -1034,7 +1019,7 @@ export default function ShowBuilder() {
             <Button 
               type="button" 
               onClick={() => {
-                const steps = ["details", "resources", "crew", "recurrence"];
+                const steps = ["details", "resources", "crew"];
                 const currentIndex = steps.indexOf(step);
                 if (currentIndex < steps.length - 1) {
                   setStep(steps[currentIndex + 1] as any);
