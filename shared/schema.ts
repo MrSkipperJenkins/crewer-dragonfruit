@@ -127,6 +127,8 @@ export const shows = pgTable("shows", {
   startTime: timestamp("start_time", { withTimezone: true }).notNull(),
   endTime: timestamp("end_time", { withTimezone: true }).notNull(),
   recurringPattern: text("recurring_pattern"), // Optional pattern for recurring shows
+  parentId: uuid("parent_id"), // For recurring event exceptions
+  isException: boolean("is_exception").default(false), // True if this is an exception to a recurring series
   notes: text("notes"),
   status: text("status").notNull().default("draft"), // draft, scheduled, in_progress, completed, cancelled
   color: text("color").default("#3b82f6"), // Event color for calendar display

@@ -49,7 +49,7 @@ import {
   notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, like, isNotNull, desc } from "drizzle-orm";
+import { eq, and, gte, lte, like, isNotNull, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Workspace CRUD
@@ -884,6 +884,36 @@ export class DatabaseStorage implements IStorage {
   async deleteShow(id: string): Promise<boolean> {
     const result = await db.delete(shows).where(eq(shows.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  // Recurring Show Methods
+  async getRecurringShows(workspaceId: string): Promise<Show[]> {
+    return await db
+      .select()
+      .from(shows)
+      .where(
+        and(
+          eq(shows.workspaceId, workspaceId),
+          // Only get shows that have a recurring pattern
+          sql`${shows.recurringPattern} IS NOT NULL AND ${shows.recurringPattern} != ''`
+        )
+      );
+  }
+
+  async getShowExceptions(workspaceId: string, startDate: Date, endDate: Date): Promise<Show[]> {
+    return await db
+      .select()
+      .from(shows)
+      .where(
+        and(
+          eq(shows.workspaceId, workspaceId),
+          // Get shows that are exceptions (have a parentId and are marked as exceptions)
+          sql`${shows.parentId} IS NOT NULL`,
+          sql`${shows.isException} = true`,
+          gte(shows.startTime, startDate),
+          lte(shows.endTime, endDate)
+        )
+      );
   }
 
   // Show Category Assignment CRUD
