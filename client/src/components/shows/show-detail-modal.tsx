@@ -19,10 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Edit2, Save, X } from "lucide-react";
+import { Edit2, Save, X, Calendar, Settings } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDateTime, getStatusColor, formatTime } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+import { ShowTemplateModal } from "./show-template-modal";
 
 type ShowDetailModalProps = {
   showId: string;
@@ -33,6 +34,8 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateMode, setTemplateMode] = useState<"template" | "single">("single");
   const [editedShow, setEditedShow] = useState({
     title: '',
     description: '',
@@ -414,14 +417,50 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                   </Button>
                 </>
               ) : (
-                <Button variant="outline" onClick={onClose}>
-                  Close
-                </Button>
+                <div className="flex justify-between w-full">
+                  <div className="flex gap-2">
+                    {(show as any)?.recurringPattern && (
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          setTemplateMode("template");
+                          setShowTemplateModal(true);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Edit Template
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setTemplateMode("single");
+                        setShowTemplateModal(true);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      Edit This Show
+                    </Button>
+                  </div>
+                  <Button variant="outline" onClick={onClose}>
+                    Close
+                  </Button>
+                </div>
               )}
             </DialogFooter>
           </>
         )}
       </DialogContent>
+      
+      {/* Show Template Modal */}
+      <ShowTemplateModal
+        open={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        show={show}
+        mode={templateMode}
+      />
     </Dialog>
   );
 }
