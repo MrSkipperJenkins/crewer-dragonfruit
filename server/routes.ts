@@ -447,36 +447,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!master.recurringPattern) continue;
         
         try {
-          let rule: any;
+          // Generate recurring instances using native date calculations
+          const masterStart = new Date(master.startTime);
+          const duration = new Date(master.endTime).getTime() - new Date(master.startTime).getTime();
           
-          // Parse RRULE string or create from simple patterns
-          if (master.recurringPattern.startsWith('RRULE:')) {
-            rule = RRule.rrulestr(master.recurringPattern);
-          } else {
-            // Handle simple patterns like 'daily', 'weekly', 'monthly'
-            const baseOptions = {
-              dtstart: new Date(master.startTime),
-              until: new Date(endDate.getTime() + 86400000) // Add one day buffer
-            };
-            
-            switch (master.recurringPattern) {
-              case 'daily':
-                rule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
-                break;
-              case 'weekly':
-                rule = new RRule({ ...baseOptions, freq: 2 }); // WEEKLY
-                break;
-              case 'monthly':
-                rule = new RRule({ ...baseOptions, freq: 1 }); // MONTHLY
-                break;
-              default:
-                console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
-                continue;
-            }
+          let current = new Date(masterStart);
+          let occurrences: Date[] = [];
+          
+          // Generate instances based on pattern
+          switch (master.recurringPattern) {
+            case 'daily':
+              while (current <= endDate) {
+                if (current >= startDate) {
+                  occurrences.push(new Date(current));
+                }
+                current.setDate(current.getDate() + 1);
+              }
+              break;
+              
+            case 'weekly':
+              while (current <= endDate) {
+                if (current >= startDate) {
+                  occurrences.push(new Date(current));
+                }
+                current.setDate(current.getDate() + 7);
+              }
+              break;
+              
+            case 'monthly':
+              while (current <= endDate) {
+                if (current >= startDate) {
+                  occurrences.push(new Date(current));
+                }
+                current.setMonth(current.getMonth() + 1);
+              }
+              break;
+              
+            default:
+              console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
+              continue;
           }
-          
-          // Generate occurrences in the date range
-          const occurrences = rule.between(startDate, endDate, true);
           
           for (const occurrenceStart of occurrences) {
             // Calculate duration from master show
@@ -508,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } catch (error) {
-          console.error(`Error parsing RRULE for show ${master.id}:`, error);
+          console.error(`Error generating recurring instances for show ${master.id}:`, error);
           // Continue processing other masters
         }
       }
@@ -612,42 +622,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update original master to end before split date
       let updatedPattern = null;
       
-      if (originalMaster.recurringPattern) {
-        try {
-          let originalRule: any;
-          
-          if (originalMaster.recurringPattern.startsWith('RRULE:')) {
-            originalRule = RRule.fromString(originalMaster.recurringPattern);
-          } else {
-            // Handle simple patterns
-            const baseOptions = { dtstart: new Date(originalMaster.startTime) };
-            switch (originalMaster.recurringPattern) {
-              case 'daily':
-                originalRule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
-                break;
-              case 'weekly':
-                originalRule = new RRule({ ...baseOptions, freq: 2 }); // WEEKLY
-                break;
-              case 'monthly':
-                originalRule = new RRule({ ...baseOptions, freq: 1 }); // MONTHLY
-                break;
-              default:
-                originalRule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
-            }
-          }
-          
-          // Create new rule with until date set to split date
-          const updatedRule = new RRule({
-            ...originalRule.options,
-            until: new Date(splitDateTime.getTime() - 1) // End before split
-          });
-          
-          updatedPattern = updatedRule.toString();
-        } catch (error) {
-          console.error('Error updating original pattern:', error);
-          updatedPattern = null;
-        }
-      }
+      // For simplicity, remove recurring pattern when splitting
+      // The original series will end and new series will start from split date
+      updatedPattern = null;
       
       await storage.updateShow(parentId, {
         recurringPattern: updatedPattern
