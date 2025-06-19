@@ -652,7 +652,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/shows/:id", async (req, res) => {
-    const show = await storage.getShow(req.params.id);
+    const { id } = req.params;
+    
+    // Check if this is a virtual recurring event ID
+    if (id.includes('-') && id.split('-').length > 5) {
+      const parts = id.split('-');
+      const timestamp = parts[parts.length - 1];
+      const parentId = parts.slice(0, -1).join('-');
+      
+      // Get the parent show and create virtual instance
+      const parentShow = await storage.getShow(parentId);
+      if (!parentShow) {
+        return res.status(404).json({ message: "Parent show not found" });
+      }
+      
+      // Calculate the virtual instance details
+      const instanceStart = new Date(parseInt(timestamp));
+      const duration = new Date(parentShow.endTime).getTime() - new Date(parentShow.startTime).getTime();
+      const instanceEnd = new Date(instanceStart.getTime() + duration);
+      
+      const virtualShow = {
+        id: id,
+        parentId: parentId,
+        title: parentShow.title,
+        description: parentShow.description,
+        startTime: instanceStart.toISOString(),
+        endTime: instanceEnd.toISOString(),
+        status: parentShow.status,
+        color: parentShow.color,
+        workspaceId: parentShow.workspaceId,
+        recurringPattern: parentShow.recurringPattern,
+        isRecurrence: true,
+        notes: parentShow.notes
+      };
+      
+      return res.json(virtualShow);
+    }
+    
+    // Regular show lookup
+    const show = await storage.getShow(id);
     if (!show) {
       return res.status(404).json({ message: "Show not found" });
     }
