@@ -133,6 +133,7 @@ export interface IStorage {
   // Show Resource CRUD
   getShowResources(workspaceId: string): Promise<ShowResource[]>;
   getShowResourcesByShow(showId: string): Promise<ShowResource[]>;
+  getShowResourcesByShowInstance(showId: string, instanceId: string): Promise<ShowResource[]>;
   createShowResource(showResource: InsertShowResource): Promise<ShowResource>;
   deleteShowResource(id: string): Promise<boolean>;
 
@@ -982,6 +983,15 @@ export class DatabaseStorage implements IStorage {
 
   async getShowResourcesByShow(showId: string): Promise<ShowResource[]> {
     return await db.select().from(showResources).where(eq(showResources.showId, showId));
+  }
+
+  async getShowResourcesByShowInstance(showId: string, instanceId: string): Promise<ShowResource[]> {
+    return await db.select().from(showResources).where(
+      and(
+        eq(showResources.showId, showId),
+        eq(showResources.instanceId, instanceId)
+      )
+    );
   }
 
   async createShowResource(showResource: InsertShowResource): Promise<ShowResource> {

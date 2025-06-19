@@ -902,15 +902,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid show resource data", errors: validation.error.errors });
       }
       
-      // Check for resource conflicts
+      // Extract show ID and instance ID for recurring shows
       const { showId, resourceId } = validation.data;
-      const hasConflict = await storage.detectResourceConflicts(showId, resourceId);
+      const actualShowId = getActualShowId(showId);
+      const instanceId = showId !== actualShowId ? showId : null;
+      
+      const hasConflict = await storage.detectResourceConflicts(actualShowId, resourceId);
       
       if (hasConflict) {
         return res.status(409).json({ message: "Resource has scheduling conflict" });
       }
       
-      const showResource = await storage.createShowResource(validation.data);
+      // Include instanceId for recurring shows
+      const resourceData = {
+        ...validation.data,
+        showId: actualShowId,
+        instanceId
+      };
+      
+      const showResource = await storage.createShowResource(resourceData);
       res.status(201).json(showResource);
     } catch (error) {
       res.status(500).json({ message: "Failed to assign resource to show" });
