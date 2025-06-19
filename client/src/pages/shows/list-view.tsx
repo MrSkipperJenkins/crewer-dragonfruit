@@ -128,9 +128,10 @@ export default function ShowsListView() {
 
   const allShows = generateExpandedShows();
 
-  // Get unique actual show IDs for staffing data
-  const showIds = Array.from(new Set((baseShows as any[]).map((show: any) => show.id)));
-  const { getCrewStaffingStatus } = useShowStaffing(showIds);
+  // Get unique actual show IDs for staffing data (including virtual recurring IDs)
+  const allShowIds = allShows.map((show: any) => show.id);
+  const uniqueActualShowIds = Array.from(new Set(allShowIds.map(getActualShowId)));
+  const { getCrewStaffingStatus } = useShowStaffing(uniqueActualShowIds);
 
   // Function to get show category
   const getShowCategory = (showId: string) => {
