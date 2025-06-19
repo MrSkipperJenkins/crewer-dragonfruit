@@ -462,37 +462,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let occurrences: Date[] = [];
           
           // Generate instances based on pattern
-          switch (master.recurringPattern) {
-            case 'daily':
-              while (current <= endDate) {
-                if (current >= startDate) {
-                  occurrences.push(new Date(current));
-                }
-                current.setDate(current.getDate() + 1);
+          if (master.recurringPattern === 'daily') {
+            while (current <= endDate) {
+              if (current >= startDate) {
+                occurrences.push(new Date(current));
               }
-              break;
-              
-            case 'weekly':
-              while (current <= endDate) {
-                if (current >= startDate) {
-                  occurrences.push(new Date(current));
-                }
-                current.setDate(current.getDate() + 7);
+              current.setDate(current.getDate() + 1);
+            }
+          } else if (master.recurringPattern === 'weekly') {
+            while (current <= endDate) {
+              if (current >= startDate) {
+                occurrences.push(new Date(current));
               }
-              break;
-              
-            case 'monthly':
-              while (current <= endDate) {
-                if (current >= startDate) {
-                  occurrences.push(new Date(current));
-                }
-                current.setMonth(current.getMonth() + 1);
+              current.setDate(current.getDate() + 7);
+            }
+          } else if (master.recurringPattern === 'monthly') {
+            while (current <= endDate) {
+              if (current >= startDate) {
+                occurrences.push(new Date(current));
               }
-              break;
-              
-            default:
-              console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
-              continue;
+              current.setMonth(current.getMonth() + 1);
+            }
+          } else if (master.recurringPattern?.startsWith('WEEKLY:')) {
+            // Handle complex weekly patterns like "WEEKLY:Monday,Tuesday,Wednesday,Thursday"
+            const daysString = master.recurringPattern.substring(7); // Remove "WEEKLY:" prefix
+            const dayNames = daysString.split(',').map(d => d.trim());
+            const dayNumbers = dayNames.map(name => {
+              const dayMap: Record<string, number> = {
+                'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+                'Thursday': 4, 'Friday': 5, 'Saturday': 6
+              };
+              return dayMap[name];
+            }).filter(num => num !== undefined);
+            
+            // Generate occurrences for specified days each week
+            const weekStart = new Date(current);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Go to Sunday of this week
+            
+            while (weekStart <= endDate) {
+              for (const dayNum of dayNumbers) {
+                const occurrence = new Date(weekStart);
+                occurrence.setDate(weekStart.getDate() + dayNum);
+                occurrence.setHours(masterStart.getHours(), masterStart.getMinutes(), masterStart.getSeconds());
+                
+                if (occurrence >= startDate && occurrence <= endDate) {
+                  occurrences.push(new Date(occurrence));
+                }
+              }
+              weekStart.setDate(weekStart.getDate() + 7); // Next week
+            }
+          } else {
+            console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
+            continue;
           }
           
           for (const occurrenceStart of occurrences) {

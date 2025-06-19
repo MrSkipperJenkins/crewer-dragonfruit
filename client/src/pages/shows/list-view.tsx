@@ -45,10 +45,24 @@ export default function ShowsListView() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortField, setSortField] = useState<SortField>("datetime");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage] = useState<number>(20);
 
-  // Fetch shows data
-  const { data: shows = [], isLoading } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+  // Date range for fetching calendar data (show next 6 months of events)
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 1); // Include past month
+  const endDate = new Date();
+  endDate.setMonth(endDate.getMonth() + 12); // Include next year
+
+  // Fetch all show instances including recurring events from calendar API
+  const { data: allShows = [], isLoading } = useQuery({
+    queryKey: [`/api/calendar`, startDate.toISOString(), endDate.toISOString(), currentWorkspace?.id],
+    queryFn: async () => {
+      if (!currentWorkspace?.id) return [];
+      const response = await fetch(`/api/calendar?start=${startDate.toISOString()}&end=${endDate.toISOString()}&workspaceId=${currentWorkspace.id}`);
+      if (!response.ok) throw new Error('Failed to fetch shows');
+      return response.json();
+    },
     enabled: !!currentWorkspace?.id,
   });
 
@@ -64,14 +78,22 @@ export default function ShowsListView() {
     enabled: !!currentWorkspace?.id,
   });
 
-  // Get show IDs and use shared staffing hook
-  const showIds = (shows as any[]).map((show: any) => show.id);
+  // Helper function to get actual show ID (parent ID for virtual recurring events)
+  const getActualShowId = (showId: string): string => {
+    return showId.includes('-') && showId.split('-').length > 5 
+      ? showId.split('-').slice(0, -1).join('-') 
+      : showId;
+  };
+
+  // Get unique actual show IDs for staffing data
+  const showIds = Array.from(new Set((allShows as any[]).map((show: any) => getActualShowId(show.id))));
   const { getCrewStaffingStatus } = useShowStaffing(showIds);
 
   // Function to get show category
   const getShowCategory = (showId: string) => {
+    const actualShowId = getActualShowId(showId);
     const assignment = (categoryAssignments as any[])?.find(
-      (ca: any) => ca.showId === showId
+      (ca: any) => ca.showId === actualShowId
     );
     
     if (!assignment) return null;
@@ -80,8 +102,6 @@ export default function ShowsListView() {
       (c: any) => c.id === assignment.categoryId
     );
   };
-
-
 
   // Helper function to handle sorting
   const handleSort = (field: SortField) => {
@@ -94,7 +114,7 @@ export default function ShowsListView() {
   };
 
   // Filter and sort shows
-  const filteredShows = (shows as any[]).filter((show: any) => {
+  const filteredShows = (allShows as any[]).filter((show: any) => {
     const matchesStatus = statusFilter === "all" || show.status === statusFilter;
     const matchesSearch = !searchQuery || 
       show.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,6 +157,18 @@ export default function ShowsListView() {
     }
     return 0;
   });
+
+  // Pagination logic
+  const totalItems = filteredShows.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedShows = filteredShows.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  const resetToFirstPage = () => {
+    setCurrentPage(1);
+  };
 
   // Function to handle row click
   const handleRowClick = (showId: string) => {
