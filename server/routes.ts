@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import RRule from "rrule";
+import * as rrule from 'rrule';
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -450,7 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Parse RRULE string or create from simple patterns
           if (master.recurringPattern.startsWith('RRULE:')) {
-            rule = RRule.fromString(master.recurringPattern);
+            rule = rrule.RRule.fromString(master.recurringPattern);
           } else {
             // Handle simple patterns like 'daily', 'weekly', 'monthly'
             const baseOptions = {
@@ -460,13 +460,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             switch (master.recurringPattern) {
               case 'daily':
-                rule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
+                rule = new rrule.RRule({ ...baseOptions, freq: rrule.Frequency.DAILY });
                 break;
               case 'weekly':
-                rule = new RRule({ ...baseOptions, freq: 2 }); // WEEKLY
+                rule = new rrule.RRule({ ...baseOptions, freq: rrule.Frequency.WEEKLY });
                 break;
               case 'monthly':
-                rule = new RRule({ ...baseOptions, freq: 1 }); // MONTHLY
+                rule = new rrule.RRule({ ...baseOptions, freq: rrule.Frequency.MONTHLY });
                 break;
               default:
                 console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
@@ -622,16 +622,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const baseOptions = { dtstart: new Date(originalMaster.startTime) };
             switch (originalMaster.recurringPattern) {
               case 'daily':
-                originalRule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
+                originalRule = new RRule({ ...baseOptions, freq: Frequency.DAILY });
                 break;
               case 'weekly':
-                originalRule = new RRule({ ...baseOptions, freq: 2 }); // WEEKLY
+                originalRule = new RRule({ ...baseOptions, freq: Frequency.WEEKLY });
                 break;
               case 'monthly':
-                originalRule = new RRule({ ...baseOptions, freq: 1 }); // MONTHLY
+                originalRule = new RRule({ ...baseOptions, freq: Frequency.MONTHLY });
                 break;
               default:
-                originalRule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
+                originalRule = new RRule({ ...baseOptions, freq: Frequency.DAILY });
             }
           }
           
