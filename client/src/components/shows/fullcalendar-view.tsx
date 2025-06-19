@@ -209,7 +209,8 @@ export function FullCalendarView() {
 
   // Function to get show resources using show-specific data
   const getShowResources = (showId: string) => {
-    const showResources = showResourceQueries.data?.[showId] || [];
+    const actualShowId = getActualShowId(showId);
+    const showResources = showResourceQueries.data?.[actualShowId] || [];
     return showResources.map((sr: any) => {
       const resource = (resources as any[]).find((r: any) => r.id === sr.resourceId);
       return resource;
@@ -233,6 +234,13 @@ export function FullCalendarView() {
       const backgroundColor = event.color || '#3b82f6';
       const textColor = getContrastTextColor(backgroundColor);
 
+      // Get crew status and resources for this event
+      const crewStatus = getCrewStaffingStatus(getActualShowId(event.id));
+      const eventResources = getShowResources(event.id);
+      const resourcesText = eventResources.length > 0 
+        ? eventResources.map((r: any) => r.name).join(', ')
+        : 'No resources assigned';
+
       return {
         id: event.id,
         title: event.title,
@@ -249,10 +257,12 @@ export function FullCalendarView() {
           isException: event.isException,
           recurringPattern: event.recurringPattern,
           notes: event.notes,
+          crewStatus: crewStatus,
+          resources: resourcesText,
         },
       };
     });
-  }, [calendarData]);
+  }, [calendarData, getCrewStaffingStatus, getShowResources]);
 
   // Handle event click
   const handleEventClick = (info: any) => {
