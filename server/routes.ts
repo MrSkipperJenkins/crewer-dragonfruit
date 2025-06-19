@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import * as rrule from 'rrule';
+import * as RRule from 'rrule';
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -450,7 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Parse RRULE string or create from simple patterns
           if (master.recurringPattern.startsWith('RRULE:')) {
-            rule = rrule.rrulestr(master.recurringPattern);
+            rule = RRule.RRule.fromString(master.recurringPattern);
           } else {
             // Handle simple patterns like 'daily', 'weekly', 'monthly'
             const baseOptions = {
@@ -460,13 +460,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             switch (master.recurringPattern) {
               case 'daily':
-                rule = new rrule.RRule({ ...baseOptions, freq: 3 }); // DAILY
+                rule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
                 break;
               case 'weekly':
-                rule = new rrule.RRule({ ...baseOptions, freq: 2 }); // WEEKLY
+                rule = new RRule({ ...baseOptions, freq: 2 }); // WEEKLY
                 break;
               case 'monthly':
-                rule = new rrule.RRule({ ...baseOptions, freq: 1 }); // MONTHLY
+                rule = new RRule({ ...baseOptions, freq: 1 }); // MONTHLY
                 break;
               default:
                 console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
@@ -616,27 +616,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let originalRule: any;
           
           if (originalMaster.recurringPattern.startsWith('RRULE:')) {
-            originalRule = rrule.rrulestr(originalMaster.recurringPattern);
+            originalRule = RRule.fromString(originalMaster.recurringPattern);
           } else {
             // Handle simple patterns
             const baseOptions = { dtstart: new Date(originalMaster.startTime) };
             switch (originalMaster.recurringPattern) {
               case 'daily':
-                originalRule = new rrule.RRule({ ...baseOptions, freq: 3 }); // DAILY
+                originalRule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
                 break;
               case 'weekly':
-                originalRule = new rrule.RRule({ ...baseOptions, freq: 2 }); // WEEKLY
+                originalRule = new RRule({ ...baseOptions, freq: 2 }); // WEEKLY
                 break;
               case 'monthly':
-                originalRule = new rrule.RRule({ ...baseOptions, freq: 1 }); // MONTHLY
+                originalRule = new RRule({ ...baseOptions, freq: 1 }); // MONTHLY
                 break;
               default:
-                originalRule = new rrule.RRule({ ...baseOptions, freq: 3 }); // DAILY
+                originalRule = new RRule({ ...baseOptions, freq: 3 }); // DAILY
             }
           }
           
           // Create new rule with until date set to split date
-          const updatedRule = new rrule.RRule({
+          const updatedRule = new RRule({
             ...originalRule.options,
             until: new Date(splitDateTime.getTime() - 1) // End before split
           });
