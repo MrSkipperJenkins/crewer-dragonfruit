@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import RRule from "rrule";
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -413,8 +414,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(shows);
   });
 
-  // Expand recurring shows into individual occurrences
-  app.get("/api/shows/expand-recurring", async (req, res) => {
+  // Calendar endpoint with robust recurrence engine
+  app.get("/api/calendar", async (req, res) => {
     try {
       const { start, end, workspaceId } = req.query;
       
@@ -429,29 +430,189 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid date range" });
       }
       
-      // For now, return regular shows in range until RRule is properly implemented
-      const regularShows = await storage.getShowsInRange(workspaceId as string, startDate, endDate);
+      // 1. Fetch one-off shows in range
+      const oneOffShows = await storage.getShowsInRange(workspaceId as string, startDate, endDate);
       
-      // Transform to match expected format
-      const transformedShows = regularShows.map(show => ({
-        id: show.id,
-        parentId: show.parentId || '',
-        title: show.title,
-        description: show.description,
-        startTime: show.startTime.toISOString(),
-        endTime: show.endTime.toISOString(),
-        status: show.status,
-        color: show.color,
-        workspaceId: show.workspaceId,
-        recurringPattern: show.recurringPattern || '',
+      // 2. Fetch recurring series masters
+      const recurringMasters = await storage.getRecurringShows(workspaceId as string);
+      
+      // 3. Fetch exceptions in the date range
+      const exceptions = await storage.getShowExceptions(workspaceId as string, startDate, endDate);
+      
+      // 4. Generate instances from recurring masters
+      const generatedInstances = [];
+      
+      for (const master of recurringMasters) {
+        if (!master.recurringPattern) continue;
+        
+        try {
+          // Parse RRULE and generate occurrences
+          const rule = RRule.fromString(master.recurringPattern);
+          const occurrences = rule.between(startDate, endDate, true);
+          
+          for (const occurrenceStart of occurrences) {
+            // Calculate duration from master show
+            const duration = new Date(master.endTime).getTime() - new Date(master.startTime).getTime();
+            const occurrenceEnd = new Date(occurrenceStart.getTime() + duration);
+            
+            // Check if this occurrence has an exception
+            const hasException = exceptions.some(exception => 
+              exception.parentId === master.id &&
+              Math.abs(new Date(exception.startTime).getTime() - occurrenceStart.getTime()) < 60000 // Within 1 minute
+            );
+            
+            // Only add if no exception exists
+            if (!hasException) {
+              generatedInstances.push({
+                id: `${master.id}-${occurrenceStart.getTime()}`, // Unique virtual ID
+                parentId: master.id,
+                title: master.title,
+                description: master.description,
+                startTime: occurrenceStart.toISOString(),
+                endTime: occurrenceEnd.toISOString(),
+                status: master.status,
+                color: master.color,
+                workspaceId: master.workspaceId,
+                recurringPattern: master.recurringPattern,
+                isRecurrence: true,
+                notes: master.notes
+              });
+            }
+          }
+        } catch (error) {
+          console.error(`Error parsing RRULE for show ${master.id}:`, error);
+          // Continue processing other masters
+        }
+      }
+      
+      // 5. Transform one-off shows to match format
+      const transformedOneOffs = oneOffShows
+        .filter(show => !show.recurringPattern) // Exclude masters from one-offs
+        .map(show => ({
+          id: show.id,
+          parentId: show.parentId || null,
+          title: show.title,
+          description: show.description,
+          startTime: show.startTime.toISOString(),
+          endTime: show.endTime.toISOString(),
+          status: show.status,
+          color: show.color,
+          workspaceId: show.workspaceId,
+          recurringPattern: show.recurringPattern || null,
+          isRecurrence: false,
+          notes: show.notes
+        }));
+      
+      // 6. Transform exceptions to match format
+      const transformedExceptions = exceptions.map(exception => ({
+        id: exception.id,
+        parentId: exception.parentId,
+        title: exception.title,
+        description: exception.description,
+        startTime: exception.startTime.toISOString(),
+        endTime: exception.endTime.toISOString(),
+        status: exception.status,
+        color: exception.color,
+        workspaceId: exception.workspaceId,
+        recurringPattern: exception.recurringPattern || null,
         isRecurrence: false,
-        notes: show.notes
+        isException: true,
+        notes: exception.notes
       }));
       
-      res.json(transformedShows);
+      // 7. Combine all events
+      const allEvents = [
+        ...transformedOneOffs,
+        ...generatedInstances,
+        ...transformedExceptions
+      ];
+      
+      res.json(allEvents);
     } catch (error) {
-      console.error("Error expanding recurring shows:", error);
-      res.status(500).json({ message: "Failed to expand recurring shows" });
+      console.error("Error generating calendar data:", error);
+      res.status(500).json({ message: "Failed to generate calendar data" });
+    }
+  });
+
+  // Create exception for single occurrence edit
+  app.post("/api/shows/:parentId/exceptions", async (req, res) => {
+    try {
+      const { parentId } = req.params;
+      const { occurrenceDate, ...showData } = req.body;
+      
+      if (!occurrenceDate) {
+        return res.status(400).json({ message: "occurrenceDate is required" });
+      }
+      
+      // Validate the show data
+      const validatedData = insertShowSchema.parse({
+        ...showData,
+        parentId,
+        isException: true,
+        workspaceId: showData.workspaceId
+      });
+      
+      const exception = await storage.createShow(validatedData);
+      res.status(201).json(exception);
+    } catch (error) {
+      console.error("Error creating show exception:", error);
+      res.status(500).json({ message: "Failed to create show exception" });
+    }
+  });
+
+  // Split recurring series (for "this and future" edits)
+  app.post("/api/shows/:parentId/split", async (req, res) => {
+    try {
+      const { parentId } = req.params;
+      const { splitDate, newPattern, ...updatedData } = req.body;
+      
+      if (!splitDate || !newPattern) {
+        return res.status(400).json({ message: "splitDate and newPattern are required" });
+      }
+      
+      const splitDateTime = new Date(splitDate);
+      if (isNaN(splitDateTime.getTime())) {
+        return res.status(400).json({ message: "Invalid splitDate" });
+      }
+      
+      // Get the original master show
+      const originalMaster = await storage.getShow(parentId);
+      if (!originalMaster) {
+        return res.status(404).json({ message: "Master show not found" });
+      }
+      
+      // Update original master to end before split date
+      const originalRule = RRule.fromString(originalMaster.recurringPattern!);
+      const originalOptions = originalRule.options;
+      
+      // Create new rule that ends before split date
+      const updatedOriginalRule = new RRule({
+        ...originalOptions,
+        until: new Date(splitDateTime.getTime() - 1) // End one millisecond before split
+      });
+      
+      await storage.updateShow(parentId, {
+        recurringPattern: updatedOriginalRule.toString()
+      });
+      
+      // Create new master starting from split date
+      const newMasterData = insertShowSchema.parse({
+        ...updatedData,
+        startTime: splitDateTime,
+        endTime: new Date(splitDateTime.getTime() + (new Date(originalMaster.endTime).getTime() - new Date(originalMaster.startTime).getTime())),
+        recurringPattern: newPattern,
+        workspaceId: originalMaster.workspaceId
+      });
+      
+      const newMaster = await storage.createShow(newMasterData);
+      
+      res.json({
+        originalMaster: await storage.getShow(parentId),
+        newMaster
+      });
+    } catch (error) {
+      console.error("Error splitting recurring series:", error);
+      res.status(500).json({ message: "Failed to split recurring series" });
     }
   });
 

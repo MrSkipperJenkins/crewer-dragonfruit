@@ -91,7 +91,27 @@ export function FullCalendarView() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<string>('dayGridMonth');
 
-  // Query shows data
+  // State for calendar date range
+  const [calendarView, setCalendarView] = useState({ start: new Date(), end: new Date() });
+
+  // Query calendar data with recurrence expansion
+  const { data: calendarData = [] } = useQuery({
+    queryKey: [`/api/calendar`, calendarView.start.toISOString(), calendarView.end.toISOString(), currentWorkspace?.id],
+    queryFn: async () => {
+      if (!currentWorkspace?.id) return [];
+      const params = new URLSearchParams({
+        start: calendarView.start.toISOString(),
+        end: calendarView.end.toISOString(),
+        workspaceId: currentWorkspace.id
+      });
+      const response = await fetch(`/api/calendar?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch calendar data');
+      return response.json();
+    },
+    enabled: !!currentWorkspace?.id,
+  });
+
+  // Fallback query for shows data (for other components)
   const { data: shows = [] } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
@@ -188,45 +208,41 @@ export function FullCalendarView() {
 
 
 
-  // Convert shows to FullCalendar events
-  const calendarEvents = useMemo(() => {
-    let filteredShows = shows;
-    
-    // Apply category filter
-    if (categoryFilter !== 'all') {
-      filteredShows = shows.filter((show: Show) => {
-        const category = getShowCategory(show.id);
-        return category && category.id === categoryFilter;
-      });
-    }
+  // Handle calendar view changes to update date range
+  const handleDatesSet = (dateInfo: any) => {
+    setCalendarView({
+      start: dateInfo.start,
+      end: dateInfo.end
+    });
+  };
 
-    return filteredShows.map((show: Show) => {
-      const category = getShowCategory(show.id);
-      const showResourceList = getShowResources(show.id);
-      const crewStatus = getCrewStaffingStatus(show.id);
-      
-      // Use show's color field or fallback to default
-      const backgroundColor = show.color || '#3b82f6';
+  // Convert calendar events to FullCalendar format
+  const calendarEvents = useMemo(() => {
+    return calendarData.map((event: any) => {
+      // Use event's color field or fallback to default
+      const backgroundColor = event.color || '#3b82f6';
       const textColor = getContrastTextColor(backgroundColor);
 
       return {
-        id: show.id,
-        title: show.title,
-        start: show.startTime,
-        end: show.endTime,
+        id: event.id,
+        title: event.title,
+        start: event.startTime,
+        end: event.endTime,
         backgroundColor,
         borderColor: backgroundColor,
         textColor,
         extendedProps: {
-          status: show.status,
-          description: show.description,
-          category: category?.title || 'Uncategorized',
-          resources: showResourceList.map((r: Resource) => r.name).join(', ') || 'No resources assigned',
-          crewStatus: crewStatus,
+          status: event.status,
+          description: event.description,
+          parentId: event.parentId,
+          isRecurrence: event.isRecurrence,
+          isException: event.isException,
+          recurringPattern: event.recurringPattern,
+          notes: event.notes,
         },
       };
     });
-  }, [shows, categoryFilter, categoryAssignments, categories, resources, showResourceQueries.data, crewAssignmentQueries.data, requiredJobQueries.data]);
+  }, [calendarData]);
 
   // Handle event click
   const handleEventClick = (info: any) => {
