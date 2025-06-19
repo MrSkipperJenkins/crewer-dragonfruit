@@ -434,6 +434,7 @@ export function FullCalendarView() {
             day: 'Day'
           }}
           events={calendarEvents}
+          datesSet={handleDatesSet}
           eventClick={handleEventClick}
           eventDrop={handleEventDrop}
           eventResize={handleEventResize}
