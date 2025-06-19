@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Calendar, List, Plus, BarChart, ArrowRight, Tag,
-  Clock, AlertTriangle, CheckCircle
+  Clock, AlertTriangle, CheckCircle, Settings
 } from "lucide-react";
 
 export default function Shows() {
@@ -84,6 +84,12 @@ export default function Shows() {
             <Link href="/shows/list">
               <List className="h-4 w-4" />
               <span>List View</span>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="flex items-center gap-1">
+            <Link href="/shows/templates">
+              <Settings className="h-4 w-4" />
+              <span>Templates</span>
             </Link>
           </Button>
           <Button asChild className="flex items-center gap-1">
