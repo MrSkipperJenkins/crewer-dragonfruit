@@ -29,7 +29,9 @@ import type {
   CrewTimeOff,
   InsertCrewTimeOff,
   Notification,
-  InsertNotification
+  InsertNotification,
+  EarlyAccessSignup,
+  InsertEarlyAccessSignup
 } from "@shared/schema";
 import {
   workspaces,
@@ -47,6 +49,7 @@ import {
   crewSchedules,
   crewTimeOff,
   notifications,
+  earlyAccessSignups,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, like, isNotNull, desc, sql } from "drizzle-orm";
@@ -1126,6 +1129,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notifications.id, id))
       .returning();
     return updatedNotification || undefined;
+  }
+
+  // Early Access Signups
+  async createEarlyAccessSignup(data: InsertEarlyAccessSignup): Promise<EarlyAccessSignup> {
+    const [signup] = await db.insert(earlyAccessSignups).values(data).returning();
+    return signup;
+  }
+
+  async getEarlyAccessSignups(): Promise<EarlyAccessSignup[]> {
+    return await db.select().from(earlyAccessSignups).orderBy(desc(earlyAccessSignups.signedUpAt));
   }
 
   async deleteNotification(id: string): Promise<boolean> {
