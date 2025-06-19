@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import RRule from "rrule";
+import * as rrule from "rrule";
+const { RRule } = rrule;
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -446,8 +447,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!master.recurringPattern) continue;
         
         try {
-          // Parse RRULE and generate occurrences
-          const rule = RRule.fromString(master.recurringPattern);
+          let rule: RRule;
+          
+          // Parse RRULE string or create from simple patterns
+          if (master.recurringPattern.startsWith('RRULE:')) {
+            rule = RRule.fromString(master.recurringPattern);
+          } else {
+            // Handle simple patterns like 'daily', 'weekly', 'monthly'
+            const baseOptions = {
+              dtstart: new Date(master.startTime),
+              until: new Date(endDate.getTime() + 86400000) // Add one day buffer
+            };
+            
+            switch (master.recurringPattern) {
+              case 'daily':
+                rule = new RRule({ ...baseOptions, freq: RRule.DAILY });
+                break;
+              case 'weekly':
+                rule = new RRule({ ...baseOptions, freq: RRule.WEEKLY });
+                break;
+              case 'monthly':
+                rule = new RRule({ ...baseOptions, freq: RRule.MONTHLY });
+                break;
+              default:
+                console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
+                continue;
+            }
+          }
+          
+          // Generate occurrences in the date range
           const occurrences = rule.between(startDate, endDate, true);
           
           for (const occurrenceStart of occurrences) {
@@ -582,17 +610,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update original master to end before split date
-      const originalRule = RRule.fromString(originalMaster.recurringPattern!);
-      const originalOptions = originalRule.options;
+      let updatedPattern = null;
       
-      // Create new rule that ends before split date
-      const updatedOriginalRule = new RRule({
-        ...originalOptions,
-        until: new Date(splitDateTime.getTime() - 1) // End one millisecond before split
-      });
+      if (originalMaster.recurringPattern) {
+        try {
+          let originalRule: RRule;
+          
+          if (originalMaster.recurringPattern.startsWith('RRULE:')) {
+            originalRule = RRule.fromString(originalMaster.recurringPattern);
+          } else {
+            // Handle simple patterns
+            const baseOptions = { dtstart: new Date(originalMaster.startTime) };
+            switch (originalMaster.recurringPattern) {
+              case 'daily':
+                originalRule = new RRule({ ...baseOptions, freq: RRule.DAILY });
+                break;
+              case 'weekly':
+                originalRule = new RRule({ ...baseOptions, freq: RRule.WEEKLY });
+                break;
+              case 'monthly':
+                originalRule = new RRule({ ...baseOptions, freq: RRule.MONTHLY });
+                break;
+              default:
+                originalRule = new RRule({ ...baseOptions, freq: RRule.DAILY });
+            }
+          }
+          
+          // Create new rule with until date set to split date
+          const updatedRule = new RRule({
+            ...originalRule.options,
+            until: new Date(splitDateTime.getTime() - 1) // End before split
+          });
+          
+          updatedPattern = updatedRule.toString();
+        } catch (error) {
+          console.error('Error updating original pattern:', error);
+          updatedPattern = null;
+        }
+      }
       
       await storage.updateShow(parentId, {
-        recurringPattern: updatedOriginalRule.toString()
+        recurringPattern: updatedPattern
       });
       
       // Create new master starting from split date
