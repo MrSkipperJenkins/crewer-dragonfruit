@@ -2,8 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import * as rrule from "rrule";
-const { RRule } = rrule;
+import { RRule } from "rrule";
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -461,13 +460,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             switch (master.recurringPattern) {
               case 'daily':
-                rule = new RRule({ ...baseOptions, freq: rrule.RRule.DAILY });
+                rule = new RRule({ ...baseOptions, freq: 3 }); // RRule.DAILY
                 break;
               case 'weekly':
-                rule = new RRule({ ...baseOptions, freq: rrule.RRule.WEEKLY });
+                rule = new RRule({ ...baseOptions, freq: 2 }); // RRule.WEEKLY
                 break;
               case 'monthly':
-                rule = new RRule({ ...baseOptions, freq: rrule.RRule.MONTHLY });
+                rule = new RRule({ ...baseOptions, freq: 1 }); // RRule.MONTHLY
                 break;
               default:
                 console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
@@ -623,16 +622,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const baseOptions = { dtstart: new Date(originalMaster.startTime) };
             switch (originalMaster.recurringPattern) {
               case 'daily':
-                originalRule = new RRule({ ...baseOptions, freq: (RRule as any).DAILY });
+                originalRule = new RRule({ ...baseOptions, freq: RRule.DAILY });
                 break;
               case 'weekly':
-                originalRule = new RRule({ ...baseOptions, freq: (RRule as any).WEEKLY });
+                originalRule = new RRule({ ...baseOptions, freq: RRule.WEEKLY });
                 break;
               case 'monthly':
-                originalRule = new RRule({ ...baseOptions, freq: (RRule as any).MONTHLY });
+                originalRule = new RRule({ ...baseOptions, freq: RRule.MONTHLY });
                 break;
               default:
-                originalRule = new RRule({ ...baseOptions, freq: (RRule as any).DAILY });
+                originalRule = new RRule({ ...baseOptions, freq: RRule.DAILY });
             }
           }
           
