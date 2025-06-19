@@ -1012,6 +1012,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Assignments must be an array" });
       }
 
+      // Extract actual show ID and instance ID for recurring shows
+      const actualShowId = getActualShowId(showId);
+      const instanceId = showId !== actualShowId ? showId : null;
+
       // Validate each assignment
       for (const assignment of assignments) {
         const validation = insertCrewAssignmentSchema.omit({ showId: true }).safeParse(assignment);
@@ -1020,8 +1024,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Replace all assignments for this show
-      await storage.replaceCrewAssignments(showId, assignments.map(a => ({ ...a, showId })));
+      // Replace all assignments for this show instance
+      await storage.replaceCrewAssignmentsForInstance(actualShowId, instanceId, assignments.map(a => ({ 
+        ...a, 
+        showId: actualShowId,
+        instanceId 
+      })));
       
       res.json({ message: "Crew assignments updated successfully" });
     } catch (error) {
