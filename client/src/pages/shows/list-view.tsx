@@ -46,23 +46,11 @@ export default function ShowsListView() {
   const [sortField, setSortField] = useState<SortField>("datetime");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage] = useState<number>(20);
+  const [itemsPerPage] = useState<number>(10);
 
-  // Date range for fetching calendar data (show next 6 months of events)
-  const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 1); // Include past month
-  const endDate = new Date();
-  endDate.setMonth(endDate.getMonth() + 12); // Include next year
-
-  // Fetch all show instances including recurring events from calendar API
-  const { data: allShows = [], isLoading } = useQuery({
-    queryKey: [`/api/calendar`, startDate.toISOString(), endDate.toISOString(), currentWorkspace?.id],
-    queryFn: async () => {
-      if (!currentWorkspace?.id) return [];
-      const response = await fetch(`/api/calendar?start=${startDate.toISOString()}&end=${endDate.toISOString()}&workspaceId=${currentWorkspace.id}`);
-      if (!response.ok) throw new Error('Failed to fetch shows');
-      return response.json();
-    },
+  // Fetch base shows data
+  const { data: baseShows = [], isLoading } = useQuery({
+    queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
   });
 
@@ -85,8 +73,63 @@ export default function ShowsListView() {
       : showId;
   };
 
+  // Generate expanded shows with recurring instances (limited to 10 instances max)
+  const generateExpandedShows = () => {
+    const expandedShows: any[] = [];
+    
+    (baseShows as any[]).forEach((show: any) => {
+      if (!show.recurringPattern) {
+        // Non-recurring show
+        expandedShows.push(show);
+      } else {
+        // Recurring show - generate limited instances
+        const showDate = new Date(show.startTime);
+        const duration = new Date(show.endTime).getTime() - new Date(show.startTime).getTime();
+        
+        // Generate only 10 instances for recurring shows to prevent infinite loops
+        for (let i = 0; i < 10; i++) {
+          const currentDate = new Date(showDate);
+          
+          // Calculate occurrence date
+          switch (show.recurringPattern) {
+            case 'daily':
+              currentDate.setDate(currentDate.getDate() + i);
+              break;
+            case 'weekly':
+              currentDate.setDate(currentDate.getDate() + (i * 7));
+              break;
+            case 'monthly':
+              currentDate.setMonth(currentDate.getMonth() + i);
+              break;
+            default:
+              if (i === 0) {
+                // For unknown patterns, just show the original
+                expandedShows.push(show);
+              }
+              continue;
+          }
+          
+          const instanceEndTime = new Date(currentDate.getTime() + duration);
+          
+          expandedShows.push({
+            ...show,
+            id: `${show.id}-${currentDate.getTime()}`,
+            parentId: show.id,
+            startTime: currentDate.toISOString(),
+            endTime: instanceEndTime.toISOString(),
+            isRecurrence: true
+          });
+        }
+      }
+    });
+    
+    return expandedShows;
+  };
+
+  const allShows = generateExpandedShows();
+
   // Get unique actual show IDs for staffing data
-  const showIds = Array.from(new Set((allShows as any[]).map((show: any) => getActualShowId(show.id))));
+  const showIds = Array.from(new Set((baseShows as any[]).map((show: any) => show.id)));
   const { getCrewStaffingStatus } = useShowStaffing(showIds);
 
   // Function to get show category
