@@ -864,23 +864,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Early Access Signups
   app.post("/api/early-access", async (req, res) => {
     try {
-      console.log("Early access signup request:", req.body);
       const validation = insertEarlyAccessSignupSchema.safeParse(req.body);
       if (!validation.success) {
-        console.log("Validation failed:", validation.error.errors);
         return res.status(400).json({ message: "Invalid email address", errors: validation.error.errors });
       }
       
-      console.log("Creating early access signup with data:", validation.data);
       const signup = await storage.createEarlyAccessSignup(validation.data);
-      console.log("Successfully created signup:", signup);
       res.status(201).json({ message: "Successfully signed up for early access", signup });
     } catch (error: any) {
-      console.error("Early access signup error:", error);
-      if (error.message?.includes('unique')) {
+      if (error.code === '23505' || error.message?.includes('unique')) {
         return res.status(409).json({ message: "Email already registered for early access" });
       }
-      res.status(500).json({ message: "Failed to sign up for early access", error: error.message });
+      res.status(500).json({ message: "Failed to sign up for early access" });
     }
   });
 
