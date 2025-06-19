@@ -882,9 +882,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Show Resources
   app.get("/api/shows/:showId/resources", async (req, res) => {
-    const actualShowId = getActualShowId(req.params.showId);
-    const showResources = await storage.getShowResourcesByShow(actualShowId);
-    res.json(showResources);
+    const showId = req.params.showId;
+    const actualShowId = getActualShowId(showId);
+    
+    // For recurring instances, filter by instance ID
+    if (showId !== actualShowId) {
+      const showResources = await storage.getShowResourcesByShowInstance(actualShowId, showId);
+      res.json(showResources);
+    } else {
+      const showResources = await storage.getShowResourcesByShow(actualShowId);
+      res.json(showResources);
+    }
   });
 
   app.post("/api/show-resources", async (req, res) => {
@@ -911,9 +919,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Crew Assignments
   app.get("/api/shows/:showId/crew-assignments", async (req, res) => {
-    const actualShowId = getActualShowId(req.params.showId);
-    const assignments = await storage.getCrewAssignmentsByShow(actualShowId);
-    res.json(assignments);
+    const showId = req.params.showId;
+    const actualShowId = getActualShowId(showId);
+    
+    // For recurring instances, filter by instance ID
+    if (showId !== actualShowId) {
+      const assignments = await storage.getCrewAssignmentsByShowInstance(actualShowId, showId);
+      res.json(assignments);
+    } else {
+      const assignments = await storage.getCrewAssignmentsByShow(actualShowId);
+      res.json(assignments);
+    }
   });
 
   app.get("/api/crew-members/:crewMemberId/assignments", async (req, res) => {
@@ -931,17 +947,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid crew assignment data", errors: validation.error.errors });
       }
       
-      // Check for crew conflicts
+      // Extract show ID and instance ID for recurring shows
       const { showId, crewMemberId } = validation.data;
-      const hasConflict = await storage.detectCrewConflicts(showId, crewMemberId);
+      const actualShowId = getActualShowId(showId);
+      const instanceId = showId !== actualShowId ? showId : null;
+      
+      const hasConflict = await storage.detectCrewConflicts(actualShowId, crewMemberId);
       
       if (hasConflict) {
-        console.log("Crew conflict detected for:", { showId, crewMemberId });
+        console.log("Crew conflict detected for:", { showId: actualShowId, crewMemberId });
         return res.status(409).json({ message: "Crew member has scheduling conflict" });
       }
       
-      console.log("About to create assignment with validated data:", validation.data);
-      const assignment = await storage.createCrewAssignment(validation.data);
+      // Include instanceId for recurring shows
+      const assignmentData = {
+        ...validation.data,
+        showId: actualShowId,
+        instanceId
+      };
+      
+      console.log("About to create assignment with validated data:", assignmentData);
+      const assignment = await storage.createCrewAssignment(assignmentData);
       console.log("Assignment created successfully:", assignment);
       res.status(201).json(assignment);
     } catch (error) {

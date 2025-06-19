@@ -139,6 +139,7 @@ export interface IStorage {
   // Crew Assignment CRUD
   getCrewAssignments(workspaceId: string): Promise<CrewAssignment[]>;
   getCrewAssignmentsByShow(showId: string): Promise<CrewAssignment[]>;
+  getCrewAssignmentsByShowInstance(showId: string, instanceId: string): Promise<CrewAssignment[]>;
   getCrewAssignmentsByCrewMember(crewMemberId: string): Promise<CrewAssignment[]>;
   createCrewAssignment(crewAssignment: InsertCrewAssignment): Promise<CrewAssignment>;
   updateCrewAssignment(id: string, crewAssignment: Partial<InsertCrewAssignment>): Promise<CrewAssignment | undefined>;
@@ -1000,6 +1001,15 @@ export class DatabaseStorage implements IStorage {
 
   async getCrewAssignmentsByShow(showId: string): Promise<CrewAssignment[]> {
     return await db.select().from(crewAssignments).where(eq(crewAssignments.showId, showId));
+  }
+
+  async getCrewAssignmentsByShowInstance(showId: string, instanceId: string): Promise<CrewAssignment[]> {
+    return await db.select().from(crewAssignments).where(
+      and(
+        eq(crewAssignments.showId, showId),
+        eq(crewAssignments.instanceId, instanceId)
+      )
+    );
   }
 
   async getCrewAssignmentsByCrewMember(crewMemberId: string): Promise<CrewAssignment[]> {
