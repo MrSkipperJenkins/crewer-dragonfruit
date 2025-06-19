@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
@@ -166,9 +166,9 @@ export default function ShowsListView() {
   const paginatedShows = filteredShows.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
-  const resetToFirstPage = () => {
+  useEffect(() => {
     setCurrentPage(1);
-  };
+  }, [statusFilter, searchQuery, sortField, sortDirection]);
 
   // Function to handle row click
   const handleRowClick = (showId: string) => {
@@ -306,7 +306,7 @@ export default function ShowsListView() {
                   </TableRow>
                 )}
 
-                {filteredShows.map((show: any) => {
+                {paginatedShows.map((show: any) => {
                   const category = getShowCategory(show.id);
                   const staffingStatus = getCrewStaffingStatus(show.id);
                   return (
@@ -384,6 +384,36 @@ export default function ShowsListView() {
               </TableBody>
             </Table>
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="text-sm text-gray-500">
+                Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} shows
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
