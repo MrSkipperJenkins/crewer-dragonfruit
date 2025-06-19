@@ -24,6 +24,13 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Helper function to extract actual show ID from virtual recurring event ID
+  const getActualShowId = (showId: string): string => {
+    return showId.includes('-') && showId.split('-').length > 5 
+      ? showId.split('-').slice(0, -1).join('-') 
+      : showId;
+  };
+
   // Workspaces
   app.get("/api/workspaces", async (req, res) => {
     const workspaces = await storage.getWorkspaces();
@@ -821,7 +828,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Required Jobs
   app.get("/api/shows/:showId/required-jobs", async (req, res) => {
-    const requiredJobs = await storage.getRequiredJobsByShow(req.params.showId);
+    const actualShowId = getActualShowId(req.params.showId);
+    const requiredJobs = await storage.getRequiredJobsByShow(actualShowId);
     res.json(requiredJobs);
   });
 
@@ -853,7 +861,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Show Resources
   app.get("/api/shows/:showId/resources", async (req, res) => {
-    const showResources = await storage.getShowResourcesByShow(req.params.showId);
+    const actualShowId = getActualShowId(req.params.showId);
+    const showResources = await storage.getShowResourcesByShow(actualShowId);
     res.json(showResources);
   });
 
@@ -881,7 +890,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Crew Assignments
   app.get("/api/shows/:showId/crew-assignments", async (req, res) => {
-    const assignments = await storage.getCrewAssignmentsByShow(req.params.showId);
+    const actualShowId = getActualShowId(req.params.showId);
+    const assignments = await storage.getCrewAssignmentsByShow(actualShowId);
     res.json(assignments);
   });
 
