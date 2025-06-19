@@ -48,337 +48,258 @@ import {
 import { ColorPicker } from "@/components/ui/color-picker";
 import { RRule } from "rrule";
 
-// Extend the insertShowSchema with validation rules
+// Extended form schema with recurrence fields
 const formSchema = insertShowSchema.extend({
-  title: z.string().min(3, {
-    message: "Title must be at least 3 characters.",
-  }),
-  startTime: z.string().refine((val) => !!val, {
-    message: "Start time is required",
-  }),
-  endTime: z.string().refine((val) => !!val, {
-    message: "End time is required",
-  }),
-  categoryId: z.string().optional(),
-  selectedResources: z.array(z.string()).optional(),
-  selectedJobs: z.array(z.string()).optional(),
-  recurringDays: z.array(z.string()).optional(),
-  // Recurrence fields
-  recurrenceType: z.enum(["none", "daily", "weekly", "monthly"]).default("none"),
+  recurrenceType: z.enum(["none", "daily", "weekly", "monthly", "custom"]).default("none"),
   recurrenceInterval: z.number().min(1).default(1),
   recurrenceWeekdays: z.array(z.string()).optional(),
   recurrenceEndType: z.enum(["never", "date", "count"]).default("never"),
   recurrenceEndDate: z.string().optional(),
   recurrenceEndCount: z.number().min(1).optional(),
+  selectedResourceIds: z.array(z.string()).default([]),
+  selectedCrewIds: z.array(z.string()).default([]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function ShowBuilder() {
+  const [step, setStep] = useState<"details" | "resources" | "crew">("details");
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState<"details" | "resources" | "crew" | "recurrence">("details");
+  const queryClient = useQueryClient();
 
-  // Helper function to get next 15-minute interval in local time
-  const getNext15MinuteSlot = () => {
-    const now = new Date();
-    const minutes = now.getMinutes();
-    const nextQuarter = Math.ceil(minutes / 15) * 15;
-    
-    if (nextQuarter === 60) {
-      now.setHours(now.getHours() + 1);
-      now.setMinutes(0);
-    } else {
-      now.setMinutes(nextQuarter);
-    }
-    now.setSeconds(0);
-    now.setMilliseconds(0);
-    
-    // Format for datetime-local input in local time (YYYY-MM-DDTHH:MM)
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${mins}`;
-  };
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      startDate: "",
+      endDate: "",
+      location: "",
+      status: "scheduled",
+      priority: "medium",
+      color: "#3b82f6",
+      recurrenceType: "none",
+      recurrenceInterval: 1,
+      recurrenceWeekdays: [],
+      recurrenceEndType: "never",
+      selectedResourceIds: [],
+      selectedCrewIds: [],
+    },
+  });
 
-  // Helper function to format date for datetime-local input in local time
+  // Fetch resources
+  const { data: resources = [] } = useQuery({
+    queryKey: ["/api/resources", currentWorkspace?.id],
+    enabled: !!currentWorkspace?.id,
+  });
+
+  // Fetch crew members
+  const { data: crewMembers = [] } = useQuery({
+    queryKey: ["/api/crew-members", currentWorkspace?.id],
+    enabled: !!currentWorkspace?.id,
+  });
+
   const formatDateTimeLocal = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
-    const mins = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${mins}`;
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  const defaultStartTime = getNext15MinuteSlot();
-  const defaultEndTime = (() => {
-    const start = new Date(defaultStartTime);
-    start.setHours(start.getHours() + 1); // Default to 1 hour duration
-    return formatDateTimeLocal(start);
-  })();
-
-  const defaultValues: Partial<FormValues> = {
-    title: "",
-    description: "",
-    status: "draft",
-    color: "#3b82f6",
-    workspaceId: currentWorkspace?.id || "",
-    selectedResources: [],
-    selectedJobs: [],
-    recurringDays: [],
-    startTime: defaultStartTime,
-    endTime: defaultEndTime,
-    recurrenceType: "none",
-    recurrenceInterval: 1,
-    recurrenceWeekdays: [],
-    recurrenceEndType: "never",
-    recurrenceEndDate: "",
-    recurrenceEndCount: 1,
-  };
-
-  // Use form hook with schema validation
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues,
-  });
-
-  // Fetch categories for dropdown
-  const { data: categories = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
-    enabled: !!currentWorkspace?.id,
-  });
-
-  // Fetch resources for selection
-  const { data: resources = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/resources`],
-    enabled: !!currentWorkspace?.id,
-  });
-
-  // Fetch jobs for selection
-  const { data: jobs = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
-    enabled: !!currentWorkspace?.id,
-  });
-
-  // Group resources by type
-  const resourcesByType = (resources as any[]).reduce((acc: any, resource: any) => {
-    const { type } = resource;
-    if (!acc[type]) {
-      acc[type] = [];
-    }
-    acc[type].push(resource);
-    return acc;
-  }, {});
-
-  // Helper function to generate RRULE string
   const generateRRule = (data: FormValues): string | null => {
     if (data.recurrenceType === "none") return null;
-    
-    const options: any = {
-      freq: data.recurrenceType === "daily" ? RRule.DAILY :
-            data.recurrenceType === "weekly" ? RRule.WEEKLY :
-            data.recurrenceType === "monthly" ? RRule.MONTHLY : RRule.DAILY,
-      interval: data.recurrenceInterval,
-    };
-    
-    // Add weekdays for weekly recurrence
-    if (data.recurrenceType === "weekly" && data.recurrenceWeekdays?.length) {
-      const weekdayMap: { [key: string]: number } = {
-        'SU': RRule.SU.weekday, 'MO': RRule.MO.weekday, 'TU': RRule.TU.weekday,
-        'WE': RRule.WE.weekday, 'TH': RRule.TH.weekday, 'FR': RRule.FR.weekday, 'SA': RRule.SA.weekday
+
+    try {
+      const startDate = new Date(data.startDate);
+      const ruleOptions: any = {
+        freq: data.recurrenceType === "daily" ? RRule.DAILY :
+              data.recurrenceType === "weekly" ? RRule.WEEKLY :
+              data.recurrenceType === "monthly" ? RRule.MONTHLY : RRule.DAILY,
+        interval: data.recurrenceInterval || 1,
+        dtstart: startDate,
       };
-      options.byweekday = data.recurrenceWeekdays.map(day => weekdayMap[day]).filter(Boolean);
+
+      if (data.recurrenceType === "weekly" && data.recurrenceWeekdays?.length) {
+        const weekdayMap: { [key: string]: number } = {
+          SU: RRule.SU, MO: RRule.MO, TU: RRule.TU, WE: RRule.WE,
+          TH: RRule.TH, FR: RRule.FR, SA: RRule.SA
+        };
+        ruleOptions.byweekday = data.recurrenceWeekdays.map(day => weekdayMap[day]);
+      }
+
+      if (data.recurrenceEndType === "date" && data.recurrenceEndDate) {
+        ruleOptions.until = new Date(data.recurrenceEndDate);
+      } else if (data.recurrenceEndType === "count" && data.recurrenceEndCount) {
+        ruleOptions.count = data.recurrenceEndCount;
+      }
+
+      const rule = new RRule(ruleOptions);
+      return rule.toString();
+    } catch (error) {
+      console.error("Error generating RRule:", error);
+      return null;
     }
-    
-    // Add end conditions
-    if (data.recurrenceEndType === "date" && data.recurrenceEndDate) {
-      options.until = new Date(data.recurrenceEndDate);
-    } else if (data.recurrenceEndType === "count" && data.recurrenceEndCount) {
-      options.count = data.recurrenceEndCount;
-    }
-    
-    return new RRule(options).toString();
   };
 
-  // Create show mutation
   const createShowMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      // Extract resource IDs and job IDs for separate API calls
-      const { selectedResources, selectedJobs, categoryId, recurringDays, recurrenceType, recurrenceInterval, recurrenceWeekdays, recurrenceEndType, recurrenceEndDate, recurrenceEndCount, ...showData } = data;
+      const rrule = generateRRule(data);
       
-      // Convert datetime-local values to proper UTC ISO strings
-      if (showData.startTime) {
-        showData.startTime = new Date(showData.startTime).toISOString();
-      }
-      if (showData.endTime) {
-        showData.endTime = new Date(showData.endTime).toISOString();
-      }
-      
-      // Generate RRULE string from recurrence fields
-      const rruleString = generateRRule(data);
-      if (rruleString) {
-        showData.recurringPattern = rruleString;
-      }
-      
-      // Legacy support: Process recurring pattern if days are selected
-      if (recurringDays && recurringDays.length > 0) {
-        showData.recurringPattern = `WEEKLY:${recurringDays.join(',')}`;
-      }
-      
-      // Create the show first
-      const response = await apiRequest("POST", "/api/shows", showData);
-      const show = await response.json();
-      
-      const promises = [];
-      const conflictedResources: string[] = [];
-      
-      // If category is selected, create category assignment
-      if (categoryId) {
-        promises.push(
-          apiRequest("POST", "/api/show-category-assignments", {
-            showId: show.id,
-            categoryId,
-            workspaceId: currentWorkspace?.id,
-          })
-        );
-      }
-      
-      // Assign selected resources to the show with conflict handling
-      if (selectedResources && selectedResources.length > 0) {
-        for (const resourceId of selectedResources) {
-          promises.push(
-            apiRequest("POST", "/api/show-resources", {
-              showId: show.id,
+      const showData = {
+        workspaceId: currentWorkspace!.id,
+        name: data.name,
+        description: data.description,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        location: data.location,
+        status: data.status,
+        priority: data.priority,
+        color: data.color,
+        rrule,
+        parentId: null,
+        isException: false,
+      };
+
+      const response = await apiRequest("/api/shows", {
+        method: "POST",
+        body: JSON.stringify(showData),
+      });
+
+      // Create resource assignments
+      if (data.selectedResourceIds.length > 0) {
+        for (const resourceId of data.selectedResourceIds) {
+          await apiRequest("/api/resource-assignments", {
+            method: "POST",
+            body: JSON.stringify({
+              showId: response.id,
               resourceId,
-              workspaceId: currentWorkspace?.id,
-            }).catch(async (error) => {
-              if (error.status === 409) {
-                // Find resource name for better error message
-                const resource = (resources as any[])?.find(r => r.id === resourceId);
-                conflictedResources.push(resource?.name || 'Unknown resource');
-              }
-              throw error;
-            })
-          );
+              workspaceId: currentWorkspace!.id,
+            }),
+          });
         }
       }
-      
-      // Add required jobs for the show
-      if (selectedJobs && selectedJobs.length > 0) {
-        for (const jobId of selectedJobs) {
-          promises.push(
-            apiRequest("POST", "/api/required-jobs", {
-              showId: show.id,
-              jobId,
-              workspaceId: currentWorkspace?.id,
-            })
-          );
+
+      // Create crew assignments
+      if (data.selectedCrewIds.length > 0) {
+        for (const crewId of data.selectedCrewIds) {
+          await apiRequest("/api/crew-assignments", {
+            method: "POST",
+            body: JSON.stringify({
+              showId: response.id,
+              crewMemberId: crewId,
+              workspaceId: currentWorkspace!.id,
+            }),
+          });
         }
       }
-      
-      // Wait for all promises to complete, ignoring 409 conflicts
-      const results = await Promise.allSettled(promises);
-      
-      // Check for any conflicts and show user-friendly message
-      if (conflictedResources.length > 0) {
-        toast({
-          title: "Show Created with Scheduling Conflicts",
-          description: `Some resources couldn't be assigned due to conflicts: ${conflictedResources.join(', ')}. Check the show details to reassign them.`,
-          variant: "destructive",
-        });
-      }
-      
-      return show;
+
+      return response;
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Show created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
-      form.reset();
-      setStep("details");
-      setLocation(`/workspaces/${currentWorkspace?.slug || currentWorkspace?.id}/shows/calendar`);
+      queryClient.invalidateQueries({ queryKey: ["/api/shows"] });
+      setLocation("/shows");
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to create show",
+        description: error.message || "Failed to create show",
         variant: "destructive",
       });
     },
   });
 
-  // Form submission handler
   const onSubmit = (data: FormValues) => {
-    // Only proceed with show creation if we're on the final step
-    if (step !== "recurrence") {
-      return;
-    }
-    
-    if (!currentWorkspace?.id) {
-      toast({
-        title: "Error",
-        description: "No workspace selected",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Prepare data for submission - keep datetime-local format for schema transformation
-    const submitData = {
-      ...data,
-      workspaceId: currentWorkspace.id,
-    };
-    
-    // Submit mutation with all form data
-    createShowMutation.mutate(submitData);
+    createShowMutation.mutate(data);
   };
 
+  if (!currentWorkspace) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Create New Show</h1>
-        <p className="text-gray-500 mt-1">Build a new show by setting up details, resources, and crew requirements</p>
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Create New Show</h1>
+        <p className="text-gray-600">Fill in the details to create a new show</p>
       </div>
 
       <Card>
         <CardHeader>
-          <Tabs defaultValue="details" className="w-full" value={step} onValueChange={(value) => setStep(value as any)}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="details">Show Details</TabsTrigger>
-              <TabsTrigger value="resources">Resources</TabsTrigger>
-              <TabsTrigger value="crew">Crew Requirements</TabsTrigger>
-              <TabsTrigger value="recurrence">Recurrence</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center space-x-4">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              step === "details" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+            }`}>
+              1
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-lg">Show Details</CardTitle>
+              <CardDescription>Basic information and recurrence settings</CardDescription>
+            </div>
+            
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              step === "resources" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+            }`}>
+              2
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-lg">Resources</CardTitle>
+              <CardDescription>Assign equipment and resources</CardDescription>
+            </div>
+            
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              step === "crew" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+            }`}>
+              3
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-lg">Crew</CardTitle>
+              <CardDescription>Assign crew members</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        
-        <CardContent className="px-6 pt-4">
+
+        <CardContent className="p-6">
           <Form {...form}>
             {step === "details" && (
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Show Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter the show title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Show Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter show name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter location" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
                   name="description"
@@ -386,392 +307,158 @@ export default function ShowBuilder() {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Enter show description" 
-                          className="resize-none" 
-                          value={field.value || ""} 
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                        />
+                        <Textarea placeholder="Enter show description" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="startTime"
+                    name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Time</FormLabel>
+                        <FormLabel>Start Date & Time</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} />
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            value={field.value}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
-                    name="endTime"
+                    name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Time</FormLabel>
+                        <FormLabel>End Date & Time</FormLabel>
                         <FormControl>
-                          <Input type="datetime-local" {...field} />
+                          <Input
+                            type="datetime-local"
+                            {...field}
+                            value={field.value}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select priority" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="critical">Critical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Color</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a status" />
-                          </SelectTrigger>
+                          <ColorPicker value={field.value} onChange={field.onChange} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="scheduled">Scheduled</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Color</FormLabel>
-                      <FormControl>
-                        <ColorPicker
-                          value={field.value || "#3b82f6"}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Choose a color to help identify this event in the calendar
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {(categories as any[]).map((category: any) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Categorize your show for easier filtering
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="space-y-2">
-                  <Label>Recurring Schedule</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Google Calendar-style Recurrence UI */}
+                <div className="space-y-4 border-t pt-6">
+                  <div>
+                    <h3 className="text-lg font-medium">Recurrence</h3>
+                    <p className="text-sm text-gray-500">Configure if this show repeats on a schedule</p>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="recurrenceType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Does not repeat</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select recurrence" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Does not repeat</SelectItem>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch("recurrenceType") !== "none" && (
+                    <div className="space-y-4 pl-4 border-l-2 border-gray-200">
                       <FormField
-                        key={day}
                         control={form.control}
-                        name="recurringDays"
+                        name="recurrenceInterval"
                         render={({ field }) => (
-                          <FormItem key={day} className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(day) || false}
-                                onCheckedChange={(checked) => {
-                                  const currentValue = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...currentValue, day]);
-                                  } else {
-                                    field.onChange(currentValue.filter((value: string) => value !== day));
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              {day.slice(0, 3)}
+                          <FormItem>
+                            <FormLabel>
+                              Repeat every {form.watch("recurrenceType") === "daily" ? "day(s)" : 
+                                           form.watch("recurrenceType") === "weekly" ? "week(s)" : "month(s)"}
                             </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {step === "resources" && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-medium">Select Resources</h3>
-                  <p className="text-gray-500 text-sm">Choose studios, control rooms, and equipment for this show</p>
-                </div>
-                
-                {Object.keys(resourcesByType).map((type) => (
-                  <div key={type} className="space-y-2">
-                    <h4 className="font-medium capitalize">{type.replace('_', ' ')}</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {resourcesByType[type].map((resource: any) => (
-                        <FormField
-                          key={resource.id}
-                          control={form.control}
-                          name="selectedResources"
-                          render={({ field }) => (
-                            <FormItem key={resource.id} className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(resource.id) || false}
-                                  onCheckedChange={(checked) => {
-                                    const currentValue = field.value || [];
-                                    if (checked) {
-                                      field.onChange([...currentValue, resource.id]);
-                                    } else {
-                                      field.onChange(currentValue.filter((value: string) => value !== resource.id));
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal text-sm">
-                                {resource.name}
-                              </FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {step === "crew" && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-medium">Crew Requirements</h3>
-                  <p className="text-gray-500 text-sm">Select the jobs/roles required for this show</p>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {(jobs as any[]).map((job: any) => (
-                    <FormField
-                      key={job.id}
-                      control={form.control}
-                      name="selectedJobs"
-                      render={({ field }) => (
-                        <FormItem key={job.id} className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(job.id) || false}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value || [];
-                                if (checked) {
-                                  field.onChange([...currentValue, job.id]);
-                                } else {
-                                  field.onChange(currentValue.filter((value: string) => value !== job.id));
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal text-sm">
-                            {job.title}
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {step === "recurrence" && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium">Recurrence Settings</h3>
-                  <p className="text-sm text-gray-500">Configure if this show repeats on a schedule</p>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="recurrenceType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Recurrence Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select recurrence" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">No Recurrence</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {form.watch("recurrenceType") !== "none" && (
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="recurrenceInterval"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Repeat every {form.watch("recurrenceType") === "daily" ? "day(s)" : 
-                                         form.watch("recurrenceType") === "weekly" ? "week(s)" : "month(s)"}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="1"
-                              {...field}
-                              value={field.value || 1}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {form.watch("recurrenceType") === "weekly" && (
-                      <FormField
-                        control={form.control}
-                        name="recurrenceWeekdays"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Repeat on days</FormLabel>
-                            <div className="flex flex-wrap gap-2">
-                              {[
-                                { label: "Sun", value: "SU" },
-                                { label: "Mon", value: "MO" },
-                                { label: "Tue", value: "TU" },
-                                { label: "Wed", value: "WE" },
-                                { label: "Thu", value: "TH" },
-                                { label: "Fri", value: "FR" },
-                                { label: "Sat", value: "SA" }
-                              ].map((day) => (
-                                <FormItem key={day.value} className="flex flex-row items-start space-x-3 space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(day.value) || false}
-                                      onCheckedChange={(checked) => {
-                                        const currentValue = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...currentValue, day.value]);
-                                        } else {
-                                          field.onChange(currentValue.filter((value: string) => value !== day.value));
-                                        }
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal text-sm">
-                                    {day.label}
-                                  </FormLabel>
-                                </FormItem>
-                              ))}
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    <FormField
-                      control={form.control}
-                      name="recurrenceEndType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>End recurrence</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select end type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="never">Never</SelectItem>
-                              <SelectItem value="date">On date</SelectItem>
-                              <SelectItem value="count">After occurrences</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {form.watch("recurrenceEndType") === "date" && (
-                      <FormField
-                        control={form.control}
-                        name="recurrenceEndDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End date</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {form.watch("recurrenceEndType") === "count" && (
-                      <FormField
-                        control={form.control}
-                        name="recurrenceEndCount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Number of occurrences</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
@@ -785,43 +472,241 @@ export default function ShowBuilder() {
                           </FormItem>
                         )}
                       />
-                    )}
 
-                    {/* Recurrence Summary */}
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <h4 className="text-sm font-medium mb-2">Recurrence Summary</h4>
-                      <p className="text-sm text-gray-600">
-                        {(() => {
-                          const type = form.watch("recurrenceType");
-                          const interval = form.watch("recurrenceInterval") || 1;
-                          const weekdays = form.watch("recurrenceWeekdays") || [];
-                          const endType = form.watch("recurrenceEndType");
-                          const endDate = form.watch("recurrenceEndDate");
-                          const endCount = form.watch("recurrenceEndCount");
+                      {form.watch("recurrenceType") === "weekly" && (
+                        <FormField
+                          control={form.control}
+                          name="recurrenceWeekdays"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Repeat on</FormLabel>
+                              <div className="flex flex-wrap gap-2">
+                                {[
+                                  { label: "S", value: "SU" },
+                                  { label: "M", value: "MO" },
+                                  { label: "T", value: "TU" },
+                                  { label: "W", value: "WE" },
+                                  { label: "T", value: "TH" },
+                                  { label: "F", value: "FR" },
+                                  { label: "S", value: "SA" }
+                                ].map((day) => (
+                                  <div key={day.value} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={day.value}
+                                      checked={field.value?.includes(day.value) || false}
+                                      onCheckedChange={(checked) => {
+                                        const currentValue = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...currentValue, day.value]);
+                                        } else {
+                                          field.onChange(currentValue.filter((value: string) => value !== day.value));
+                                        }
+                                      }}
+                                    />
+                                    <Label htmlFor={day.value} className="text-sm font-medium">
+                                      {day.label}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
 
-                          if (type === "none") return "No recurrence";
+                      <FormField
+                        control={form.control}
+                        name="recurrenceEndType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ends</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select end type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="never">Never</SelectItem>
+                                <SelectItem value="date">On date</SelectItem>
+                                <SelectItem value="count">After occurrences</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                          let summary = `Repeats ${interval > 1 ? `every ${interval} ` : ""}${type}`;
-                          
-                          if (type === "weekly" && weekdays.length > 0) {
-                            const dayNames = weekdays.map(day => 
-                              ({ SU: "Sun", MO: "Mon", TU: "Tue", WE: "Wed", TH: "Thu", FR: "Fri", SA: "Sat" }[day])
-                            ).join(", ");
-                            summary += ` on ${dayNames}`;
-                          }
+                      {form.watch("recurrenceEndType") === "date" && (
+                        <FormField
+                          control={form.control}
+                          name="recurrenceEndDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>End date</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
 
-                          if (endType === "date" && endDate) {
-                            summary += ` until ${new Date(endDate).toLocaleDateString()}`;
-                          } else if (endType === "count" && endCount) {
-                            summary += ` for ${endCount} occurrences`;
-                          }
+                      {form.watch("recurrenceEndType") === "count" && (
+                        <FormField
+                          control={form.control}
+                          name="recurrenceEndCount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Number of occurrences</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  {...field}
+                                  value={field.value || 1}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
 
-                          return summary;
-                        })()}
-                      </p>
+                      {/* Recurrence Summary */}
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="text-sm font-medium mb-2">Summary</h4>
+                        <p className="text-sm text-gray-600">
+                          {(() => {
+                            const type = form.watch("recurrenceType");
+                            const interval = form.watch("recurrenceInterval") || 1;
+                            const weekdays = form.watch("recurrenceWeekdays") || [];
+                            const endType = form.watch("recurrenceEndType");
+                            const endDate = form.watch("recurrenceEndDate");
+                            const endCount = form.watch("recurrenceEndCount");
+
+                            if (type === "none") return "Does not repeat";
+
+                            let summary = `Repeats ${interval > 1 ? `every ${interval} ` : ""}${type}`;
+                            
+                            if (type === "weekly" && weekdays.length > 0) {
+                              const dayNames = weekdays.map(day => 
+                                ({ SU: "Sun", MO: "Mon", TU: "Tue", WE: "Wed", TH: "Thu", FR: "Fri", SA: "Sat" }[day])
+                              ).join(", ");
+                              summary += ` on ${dayNames}`;
+                            }
+
+                            if (endType === "date" && endDate) {
+                              summary += ` until ${new Date(endDate).toLocaleDateString()}`;
+                            } else if (endType === "count" && endCount) {
+                              summary += ` for ${endCount} occurrences`;
+                            }
+
+                            return summary;
+                          })()}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              </div>
+            )}
+
+            {step === "resources" && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium">Select Resources</h3>
+                  <p className="text-sm text-gray-500">Choose equipment and resources needed for this show</p>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="selectedResourceIds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {resources.map((resource: any) => (
+                          <div key={resource.id} className="flex items-start space-x-3 p-4 border rounded-lg">
+                            <Checkbox
+                              checked={field.value.includes(resource.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...field.value, resource.id]);
+                                } else {
+                                  field.onChange(field.value.filter((id: string) => id !== resource.id));
+                                }
+                              }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium">{resource.name}</p>
+                              <p className="text-xs text-gray-500">{resource.category}</p>
+                              <Badge variant={resource.availability === "available" ? "default" : "secondary"}>
+                                {resource.availability}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {step === "crew" && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium">Select Crew Members</h3>
+                  <p className="text-sm text-gray-500">Choose crew members for this show</p>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="selectedCrewIds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {crewMembers.map((crew: any) => (
+                          <div key={crew.id} className="flex items-start space-x-3 p-4 border rounded-lg">
+                            <Checkbox
+                              checked={field.value.includes(crew.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...field.value, crew.id]);
+                                } else {
+                                  field.onChange(field.value.filter((id: string) => id !== crew.id));
+                                }
+                              }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium">{crew.name}</p>
+                              <p className="text-xs text-gray-500">{crew.role}</p>
+                              {crew.qualifications && crew.qualifications.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {crew.qualifications.slice(0, 2).map((qual: string) => (
+                                    <Badge key={qual} variant="outline" className="text-xs">
+                                      {qual}
+                                    </Badge>
+                                  ))}
+                                  {crew.qualifications.length > 2 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{crew.qualifications.length - 2}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
           </Form>
@@ -832,7 +717,7 @@ export default function ShowBuilder() {
             <div></div>
           ) : (
             <Button type="button" variant="outline" onClick={() => {
-              const steps = ["details", "resources", "crew", "recurrence"];
+              const steps = ["details", "resources", "crew"];
               const currentIndex = steps.indexOf(step);
               if (currentIndex > 0) {
                 setStep(steps[currentIndex - 1] as any);
@@ -842,7 +727,7 @@ export default function ShowBuilder() {
             </Button>
           )}
           
-          {step === "recurrence" ? (
+          {step === "crew" ? (
             <Button 
               type="button" 
               disabled={createShowMutation.isPending}
@@ -854,7 +739,7 @@ export default function ShowBuilder() {
             <Button 
               type="button" 
               onClick={() => {
-                const steps = ["details", "resources", "crew", "recurrence"];
+                const steps = ["details", "resources", "crew"];
                 const currentIndex = steps.indexOf(step);
                 if (currentIndex < steps.length - 1) {
                   setStep(steps[currentIndex + 1] as any);

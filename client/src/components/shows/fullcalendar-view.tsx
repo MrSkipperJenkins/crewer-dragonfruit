@@ -91,27 +91,7 @@ export function FullCalendarView() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<string>('dayGridMonth');
 
-  // State for calendar date range
-  const [calendarView, setCalendarView] = useState({ start: new Date(), end: new Date() });
-
-  // Query calendar data with recurrence expansion
-  const { data: calendarData = [] } = useQuery({
-    queryKey: [`/api/calendar`, calendarView.start.toISOString(), calendarView.end.toISOString(), currentWorkspace?.id],
-    queryFn: async () => {
-      if (!currentWorkspace?.id) return [];
-      const params = new URLSearchParams({
-        start: calendarView.start.toISOString(),
-        end: calendarView.end.toISOString(),
-        workspaceId: currentWorkspace.id
-      });
-      const response = await fetch(`/api/calendar?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch calendar data');
-      return response.json();
-    },
-    enabled: !!currentWorkspace?.id,
-  });
-
-  // Fallback query for shows data (for other components)
+  // Query shows data
   const { data: shows = [] } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
@@ -172,25 +152,15 @@ export function FullCalendarView() {
   // Query all show-specific data for the shows we have
   const showIds = (shows as any[]).map((show: any) => show.id);
   
-  // Helper function to get actual show ID (parent ID for virtual recurring events)
-  const getActualShowId = (showId: string): string => {
-    return showId.includes('-') && showId.split('-').length > 5 
-      ? showId.split('-').slice(0, -1).join('-') 
-      : showId;
-  };
-  
-  // Get unique actual show IDs for data fetching
-  const actualShowIds = Array.from(new Set(showIds.map(getActualShowId)));
-  
-  // Use shared staffing hook with actual show IDs
-  const { getCrewStaffingStatus, crewAssignmentQueries, requiredJobQueries } = useShowStaffing(actualShowIds);
+  // Use shared staffing hook
+  const { getCrewStaffingStatus, crewAssignmentQueries, requiredJobQueries } = useShowStaffing(showIds);
   
   // Query show resources for all shows
   const showResourceQueries = useQuery({
-    queryKey: [`/api/show-resources-batch`, actualShowIds],
+    queryKey: [`/api/show-resources-batch`, showIds],
     queryFn: async () => {
       const results: Record<string, any[]> = {};
-      for (const showId of actualShowIds) {
+      for (const showId of showIds) {
         try {
           const response = await fetch(`/api/shows/${showId}/resources`);
           if (response.ok) {
@@ -204,13 +174,12 @@ export function FullCalendarView() {
       }
       return results;
     },
-    enabled: actualShowIds.length > 0,
+    enabled: showIds.length > 0,
   });
 
   // Function to get show resources using show-specific data
   const getShowResources = (showId: string) => {
-    const actualShowId = getActualShowId(showId);
-    const showResources = showResourceQueries.data?.[actualShowId] || [];
+    const showResources = showResourceQueries.data?.[showId] || [];
     return showResources.map((sr: any) => {
       const resource = (resources as any[]).find((r: any) => r.id === sr.resourceId);
       return resource;
@@ -219,50 +188,45 @@ export function FullCalendarView() {
 
 
 
-  // Handle calendar view changes to update date range
-  const handleDatesSet = (dateInfo: any) => {
-    setCalendarView({
-      start: dateInfo.start,
-      end: dateInfo.end
-    });
-  };
-
-  // Convert calendar events to FullCalendar format
+  // Convert shows to FullCalendar events
   const calendarEvents = useMemo(() => {
-    return calendarData.map((event: any) => {
-      // Use event's color field or fallback to default
-      const backgroundColor = event.color || '#3b82f6';
+    let filteredShows = shows;
+    
+    // Apply category filter
+    if (categoryFilter !== 'all') {
+      filteredShows = shows.filter((show: Show) => {
+        const category = getShowCategory(show.id);
+        return category && category.id === categoryFilter;
+      });
+    }
+
+    return filteredShows.map((show: Show) => {
+      const category = getShowCategory(show.id);
+      const showResourceList = getShowResources(show.id);
+      const crewStatus = getCrewStaffingStatus(show.id);
+      
+      // Use show's color field or fallback to default
+      const backgroundColor = show.color || '#3b82f6';
       const textColor = getContrastTextColor(backgroundColor);
 
-      // Get crew status and resources for this event
-      const crewStatus = getCrewStaffingStatus(getActualShowId(event.id));
-      const eventResources = getShowResources(event.id);
-      const resourcesText = eventResources.length > 0 
-        ? eventResources.map((r: any) => r.name).join(', ')
-        : 'No resources assigned';
-
       return {
-        id: event.id,
-        title: event.title,
-        start: event.startTime,
-        end: event.endTime,
+        id: show.id,
+        title: show.title,
+        start: show.startTime,
+        end: show.endTime,
         backgroundColor,
         borderColor: backgroundColor,
         textColor,
         extendedProps: {
-          status: event.status,
-          description: event.description,
-          parentId: event.parentId,
-          isRecurrence: event.isRecurrence,
-          isException: event.isException,
-          recurringPattern: event.recurringPattern,
-          notes: event.notes,
+          status: show.status,
+          description: show.description,
+          category: category?.title || 'Uncategorized',
+          resources: showResourceList.map((r: Resource) => r.name).join(', ') || 'No resources assigned',
           crewStatus: crewStatus,
-          resources: resourcesText,
         },
       };
     });
-  }, [calendarData, getCrewStaffingStatus, getShowResources]);
+  }, [shows, categoryFilter, categoryAssignments, categories, resources, showResourceQueries.data, crewAssignmentQueries.data, requiredJobQueries.data]);
 
   // Handle event click
   const handleEventClick = (info: any) => {
@@ -454,7 +418,6 @@ export function FullCalendarView() {
             day: 'Day'
           }}
           events={calendarEvents}
-          datesSet={handleDatesSet}
           eventClick={handleEventClick}
           eventDrop={handleEventDrop}
           eventResize={handleEventResize}

@@ -178,13 +178,12 @@ export const insertRequiredJobSchema = createInsertSchema(requiredJobs).omit({
 export const showResources = pgTable("show_resources", {
   id: uuid("id").defaultRandom().primaryKey(),
   showId: uuid("show_id").references(() => shows.id).notNull(),
-  instanceId: text("instance_id"), // For recurring shows: "showId-timestamp", for regular shows: null
   resourceId: uuid("resource_id").references(() => resources.id).notNull(),
   workspaceId: uuid("workspace_id").references(() => workspaces.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => {
   return {
-    uniq: unique().on(table.showId, table.instanceId, table.resourceId),
+    uniq: unique().on(table.showId, table.resourceId),
   };
 });
 
@@ -197,7 +196,6 @@ export const insertShowResourceSchema = createInsertSchema(showResources).omit({
 export const crewAssignments = pgTable("crew_assignments", {
   id: uuid("id").defaultRandom().primaryKey(),
   showId: uuid("show_id").references(() => shows.id).notNull(),
-  instanceId: text("instance_id"), // For recurring shows: "showId-timestamp", for regular shows: null
   crewMemberId: uuid("crew_member_id").references(() => crewMembers.id).notNull(),
   jobId: uuid("job_id").references(() => jobs.id).notNull(),
   requiredJobId: uuid("required_job_id").references(() => requiredJobs.id), // Links to specific required job

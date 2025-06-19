@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
@@ -45,11 +45,9 @@ export default function ShowsListView() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortField, setSortField] = useState<SortField>("datetime");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage] = useState<number>(10);
 
-  // Fetch base shows data
-  const { data: baseShows = [], isLoading } = useQuery({
+  // Fetch shows data
+  const { data: shows = [], isLoading } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
   });
@@ -66,78 +64,14 @@ export default function ShowsListView() {
     enabled: !!currentWorkspace?.id,
   });
 
-  // Helper function to get actual show ID (parent ID for virtual recurring events)
-  const getActualShowId = (showId: string): string => {
-    return showId.includes('-') && showId.split('-').length > 5 
-      ? showId.split('-').slice(0, -1).join('-') 
-      : showId;
-  };
-
-  // Generate expanded shows with recurring instances (limited to 10 instances max)
-  const generateExpandedShows = () => {
-    const expandedShows: any[] = [];
-    
-    (baseShows as any[]).forEach((show: any) => {
-      if (!show.recurringPattern) {
-        // Non-recurring show
-        expandedShows.push(show);
-      } else {
-        // Recurring show - generate limited instances
-        const showDate = new Date(show.startTime);
-        const duration = new Date(show.endTime).getTime() - new Date(show.startTime).getTime();
-        
-        // Generate only 10 instances for recurring shows to prevent infinite loops
-        for (let i = 0; i < 10; i++) {
-          const currentDate = new Date(showDate);
-          
-          // Calculate occurrence date
-          switch (show.recurringPattern) {
-            case 'daily':
-              currentDate.setDate(currentDate.getDate() + i);
-              break;
-            case 'weekly':
-              currentDate.setDate(currentDate.getDate() + (i * 7));
-              break;
-            case 'monthly':
-              currentDate.setMonth(currentDate.getMonth() + i);
-              break;
-            default:
-              if (i === 0) {
-                // For unknown patterns, just show the original
-                expandedShows.push(show);
-              }
-              continue;
-          }
-          
-          const instanceEndTime = new Date(currentDate.getTime() + duration);
-          
-          expandedShows.push({
-            ...show,
-            id: `${show.id}-${currentDate.getTime()}`,
-            parentId: show.id,
-            startTime: currentDate.toISOString(),
-            endTime: instanceEndTime.toISOString(),
-            isRecurrence: true
-          });
-        }
-      }
-    });
-    
-    return expandedShows;
-  };
-
-  const allShows = generateExpandedShows();
-
-  // Get unique actual show IDs for staffing data (including virtual recurring IDs)
-  const allShowIds = allShows.map((show: any) => show.id);
-  const uniqueActualShowIds = Array.from(new Set(allShowIds.map(getActualShowId)));
-  const { getCrewStaffingStatus } = useShowStaffing(uniqueActualShowIds);
+  // Get show IDs and use shared staffing hook
+  const showIds = (shows as any[]).map((show: any) => show.id);
+  const { getCrewStaffingStatus } = useShowStaffing(showIds);
 
   // Function to get show category
   const getShowCategory = (showId: string) => {
-    const actualShowId = getActualShowId(showId);
     const assignment = (categoryAssignments as any[])?.find(
-      (ca: any) => ca.showId === actualShowId
+      (ca: any) => ca.showId === showId
     );
     
     if (!assignment) return null;
@@ -146,6 +80,8 @@ export default function ShowsListView() {
       (c: any) => c.id === assignment.categoryId
     );
   };
+
+
 
   // Helper function to handle sorting
   const handleSort = (field: SortField) => {
@@ -158,7 +94,7 @@ export default function ShowsListView() {
   };
 
   // Filter and sort shows
-  const filteredShows = (allShows as any[]).filter((show: any) => {
+  const filteredShows = (shows as any[]).filter((show: any) => {
     const matchesStatus = statusFilter === "all" || show.status === statusFilter;
     const matchesSearch = !searchQuery || 
       show.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -201,18 +137,6 @@ export default function ShowsListView() {
     }
     return 0;
   });
-
-  // Pagination logic
-  const totalItems = filteredShows.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedShows = filteredShows.slice(startIndex, endIndex);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, searchQuery, sortField, sortDirection]);
 
   // Function to handle row click
   const handleRowClick = (showId: string) => {
@@ -350,7 +274,7 @@ export default function ShowsListView() {
                   </TableRow>
                 )}
 
-                {paginatedShows.map((show: any) => {
+                {filteredShows.map((show: any) => {
                   const category = getShowCategory(show.id);
                   const staffingStatus = getCrewStaffingStatus(show.id);
                   return (
@@ -428,36 +352,6 @@ export default function ShowsListView() {
               </TableBody>
             </Table>
           </div>
-          
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t">
-              <div className="text-sm text-gray-500">
-                Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} shows
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 

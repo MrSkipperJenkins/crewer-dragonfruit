@@ -3,7 +3,6 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -157,17 +156,11 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
     }
   };
 
-  // Format datetime for input fields with error handling
+  // Format datetime for input fields
   const formatDateTimeForInput = (dateString: string) => {
     if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '';
-      return date.toISOString().slice(0, 16);
-    } catch (error) {
-      console.warn('Invalid date format:', dateString);
-      return '';
-    }
+    const date = new Date(dateString);
+    return date.toISOString().slice(0, 16);
   };
   
   // Format crew name for avatar fallback
@@ -192,9 +185,6 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
         ) : (
           <>
             <DialogHeader className="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-              <DialogTitle className="text-xl font-semibold text-gray-900">
-                {isEditing ? 'Edit Show' : (show as any)?.title || 'Show Details'}
-              </DialogTitle>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   {isEditing ? (

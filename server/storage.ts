@@ -49,7 +49,7 @@ import {
   notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, like, isNotNull, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, like, isNotNull, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Workspace CRUD
@@ -133,20 +133,17 @@ export interface IStorage {
   // Show Resource CRUD
   getShowResources(workspaceId: string): Promise<ShowResource[]>;
   getShowResourcesByShow(showId: string): Promise<ShowResource[]>;
-  getShowResourcesByShowInstance(showId: string, instanceId: string): Promise<ShowResource[]>;
   createShowResource(showResource: InsertShowResource): Promise<ShowResource>;
   deleteShowResource(id: string): Promise<boolean>;
 
   // Crew Assignment CRUD
   getCrewAssignments(workspaceId: string): Promise<CrewAssignment[]>;
   getCrewAssignmentsByShow(showId: string): Promise<CrewAssignment[]>;
-  getCrewAssignmentsByShowInstance(showId: string, instanceId: string): Promise<CrewAssignment[]>;
   getCrewAssignmentsByCrewMember(crewMemberId: string): Promise<CrewAssignment[]>;
   createCrewAssignment(crewAssignment: InsertCrewAssignment): Promise<CrewAssignment>;
   updateCrewAssignment(id: string, crewAssignment: Partial<InsertCrewAssignment>): Promise<CrewAssignment | undefined>;
   deleteCrewAssignment(id: string): Promise<boolean>;
   replaceCrewAssignments(showId: string, assignments: InsertCrewAssignment[]): Promise<void>;
-  replaceCrewAssignmentsForInstance(showId: string, instanceId: string | null, assignments: InsertCrewAssignment[]): Promise<void>;
 
   // Crew Schedule CRUD
   getCrewSchedules(workspaceId: string): Promise<CrewSchedule[]>;
@@ -986,15 +983,6 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(showResources).where(eq(showResources.showId, showId));
   }
 
-  async getShowResourcesByShowInstance(showId: string, instanceId: string): Promise<ShowResource[]> {
-    return await db.select().from(showResources).where(
-      and(
-        eq(showResources.showId, showId),
-        eq(showResources.instanceId, instanceId)
-      )
-    );
-  }
-
   async createShowResource(showResource: InsertShowResource): Promise<ShowResource> {
     const [newShowResource] = await db.insert(showResources).values(showResource).returning();
     return newShowResource;
@@ -1012,15 +1000,6 @@ export class DatabaseStorage implements IStorage {
 
   async getCrewAssignmentsByShow(showId: string): Promise<CrewAssignment[]> {
     return await db.select().from(crewAssignments).where(eq(crewAssignments.showId, showId));
-  }
-
-  async getCrewAssignmentsByShowInstance(showId: string, instanceId: string): Promise<CrewAssignment[]> {
-    return await db.select().from(crewAssignments).where(
-      and(
-        eq(crewAssignments.showId, showId),
-        eq(crewAssignments.instanceId, instanceId)
-      )
-    );
   }
 
   async getCrewAssignmentsByCrewMember(crewMemberId: string): Promise<CrewAssignment[]> {
@@ -1051,44 +1030,6 @@ export class DatabaseStorage implements IStorage {
     await db.transaction(async (tx) => {
       // First, delete all existing assignments for this show
       await tx.delete(crewAssignments).where(eq(crewAssignments.showId, showId));
-      
-      // Then insert the new assignments
-      if (assignments.length > 0) {
-        // Filter to ensure only one assignment per required job
-        const uniqueAssignments = assignments.reduce((acc, assignment) => {
-          if (assignment.requiredJobId) {
-            acc[assignment.requiredJobId] = assignment;
-          }
-          return acc;
-        }, {} as Record<string, InsertCrewAssignment>);
-        
-        const finalAssignments = Object.values(uniqueAssignments);
-        if (finalAssignments.length > 0) {
-          await tx.insert(crewAssignments).values(finalAssignments);
-        }
-      }
-    });
-  }
-
-  async replaceCrewAssignmentsForInstance(showId: string, instanceId: string | null, assignments: InsertCrewAssignment[]): Promise<void> {
-    // Use a transaction to ensure atomicity
-    await db.transaction(async (tx) => {
-      // First, delete all existing assignments for this show instance
-      if (instanceId) {
-        await tx.delete(crewAssignments).where(
-          and(
-            eq(crewAssignments.showId, showId),
-            eq(crewAssignments.instanceId, instanceId)
-          )
-        );
-      } else {
-        await tx.delete(crewAssignments).where(
-          and(
-            eq(crewAssignments.showId, showId),
-            isNull(crewAssignments.instanceId)
-          )
-        );
-      }
       
       // Then insert the new assignments
       if (assignments.length > 0) {

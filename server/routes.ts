@@ -2,8 +2,6 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-// Simple recurrence implementation without rrule library
-// We'll implement basic recurring patterns using date math
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -24,13 +22,6 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Helper function to extract actual show ID from virtual recurring event ID
-  const getActualShowId = (showId: string): string => {
-    return showId.includes('-') && showId.split('-').length > 5 
-      ? showId.split('-').slice(0, -1).join('-') 
-      : showId;
-  };
-
   // Workspaces
   app.get("/api/workspaces", async (req, res) => {
     const workspaces = await storage.getWorkspaces();
@@ -422,8 +413,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(shows);
   });
 
-  // Calendar endpoint with robust recurrence engine
-  app.get("/api/calendar", async (req, res) => {
+  // Expand recurring shows into individual occurrences
+  app.get("/api/shows/expand-recurring", async (req, res) => {
     try {
       const { start, end, workspaceId } = req.query;
       
@@ -438,287 +429,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid date range" });
       }
       
-      // 1. Fetch one-off shows in range
-      const oneOffShows = await storage.getShowsInRange(workspaceId as string, startDate, endDate);
+      // For now, return regular shows in range until RRule is properly implemented
+      const regularShows = await storage.getShowsInRange(workspaceId as string, startDate, endDate);
       
-      // 2. Fetch recurring series masters
-      const recurringMasters = await storage.getRecurringShows(workspaceId as string);
-      
-      // 3. Fetch exceptions in the date range
-      const exceptions = await storage.getShowExceptions(workspaceId as string, startDate, endDate);
-      
-      // 4. Generate instances from recurring masters
-      const generatedInstances = [];
-      
-      for (const master of recurringMasters) {
-        if (!master.recurringPattern) continue;
-        
-        try {
-          // Generate recurring instances using native date calculations
-          const masterStart = new Date(master.startTime);
-          const duration = new Date(master.endTime).getTime() - new Date(master.startTime).getTime();
-          
-          let current = new Date(masterStart);
-          let occurrences: Date[] = [];
-          
-          // Generate instances based on pattern
-          if (master.recurringPattern === 'daily') {
-            while (current <= endDate) {
-              if (current >= startDate) {
-                occurrences.push(new Date(current));
-              }
-              current.setDate(current.getDate() + 1);
-            }
-          } else if (master.recurringPattern === 'weekly') {
-            while (current <= endDate) {
-              if (current >= startDate) {
-                occurrences.push(new Date(current));
-              }
-              current.setDate(current.getDate() + 7);
-            }
-          } else if (master.recurringPattern === 'monthly') {
-            while (current <= endDate) {
-              if (current >= startDate) {
-                occurrences.push(new Date(current));
-              }
-              current.setMonth(current.getMonth() + 1);
-            }
-          } else if (master.recurringPattern?.startsWith('WEEKLY:')) {
-            // Handle complex weekly patterns like "WEEKLY:Monday,Tuesday,Wednesday,Thursday"
-            const daysString = master.recurringPattern.substring(7); // Remove "WEEKLY:" prefix
-            const dayNames = daysString.split(',').map(d => d.trim());
-            const dayNumbers = dayNames.map(name => {
-              const dayMap: Record<string, number> = {
-                'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
-                'Thursday': 4, 'Friday': 5, 'Saturday': 6
-              };
-              return dayMap[name];
-            }).filter(num => num !== undefined);
-            
-            // Generate occurrences for specified days each week
-            const weekStart = new Date(current);
-            weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Go to Sunday of this week
-            
-            while (weekStart <= endDate) {
-              for (const dayNum of dayNumbers) {
-                const occurrence = new Date(weekStart);
-                occurrence.setDate(weekStart.getDate() + dayNum);
-                occurrence.setHours(masterStart.getHours(), masterStart.getMinutes(), masterStart.getSeconds());
-                
-                if (occurrence >= startDate && occurrence <= endDate) {
-                  occurrences.push(new Date(occurrence));
-                }
-              }
-              weekStart.setDate(weekStart.getDate() + 7); // Next week
-            }
-          } else {
-            console.warn(`Unknown recurring pattern: ${master.recurringPattern}`);
-            continue;
-          }
-          
-          for (const occurrenceStart of occurrences) {
-            // Calculate duration from master show
-            const duration = new Date(master.endTime).getTime() - new Date(master.startTime).getTime();
-            const occurrenceEnd = new Date(occurrenceStart.getTime() + duration);
-            
-            // Check if this occurrence has an exception
-            const hasException = exceptions.some(exception => 
-              exception.parentId === master.id &&
-              Math.abs(new Date(exception.startTime).getTime() - occurrenceStart.getTime()) < 60000 // Within 1 minute
-            );
-            
-            // Only add if no exception exists
-            if (!hasException) {
-              generatedInstances.push({
-                id: `${master.id}-${occurrenceStart.getTime()}`, // Unique virtual ID
-                parentId: master.id,
-                title: master.title,
-                description: master.description,
-                startTime: occurrenceStart.toISOString(),
-                endTime: occurrenceEnd.toISOString(),
-                status: master.status,
-                color: master.color,
-                workspaceId: master.workspaceId,
-                recurringPattern: master.recurringPattern,
-                isRecurrence: true,
-                notes: master.notes
-              });
-            }
-          }
-        } catch (error) {
-          console.error(`Error generating recurring instances for show ${master.id}:`, error);
-          // Continue processing other masters
-        }
-      }
-      
-      // 5. Transform one-off shows to match format
-      const transformedOneOffs = oneOffShows
-        .filter(show => !show.recurringPattern) // Exclude masters from one-offs
-        .map(show => ({
-          id: show.id,
-          parentId: show.parentId || null,
-          title: show.title,
-          description: show.description,
-          startTime: show.startTime.toISOString(),
-          endTime: show.endTime.toISOString(),
-          status: show.status,
-          color: show.color,
-          workspaceId: show.workspaceId,
-          recurringPattern: show.recurringPattern || null,
-          isRecurrence: false,
-          notes: show.notes
-        }));
-      
-      // 6. Transform exceptions to match format
-      const transformedExceptions = exceptions.map(exception => ({
-        id: exception.id,
-        parentId: exception.parentId,
-        title: exception.title,
-        description: exception.description,
-        startTime: exception.startTime.toISOString(),
-        endTime: exception.endTime.toISOString(),
-        status: exception.status,
-        color: exception.color,
-        workspaceId: exception.workspaceId,
-        recurringPattern: exception.recurringPattern || null,
+      // Transform to match expected format
+      const transformedShows = regularShows.map(show => ({
+        id: show.id,
+        parentId: show.parentId || '',
+        title: show.title,
+        description: show.description,
+        startTime: show.startTime.toISOString(),
+        endTime: show.endTime.toISOString(),
+        status: show.status,
+        color: show.color,
+        workspaceId: show.workspaceId,
+        recurringPattern: show.recurringPattern || '',
         isRecurrence: false,
-        isException: true,
-        notes: exception.notes
+        notes: show.notes
       }));
       
-      // 7. Combine all events
-      const allEvents = [
-        ...transformedOneOffs,
-        ...generatedInstances,
-        ...transformedExceptions
-      ];
-      
-      res.json(allEvents);
+      res.json(transformedShows);
     } catch (error) {
-      console.error("Error generating calendar data:", error);
-      res.status(500).json({ message: "Failed to generate calendar data" });
-    }
-  });
-
-  // Create exception for single occurrence edit
-  app.post("/api/shows/:parentId/exceptions", async (req, res) => {
-    try {
-      const { parentId } = req.params;
-      const { occurrenceDate, ...showData } = req.body;
-      
-      if (!occurrenceDate) {
-        return res.status(400).json({ message: "occurrenceDate is required" });
-      }
-      
-      // Validate the show data
-      const validatedData = insertShowSchema.parse({
-        ...showData,
-        parentId,
-        isException: true,
-        workspaceId: showData.workspaceId
-      });
-      
-      const exception = await storage.createShow(validatedData);
-      res.status(201).json(exception);
-    } catch (error) {
-      console.error("Error creating show exception:", error);
-      res.status(500).json({ message: "Failed to create show exception" });
-    }
-  });
-
-  // Split recurring series (for "this and future" edits)
-  app.post("/api/shows/:parentId/split", async (req, res) => {
-    try {
-      const { parentId } = req.params;
-      const { splitDate, newPattern, ...updatedData } = req.body;
-      
-      if (!splitDate || !newPattern) {
-        return res.status(400).json({ message: "splitDate and newPattern are required" });
-      }
-      
-      const splitDateTime = new Date(splitDate);
-      if (isNaN(splitDateTime.getTime())) {
-        return res.status(400).json({ message: "Invalid splitDate" });
-      }
-      
-      // Get the original master show
-      const originalMaster = await storage.getShow(parentId);
-      if (!originalMaster) {
-        return res.status(404).json({ message: "Master show not found" });
-      }
-      
-      // Update original master to end before split date
-      let updatedPattern = null;
-      
-      // For simplicity, remove recurring pattern when splitting
-      // The original series will end and new series will start from split date
-      updatedPattern = null;
-      
-      await storage.updateShow(parentId, {
-        recurringPattern: updatedPattern
-      });
-      
-      // Create new master starting from split date
-      const newMasterData = insertShowSchema.parse({
-        ...updatedData,
-        startTime: splitDateTime,
-        endTime: new Date(splitDateTime.getTime() + (new Date(originalMaster.endTime).getTime() - new Date(originalMaster.startTime).getTime())),
-        recurringPattern: newPattern,
-        workspaceId: originalMaster.workspaceId
-      });
-      
-      const newMaster = await storage.createShow(newMasterData);
-      
-      res.json({
-        originalMaster: await storage.getShow(parentId),
-        newMaster
-      });
-    } catch (error) {
-      console.error("Error splitting recurring series:", error);
-      res.status(500).json({ message: "Failed to split recurring series" });
+      console.error("Error expanding recurring shows:", error);
+      res.status(500).json({ message: "Failed to expand recurring shows" });
     }
   });
 
   app.get("/api/shows/:id", async (req, res) => {
-    const { id } = req.params;
-    
-    // Check if this is a virtual recurring event ID
-    if (id.includes('-') && id.split('-').length > 5) {
-      const parts = id.split('-');
-      const timestamp = parts[parts.length - 1];
-      const parentId = parts.slice(0, -1).join('-');
-      
-      // Get the parent show and create virtual instance
-      const parentShow = await storage.getShow(parentId);
-      if (!parentShow) {
-        return res.status(404).json({ message: "Parent show not found" });
-      }
-      
-      // Calculate the virtual instance details
-      const instanceStart = new Date(parseInt(timestamp));
-      const duration = new Date(parentShow.endTime).getTime() - new Date(parentShow.startTime).getTime();
-      const instanceEnd = new Date(instanceStart.getTime() + duration);
-      
-      const virtualShow = {
-        id: id,
-        parentId: parentId,
-        title: parentShow.title,
-        description: parentShow.description,
-        startTime: instanceStart.toISOString(),
-        endTime: instanceEnd.toISOString(),
-        status: parentShow.status,
-        color: parentShow.color,
-        workspaceId: parentShow.workspaceId,
-        recurringPattern: parentShow.recurringPattern,
-        isRecurrence: true,
-        notes: parentShow.notes
-      };
-      
-      return res.json(virtualShow);
-    }
-    
-    // Regular show lookup
-    const show = await storage.getShow(id);
+    const show = await storage.getShow(req.params.id);
     if (!show) {
       return res.status(404).json({ message: "Show not found" });
     }
@@ -849,8 +587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Required Jobs
   app.get("/api/shows/:showId/required-jobs", async (req, res) => {
-    const actualShowId = getActualShowId(req.params.showId);
-    const requiredJobs = await storage.getRequiredJobsByShow(actualShowId);
+    const requiredJobs = await storage.getRequiredJobsByShow(req.params.showId);
     res.json(requiredJobs);
   });
 
@@ -882,17 +619,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Show Resources
   app.get("/api/shows/:showId/resources", async (req, res) => {
-    const showId = req.params.showId;
-    const actualShowId = getActualShowId(showId);
-    
-    // For recurring instances, filter by instance ID
-    if (showId !== actualShowId) {
-      const showResources = await storage.getShowResourcesByShowInstance(actualShowId, showId);
-      res.json(showResources);
-    } else {
-      const showResources = await storage.getShowResourcesByShow(actualShowId);
-      res.json(showResources);
-    }
+    const showResources = await storage.getShowResourcesByShow(req.params.showId);
+    res.json(showResources);
   });
 
   app.post("/api/show-resources", async (req, res) => {
@@ -902,25 +630,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid show resource data", errors: validation.error.errors });
       }
       
-      // Extract show ID and instance ID for recurring shows
+      // Check for resource conflicts
       const { showId, resourceId } = validation.data;
-      const actualShowId = getActualShowId(showId);
-      const instanceId = showId !== actualShowId ? showId : null;
-      
-      const hasConflict = await storage.detectResourceConflicts(actualShowId, resourceId);
+      const hasConflict = await storage.detectResourceConflicts(showId, resourceId);
       
       if (hasConflict) {
         return res.status(409).json({ message: "Resource has scheduling conflict" });
       }
       
-      // Include instanceId for recurring shows
-      const resourceData = {
-        ...validation.data,
-        showId: actualShowId,
-        instanceId
-      };
-      
-      const showResource = await storage.createShowResource(resourceData);
+      const showResource = await storage.createShowResource(validation.data);
       res.status(201).json(showResource);
     } catch (error) {
       res.status(500).json({ message: "Failed to assign resource to show" });
@@ -929,17 +647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Crew Assignments
   app.get("/api/shows/:showId/crew-assignments", async (req, res) => {
-    const showId = req.params.showId;
-    const actualShowId = getActualShowId(showId);
-    
-    // For recurring instances, filter by instance ID
-    if (showId !== actualShowId) {
-      const assignments = await storage.getCrewAssignmentsByShowInstance(actualShowId, showId);
-      res.json(assignments);
-    } else {
-      const assignments = await storage.getCrewAssignmentsByShow(actualShowId);
-      res.json(assignments);
-    }
+    const assignments = await storage.getCrewAssignmentsByShow(req.params.showId);
+    res.json(assignments);
   });
 
   app.get("/api/crew-members/:crewMemberId/assignments", async (req, res) => {
@@ -957,27 +666,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid crew assignment data", errors: validation.error.errors });
       }
       
-      // Extract show ID and instance ID for recurring shows
+      // Check for crew conflicts
       const { showId, crewMemberId } = validation.data;
-      const actualShowId = getActualShowId(showId);
-      const instanceId = showId !== actualShowId ? showId : null;
-      
-      const hasConflict = await storage.detectCrewConflicts(actualShowId, crewMemberId);
+      const hasConflict = await storage.detectCrewConflicts(showId, crewMemberId);
       
       if (hasConflict) {
-        console.log("Crew conflict detected for:", { showId: actualShowId, crewMemberId });
+        console.log("Crew conflict detected for:", { showId, crewMemberId });
         return res.status(409).json({ message: "Crew member has scheduling conflict" });
       }
       
-      // Include instanceId for recurring shows
-      const assignmentData = {
-        ...validation.data,
-        showId: actualShowId,
-        instanceId
-      };
-      
-      console.log("About to create assignment with validated data:", assignmentData);
-      const assignment = await storage.createCrewAssignment(assignmentData);
+      console.log("About to create assignment with validated data:", validation.data);
+      const assignment = await storage.createCrewAssignment(validation.data);
       console.log("Assignment created successfully:", assignment);
       res.status(201).json(assignment);
     } catch (error) {
@@ -1012,10 +711,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Assignments must be an array" });
       }
 
-      // Extract actual show ID and instance ID for recurring shows
-      const actualShowId = getActualShowId(showId);
-      const instanceId = showId !== actualShowId ? showId : null;
-
       // Validate each assignment
       for (const assignment of assignments) {
         const validation = insertCrewAssignmentSchema.omit({ showId: true }).safeParse(assignment);
@@ -1024,12 +719,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Replace all assignments for this show instance
-      await storage.replaceCrewAssignmentsForInstance(actualShowId, instanceId, assignments.map(a => ({ 
-        ...a, 
-        showId: actualShowId,
-        instanceId 
-      })));
+      // Replace all assignments for this show
+      await storage.replaceCrewAssignments(showId, assignments.map(a => ({ ...a, showId })));
       
       res.json({ message: "Crew assignments updated successfully" });
     } catch (error) {
