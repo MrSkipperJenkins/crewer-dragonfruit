@@ -12,6 +12,7 @@ import ShowsListView from "@/pages/shows/list-view";
 import ShowBuilder from "@/pages/shows/show-builder";
 import EditShow from "@/pages/shows/edit";
 import ShowTemplates from "@/pages/shows/templates";
+import Landing from "@/pages/landing";
 import CrewMembers from "@/pages/crew-members";
 import CrewSchedule from "@/pages/crew-schedule";
 import Jobs from "@/pages/jobs";
@@ -26,6 +27,7 @@ function Router() {
   return (
     <Switch>
       {/* Standalone routes (outside workspace layout) */}
+      <Route path="/landing" component={Landing} />
       <Route path="/workspaces/new" component={NewWorkspacePage} />
       
       {/* Workspace-aware routes */}

@@ -261,6 +261,19 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   read: true,
 });
 
+// Early Access Signups
+export const earlyAccessSignups = pgTable("early_access_signups", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull().unique(),
+  signedUpAt: timestamp("signed_up_at", { withTimezone: true }).defaultNow().notNull(),
+  status: text("status").notNull().default("pending"), // pending, contacted, converted
+});
+
+export const insertEarlyAccessSignupSchema = createInsertSchema(earlyAccessSignups).omit({
+  id: true,
+  signedUpAt: true,
+});
+
 // Type exports
 export type Workspace = typeof workspaces.$inferSelect;
 export type InsertWorkspace = z.infer<typeof insertWorkspaceSchema>;
@@ -306,6 +319,9 @@ export type InsertCrewTimeOff = z.infer<typeof insertCrewTimeOffSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type EarlyAccessSignup = typeof earlyAccessSignups.$inferSelect;
+export type InsertEarlyAccessSignup = z.infer<typeof insertEarlyAccessSignupSchema>;
 
 // Relations
 export const workspaceRelations = relations(workspaces, ({ many }) => ({

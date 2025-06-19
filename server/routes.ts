@@ -18,7 +18,8 @@ import {
   insertCrewAssignmentSchema,
   insertCrewScheduleSchema,
   insertCrewTimeOffSchema,
-  insertNotificationSchema
+  insertNotificationSchema,
+  insertEarlyAccessSignupSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -858,6 +859,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Notification not found" });
     }
     res.json(notification);
+  });
+
+  // Early Access Signups
+  app.post("/api/early-access", async (req, res) => {
+    try {
+      const validation = insertEarlyAccessSignupSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid email address", errors: validation.error.errors });
+      }
+      
+      const signup = await storage.createEarlyAccessSignup(validation.data);
+      res.status(201).json({ message: "Successfully signed up for early access", signup });
+    } catch (error: any) {
+      if (error.message?.includes('unique')) {
+        return res.status(409).json({ message: "Email already registered for early access" });
+      }
+      res.status(500).json({ message: "Failed to sign up for early access" });
+    }
+  });
+
+  app.get("/api/early-access", async (req, res) => {
+    const signups = await storage.getEarlyAccessSignups();
+    res.json(signups);
   });
 
   // For testing connection
