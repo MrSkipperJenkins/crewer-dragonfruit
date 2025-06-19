@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import * as RRule from 'rrule';
+// Simple recurrence implementation without rrule library
+// We'll implement basic recurring patterns using date math
 import { 
   insertWorkspaceSchema,
   workspaceInviteSchema,
@@ -450,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Parse RRULE string or create from simple patterns
           if (master.recurringPattern.startsWith('RRULE:')) {
-            rule = RRule.RRule.fromString(master.recurringPattern);
+            rule = RRule.rrulestr(master.recurringPattern);
           } else {
             // Handle simple patterns like 'daily', 'weekly', 'monthly'
             const baseOptions = {
