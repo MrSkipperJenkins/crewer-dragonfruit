@@ -172,15 +172,25 @@ export function FullCalendarView() {
   // Query all show-specific data for the shows we have
   const showIds = (shows as any[]).map((show: any) => show.id);
   
-  // Use shared staffing hook
-  const { getCrewStaffingStatus, crewAssignmentQueries, requiredJobQueries } = useShowStaffing(showIds);
+  // Helper function to get actual show ID (parent ID for virtual recurring events)
+  const getActualShowId = (showId: string): string => {
+    return showId.includes('-') && showId.split('-').length > 5 
+      ? showId.split('-').slice(0, -1).join('-') 
+      : showId;
+  };
+  
+  // Get unique actual show IDs for data fetching
+  const actualShowIds = Array.from(new Set(showIds.map(getActualShowId)));
+  
+  // Use shared staffing hook with actual show IDs
+  const { getCrewStaffingStatus, crewAssignmentQueries, requiredJobQueries } = useShowStaffing(actualShowIds);
   
   // Query show resources for all shows
   const showResourceQueries = useQuery({
-    queryKey: [`/api/show-resources-batch`, showIds],
+    queryKey: [`/api/show-resources-batch`, actualShowIds],
     queryFn: async () => {
       const results: Record<string, any[]> = {};
-      for (const showId of showIds) {
+      for (const showId of actualShowIds) {
         try {
           const response = await fetch(`/api/shows/${showId}/resources`);
           if (response.ok) {
@@ -194,7 +204,7 @@ export function FullCalendarView() {
       }
       return results;
     },
-    enabled: showIds.length > 0,
+    enabled: actualShowIds.length > 0,
   });
 
   // Function to get show resources using show-specific data
