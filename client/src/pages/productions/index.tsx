@@ -84,10 +84,7 @@ export default function ProductionsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertProduction) => {
-      return await apiRequest(`/api/workspaces/${currentWorkspace?.id}/productions`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", `/api/workspaces/${currentWorkspace?.id}/productions`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "productions"] });
@@ -102,10 +99,7 @@ export default function ProductionsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InsertProduction> }) => {
-      return await apiRequest(`/api/productions/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("PUT", `/api/productions/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "productions"] });
@@ -120,7 +114,7 @@ export default function ProductionsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/productions/${id}`, { method: "DELETE" });
+      return await apiRequest("DELETE", `/api/productions/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "productions"] });

@@ -76,12 +76,9 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
 
   const addJobMutation = useMutation({
     mutationFn: async (data: { jobId: string; quantity: number; notes: string }) => {
-      return await apiRequest(`/api/show-templates/${template.id}/required-jobs`, {
-        method: "POST",
-        body: JSON.stringify({
-          ...data,
-          workspaceId: currentWorkspace?.id,
-        }),
+      return await apiRequest("POST", `/api/show-templates/${template.id}/required-jobs`, {
+        ...data,
+        workspaceId: currentWorkspace?.id,
       });
     },
     onSuccess: () => {
@@ -98,7 +95,7 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
 
   const removeJobMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/template-required-jobs/${id}`, { method: "DELETE" });
+      return await apiRequest("DELETE", `/api/template-required-jobs/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/show-templates", template.id, "required-jobs"] });
@@ -111,12 +108,9 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
 
   const addResourceMutation = useMutation({
     mutationFn: async (data: { resourceId: string; quantity: number; notes: string }) => {
-      return await apiRequest(`/api/show-templates/${template.id}/resources`, {
-        method: "POST",
-        body: JSON.stringify({
-          ...data,
-          workspaceId: currentWorkspace?.id,
-        }),
+      return await apiRequest("POST", `/api/show-templates/${template.id}/resources`, {
+        ...data,
+        workspaceId: currentWorkspace?.id,
       });
     },
     onSuccess: () => {
@@ -133,7 +127,7 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
 
   const removeResourceMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/template-resources/${id}`, { method: "DELETE" });
+      return await apiRequest("DELETE", `/api/template-resources/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/show-templates", template.id, "resources"] });

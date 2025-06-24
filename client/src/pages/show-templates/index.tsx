@@ -152,10 +152,7 @@ export default function ShowTemplatesPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertShowTemplate) => {
-      return await apiRequest(`/api/workspaces/${currentWorkspace?.id}/show-templates`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", `/api/workspaces/${currentWorkspace?.id}/show-templates`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"] });
@@ -170,10 +167,7 @@ export default function ShowTemplatesPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InsertShowTemplate> }) => {
-      return await apiRequest(`/api/show-templates/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("PUT", `/api/show-templates/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"] });
@@ -188,7 +182,7 @@ export default function ShowTemplatesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/show-templates/${id}`, { method: "DELETE" });
+      return await apiRequest("DELETE", `/api/show-templates/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"] });
@@ -210,10 +204,7 @@ export default function ShowTemplatesPage() {
         notes: template.notes,
         color: template.color
       };
-      return await apiRequest(`/api/workspaces/${currentWorkspace?.id}/show-templates`, {
-        method: "POST",
-        body: JSON.stringify(duplicateData),
-      });
+      return await apiRequest("POST", `/api/workspaces/${currentWorkspace?.id}/show-templates`, duplicateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"] });

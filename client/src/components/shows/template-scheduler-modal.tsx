@@ -49,10 +49,7 @@ export function TemplateSchedulerModal({ template, isOpen, onClose }: TemplateSc
 
   const createEventMutation = useMutation({
     mutationFn: async (data: InsertScheduledEvent) => {
-      return await apiRequest(`/api/workspaces/${currentWorkspace?.id}/scheduled-events`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", `/api/workspaces/${currentWorkspace?.id}/scheduled-events`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "scheduled-events"] });
