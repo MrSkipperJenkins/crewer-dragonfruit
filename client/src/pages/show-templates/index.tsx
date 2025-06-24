@@ -106,7 +106,7 @@ interface TemplateFormData {
 }
 
 const recurringPatterns = [
-  { value: "", label: "No Recurring Pattern" },
+  { value: "none", label: "No Recurring Pattern" },
   { value: "FREQ=DAILY", label: "Daily" },
   { value: "FREQ=WEEKLY", label: "Weekly" },
   { value: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", label: "Weekdays" },
@@ -230,7 +230,7 @@ export default function ShowTemplatesPage() {
       name: "",
       description: "",
       duration: 60,
-      recurringPattern: "",
+      recurringPattern: "none",
       notes: "",
       color: ""
     });
@@ -239,10 +239,16 @@ export default function ShowTemplatesPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Convert "none" back to empty string for storage
+    const submitData = {
+      ...formData,
+      recurringPattern: formData.recurringPattern === "none" ? "" : formData.recurringPattern
+    };
+    
     if (editingTemplate) {
-      updateMutation.mutate({ id: editingTemplate.id, data: formData });
+      updateMutation.mutate({ id: editingTemplate.id, data: submitData });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(submitData);
     }
   };
 
@@ -253,7 +259,7 @@ export default function ShowTemplatesPage() {
       name: template.name,
       description: template.description || "",
       duration: template.duration,
-      recurringPattern: template.recurringPattern || "",
+      recurringPattern: template.recurringPattern || "none",
       notes: template.notes || "",
       color: template.color || ""
     });
@@ -285,6 +291,7 @@ export default function ShowTemplatesPage() {
   };
 
   const formatRecurringPattern = (pattern: string) => {
+    if (!pattern) return "No Recurring Pattern";
     const found = recurringPatterns.find(p => p.value === pattern);
     return found?.label || "Custom Pattern";
   };
@@ -559,12 +566,10 @@ export default function ShowTemplatesPage() {
                       <span>{formatDuration(template.duration)}</span>
                     </div>
                     
-                    {template.recurringPattern && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-slate-500" />
-                        <span>{formatRecurringPattern(template.recurringPattern)}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-slate-500" />
+                      <span>{formatRecurringPattern(template.recurringPattern)}</span>
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-2 pt-2">
                       <div className="text-center">
