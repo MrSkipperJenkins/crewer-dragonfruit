@@ -64,6 +64,8 @@ function Router() {
               <Route path="/workspaces/:slug/shows/list" component={ShowsListView} />
               <Route path="/workspaces/:slug/shows/:id/edit" component={EditShow} />
               <Route path="/workspaces/:slug/shows/builder" component={ShowBuilder} />
+              <Route path="/workspaces/:slug/shows/templates" component={ShowTemplates} />
+              <Route path="/workspaces/:slug/templates" component={ShowTemplatesNew} />
               <Route path="/workspaces/:slug/crew-members" component={CrewMembers} />
               <Route path="/workspaces/:slug/crew-schedule" component={CrewSchedule} />
               <Route path="/workspaces/:slug/jobs" component={Jobs} />

@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { TemplateRequirementsModal } from "@/components/shows/template-requirements-modal";
+import { TemplateSchedulerModal } from "@/components/shows/template-scheduler-modal";
 import { useLocation } from "wouter";
 import type { ShowTemplate, InsertShowTemplate, Production } from "@/shared/schema";
 
@@ -65,6 +66,30 @@ function TemplateRequirementsButton({ template }: { template: ShowTemplate }) {
         template={template}
         isOpen={isRequirementsOpen}
         onClose={() => setIsRequirementsOpen(false)}
+      />
+    </>
+  );
+}
+
+function TemplateScheduleButton({ template }: { template: ShowTemplate }) {
+  const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
+
+  return (
+    <>
+      <Button 
+        size="sm" 
+        variant="outline" 
+        className="flex-1"
+        onClick={() => setIsSchedulerOpen(true)}
+      >
+        <Play className="h-3 w-3 mr-1" />
+        Schedule
+      </Button>
+      
+      <TemplateSchedulerModal
+        template={template}
+        isOpen={isSchedulerOpen}
+        onClose={() => setIsSchedulerOpen(false)}
       />
     </>
   );
@@ -201,7 +226,7 @@ export default function ShowTemplatesPage() {
 
   const resetForm = () => {
     setFormData({
-      productionId: "",
+      productionId: productionFilter || "",
       name: "",
       description: "",
       duration: 60,
@@ -558,10 +583,7 @@ export default function ShowTemplatesPage() {
                     
                     <div className="flex gap-2 pt-2">
                       <TemplateRequirementsButton template={template} />
-                      <Button size="sm" variant="outline" className="flex-1">
-                        <Play className="h-3 w-3 mr-1" />
-                        Schedule
-                      </Button>
+                      <TemplateScheduleButton template={template} />
                     </div>
                   </div>
                 </CardContent>

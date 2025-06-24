@@ -578,6 +578,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/template-required-jobs/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteTemplateRequiredJob(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting template required job:", error);
+      res.status(500).json({ error: "Failed to delete template required job" });
+    }
+  });
+
   app.get("/api/show-templates/:templateId/resources", async (req, res) => {
     try {
       const { templateId } = req.params;
@@ -598,6 +609,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating template resource:", error);
       res.status(500).json({ error: "Failed to create template resource" });
+    }
+  });
+
+  app.delete("/api/template-resources/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteTemplateResource(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting template resource:", error);
+      res.status(500).json({ error: "Failed to delete template resource" });
     }
   });
 
