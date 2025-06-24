@@ -110,6 +110,12 @@ npm run start  # Runs production server
 ### June 24, 2025 - Major Architecture Overhaul
 1. **Landing Page & Onboarding**: Created comprehensive landing page with early access signup and 4-step onboarding flow
 2. **3-Tier Scheduling Architecture**: Implemented new Productions → Show Templates → Scheduled Events structure
+   - **Database Schema**: Added productions, showTemplates, scheduledEvents tables with supporting tables
+   - **Migration System**: Auto-migration from legacy shows to new 3-tier structure
+   - **API Layer**: Complete REST API for all new entities with CRUD operations
+   - **Backward Compatibility**: Legacy shows API maintained during transition period
+   - **Template Requirements**: Job and resource requirements at template level
+   - **Event Assignments**: Concrete crew and resource assignments at event level
    - Separated abstract show concepts from concrete calendar instances
    - Added powerful recurring pattern support
    - Enabled flexible one-off event creation

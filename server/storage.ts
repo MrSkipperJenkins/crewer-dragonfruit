@@ -31,7 +31,22 @@ import type {
   Notification,
   InsertNotification,
   EarlyAccessSignup,
-  InsertEarlyAccessSignup
+  InsertEarlyAccessSignup,
+  // New 3-tier architecture types
+  Production,
+  InsertProduction,
+  ShowTemplate,
+  InsertShowTemplate,
+  ScheduledEvent,
+  InsertScheduledEvent,
+  TemplateRequiredJob,
+  InsertTemplateRequiredJob,
+  TemplateResource,
+  InsertTemplateResource,
+  EventCrewAssignment,
+  InsertEventCrewAssignment,
+  EventResourceAssignment,
+  InsertEventResourceAssignment
 } from "@shared/schema";
 import {
   workspaces,
@@ -50,7 +65,16 @@ import {
   crewTimeOff,
   notifications,
   earlyAccessSignups,
+  // New 3-tier architecture tables
+  productions,
+  showTemplates,
+  scheduledEvents,
+  templateRequiredJobs,
+  templateResources,
+  eventCrewAssignments,
+  eventResourceAssignments
 } from "@shared/schema";
+import { migration } from "./migration";
 import { db } from "./db";
 import { eq, and, gte, lte, like, isNotNull, desc, sql } from "drizzle-orm";
 
