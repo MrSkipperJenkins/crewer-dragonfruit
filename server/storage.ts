@@ -867,6 +867,136 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Show CRUD
+  // Productions (New 3-tier architecture)
+  async getProductions(workspaceId: string): Promise<Production[]> {
+    await migration.autoMigrateIfNeeded(workspaceId);
+    return await db.select().from(productions).where(eq(productions.workspaceId, workspaceId));
+  }
+
+  async createProduction(production: InsertProduction): Promise<Production> {
+    const [newProduction] = await db.insert(productions).values(production).returning();
+    return newProduction;
+  }
+
+  async updateProduction(id: string, production: Partial<InsertProduction>): Promise<Production> {
+    const [updatedProduction] = await db.update(productions).set(production).where(eq(productions.id, id)).returning();
+    return updatedProduction;
+  }
+
+  async deleteProduction(id: string): Promise<void> {
+    await db.delete(productions).where(eq(productions.id, id));
+  }
+
+  // Show Templates
+  async getShowTemplates(workspaceId: string): Promise<ShowTemplate[]> {
+    await migration.autoMigrateIfNeeded(workspaceId);
+    return await db.select().from(showTemplates).where(eq(showTemplates.workspaceId, workspaceId));
+  }
+
+  async getShowTemplatesByProduction(productionId: string): Promise<ShowTemplate[]> {
+    return await db.select().from(showTemplates).where(eq(showTemplates.productionId, productionId));
+  }
+
+  async createShowTemplate(template: InsertShowTemplate): Promise<ShowTemplate> {
+    const [newTemplate] = await db.insert(showTemplates).values(template).returning();
+    return newTemplate;
+  }
+
+  async updateShowTemplate(id: string, template: Partial<InsertShowTemplate>): Promise<ShowTemplate> {
+    const [updatedTemplate] = await db.update(showTemplates).set(template).where(eq(showTemplates.id, id)).returning();
+    return updatedTemplate;
+  }
+
+  async deleteShowTemplate(id: string): Promise<void> {
+    await db.delete(showTemplates).where(eq(showTemplates.id, id));
+  }
+
+  // Scheduled Events
+  async getScheduledEvents(workspaceId: string): Promise<ScheduledEvent[]> {
+    await migration.autoMigrateIfNeeded(workspaceId);
+    return await db.select().from(scheduledEvents).where(eq(scheduledEvents.workspaceId, workspaceId));
+  }
+
+  async getScheduledEventsByTemplate(templateId: string): Promise<ScheduledEvent[]> {
+    return await db.select().from(scheduledEvents).where(eq(scheduledEvents.templateId, templateId));
+  }
+
+  async createScheduledEvent(event: InsertScheduledEvent): Promise<ScheduledEvent> {
+    const [newEvent] = await db.insert(scheduledEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async updateScheduledEvent(id: string, event: Partial<InsertScheduledEvent>): Promise<ScheduledEvent> {
+    const [updatedEvent] = await db.update(scheduledEvents).set(event).where(eq(scheduledEvents.id, id)).returning();
+    return updatedEvent;
+  }
+
+  async deleteScheduledEvent(id: string): Promise<void> {
+    await db.delete(scheduledEvents).where(eq(scheduledEvents.id, id));
+  }
+
+  // Template Required Jobs
+  async getTemplateRequiredJobs(templateId: string): Promise<TemplateRequiredJob[]> {
+    return await db.select().from(templateRequiredJobs).where(eq(templateRequiredJobs.templateId, templateId));
+  }
+
+  async createTemplateRequiredJob(requiredJob: InsertTemplateRequiredJob): Promise<TemplateRequiredJob> {
+    const [newRequiredJob] = await db.insert(templateRequiredJobs).values(requiredJob).returning();
+    return newRequiredJob;
+  }
+
+  async deleteTemplateRequiredJob(id: string): Promise<void> {
+    await db.delete(templateRequiredJobs).where(eq(templateRequiredJobs.id, id));
+  }
+
+  // Template Resources
+  async getTemplateResources(templateId: string): Promise<TemplateResource[]> {
+    return await db.select().from(templateResources).where(eq(templateResources.templateId, templateId));
+  }
+
+  async createTemplateResource(resource: InsertTemplateResource): Promise<TemplateResource> {
+    const [newResource] = await db.insert(templateResources).values(resource).returning();
+    return newResource;
+  }
+
+  async deleteTemplateResource(id: string): Promise<void> {
+    await db.delete(templateResources).where(eq(templateResources.id, id));
+  }
+
+  // Event Crew Assignments
+  async getEventCrewAssignments(eventId: string): Promise<EventCrewAssignment[]> {
+    return await db.select().from(eventCrewAssignments).where(eq(eventCrewAssignments.eventId, eventId));
+  }
+
+  async createEventCrewAssignment(assignment: InsertEventCrewAssignment): Promise<EventCrewAssignment> {
+    const [newAssignment] = await db.insert(eventCrewAssignments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async updateEventCrewAssignment(id: string, assignment: Partial<InsertEventCrewAssignment>): Promise<EventCrewAssignment> {
+    const [updatedAssignment] = await db.update(eventCrewAssignments).set(assignment).where(eq(eventCrewAssignments.id, id)).returning();
+    return updatedAssignment;
+  }
+
+  async deleteEventCrewAssignment(id: string): Promise<void> {
+    await db.delete(eventCrewAssignments).where(eq(eventCrewAssignments.id, id));
+  }
+
+  // Event Resource Assignments
+  async getEventResourceAssignments(eventId: string): Promise<EventResourceAssignment[]> {
+    return await db.select().from(eventResourceAssignments).where(eq(eventResourceAssignments.eventId, eventId));
+  }
+
+  async createEventResourceAssignment(assignment: InsertEventResourceAssignment): Promise<EventResourceAssignment> {
+    const [newAssignment] = await db.insert(eventResourceAssignments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async deleteEventResourceAssignment(id: string): Promise<void> {
+    await db.delete(eventResourceAssignments).where(eq(eventResourceAssignments.id, id));
+  }
+
+  // Legacy Shows (maintained for backward compatibility)
   async getShows(workspaceId: string): Promise<Show[]> {
     return await db.select().from(shows).where(eq(shows.workspaceId, workspaceId));
   }

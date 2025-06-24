@@ -394,7 +394,261 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Shows
+  // Productions (New 3-tier architecture)
+  app.get("/api/workspaces/:workspaceId/productions", async (req, res) => {
+    try {
+      const { workspaceId } = req.params;
+      const productions = await storage.getProductions(workspaceId);
+      res.json(productions);
+    } catch (error) {
+      console.error("Error fetching productions:", error);
+      res.status(500).json({ error: "Failed to fetch productions" });
+    }
+  });
+
+  app.post("/api/workspaces/:workspaceId/productions", async (req, res) => {
+    try {
+      const { workspaceId } = req.params;
+      const productionData = { ...req.body, workspaceId };
+      const production = await storage.createProduction(productionData);
+      res.status(201).json(production);
+    } catch (error) {
+      console.error("Error creating production:", error);
+      res.status(500).json({ error: "Failed to create production" });
+    }
+  });
+
+  app.put("/api/productions/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const production = await storage.updateProduction(id, req.body);
+      res.json(production);
+    } catch (error) {
+      console.error("Error updating production:", error);
+      res.status(500).json({ error: "Failed to update production" });
+    }
+  });
+
+  app.delete("/api/productions/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteProduction(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting production:", error);
+      res.status(500).json({ error: "Failed to delete production" });
+    }
+  });
+
+  // Show Templates
+  app.get("/api/workspaces/:workspaceId/show-templates", async (req, res) => {
+    try {
+      const { workspaceId } = req.params;
+      const templates = await storage.getShowTemplates(workspaceId);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching show templates:", error);
+      res.status(500).json({ error: "Failed to fetch show templates" });
+    }
+  });
+
+  app.get("/api/productions/:productionId/show-templates", async (req, res) => {
+    try {
+      const { productionId } = req.params;
+      const templates = await storage.getShowTemplatesByProduction(productionId);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching production templates:", error);
+      res.status(500).json({ error: "Failed to fetch production templates" });
+    }
+  });
+
+  app.post("/api/workspaces/:workspaceId/show-templates", async (req, res) => {
+    try {
+      const { workspaceId } = req.params;
+      const templateData = { ...req.body, workspaceId };
+      const template = await storage.createShowTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Error creating show template:", error);
+      res.status(500).json({ error: "Failed to create show template" });
+    }
+  });
+
+  app.put("/api/show-templates/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const template = await storage.updateShowTemplate(id, req.body);
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating show template:", error);
+      res.status(500).json({ error: "Failed to update show template" });
+    }
+  });
+
+  app.delete("/api/show-templates/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteShowTemplate(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting show template:", error);
+      res.status(500).json({ error: "Failed to delete show template" });
+    }
+  });
+
+  // Scheduled Events
+  app.get("/api/workspaces/:workspaceId/scheduled-events", async (req, res) => {
+    try {
+      const { workspaceId } = req.params;
+      const events = await storage.getScheduledEvents(workspaceId);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching scheduled events:", error);
+      res.status(500).json({ error: "Failed to fetch scheduled events" });
+    }
+  });
+
+  app.get("/api/show-templates/:templateId/scheduled-events", async (req, res) => {
+    try {
+      const { templateId } = req.params;
+      const events = await storage.getScheduledEventsByTemplate(templateId);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching template events:", error);
+      res.status(500).json({ error: "Failed to fetch template events" });
+    }
+  });
+
+  app.post("/api/workspaces/:workspaceId/scheduled-events", async (req, res) => {
+    try {
+      const { workspaceId } = req.params;
+      const eventData = { ...req.body, workspaceId };
+      const event = await storage.createScheduledEvent(eventData);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating scheduled event:", error);
+      res.status(500).json({ error: "Failed to create scheduled event" });
+    }
+  });
+
+  app.put("/api/scheduled-events/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const event = await storage.updateScheduledEvent(id, req.body);
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating scheduled event:", error);
+      res.status(500).json({ error: "Failed to update scheduled event" });
+    }
+  });
+
+  app.delete("/api/scheduled-events/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteScheduledEvent(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting scheduled event:", error);
+      res.status(500).json({ error: "Failed to delete scheduled event" });
+    }
+  });
+
+  // Template Requirements
+  app.get("/api/show-templates/:templateId/required-jobs", async (req, res) => {
+    try {
+      const { templateId } = req.params;
+      const requiredJobs = await storage.getTemplateRequiredJobs(templateId);
+      res.json(requiredJobs);
+    } catch (error) {
+      console.error("Error fetching template required jobs:", error);
+      res.status(500).json({ error: "Failed to fetch template required jobs" });
+    }
+  });
+
+  app.post("/api/show-templates/:templateId/required-jobs", async (req, res) => {
+    try {
+      const { templateId } = req.params;
+      const requiredJobData = { ...req.body, templateId };
+      const requiredJob = await storage.createTemplateRequiredJob(requiredJobData);
+      res.status(201).json(requiredJob);
+    } catch (error) {
+      console.error("Error creating template required job:", error);
+      res.status(500).json({ error: "Failed to create template required job" });
+    }
+  });
+
+  app.get("/api/show-templates/:templateId/resources", async (req, res) => {
+    try {
+      const { templateId } = req.params;
+      const resources = await storage.getTemplateResources(templateId);
+      res.json(resources);
+    } catch (error) {
+      console.error("Error fetching template resources:", error);
+      res.status(500).json({ error: "Failed to fetch template resources" });
+    }
+  });
+
+  app.post("/api/show-templates/:templateId/resources", async (req, res) => {
+    try {
+      const { templateId } = req.params;
+      const resourceData = { ...req.body, templateId };
+      const resource = await storage.createTemplateResource(resourceData);
+      res.status(201).json(resource);
+    } catch (error) {
+      console.error("Error creating template resource:", error);
+      res.status(500).json({ error: "Failed to create template resource" });
+    }
+  });
+
+  // Event Assignments
+  app.get("/api/scheduled-events/:eventId/crew-assignments", async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const assignments = await storage.getEventCrewAssignments(eventId);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching event crew assignments:", error);
+      res.status(500).json({ error: "Failed to fetch event crew assignments" });
+    }
+  });
+
+  app.post("/api/scheduled-events/:eventId/crew-assignments", async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const assignmentData = { ...req.body, eventId };
+      const assignment = await storage.createEventCrewAssignment(assignmentData);
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Error creating event crew assignment:", error);
+      res.status(500).json({ error: "Failed to create event crew assignment" });
+    }
+  });
+
+  app.get("/api/scheduled-events/:eventId/resource-assignments", async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const assignments = await storage.getEventResourceAssignments(eventId);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching event resource assignments:", error);
+      res.status(500).json({ error: "Failed to fetch event resource assignments" });
+    }
+  });
+
+  app.post("/api/scheduled-events/:eventId/resource-assignments", async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const assignmentData = { ...req.body, eventId };
+      const assignment = await storage.createEventResourceAssignment(assignmentData);
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Error creating event resource assignment:", error);
+      res.status(500).json({ error: "Failed to create event resource assignment" });
+    }
+  });
+
+  // Legacy Shows (maintained for backward compatibility)
   app.get("/api/workspaces/:workspaceId/shows", async (req, res) => {
     const { start, end } = req.query;
     

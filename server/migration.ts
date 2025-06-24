@@ -11,7 +11,7 @@ import {
   requiredJobs,
   showResources,
   crewAssignments
-} from "@/shared/schema";
+} from "../shared/schema";
 import { eq } from "drizzle-orm";
 
 /**

@@ -12,6 +12,7 @@ import ShowsListView from "@/pages/shows/list-view";
 import ShowBuilder from "@/pages/shows/show-builder";
 import EditShow from "@/pages/shows/edit";
 import ShowTemplates from "@/pages/shows/templates";
+import Productions from "@/pages/productions";
 import Landing from "@/pages/landing";
 import Onboarding from "@/pages/onboarding";
 import CrewMembers from "@/pages/crew-members";
@@ -56,6 +57,7 @@ function Router() {
               {/* Workspace-specific routes */}
               <Route path="/workspaces/:slug" component={Dashboard} />
               <Route path="/workspaces/:slug/dashboard" component={Dashboard} />
+              <Route path="/workspaces/:slug/productions" component={Productions} />
               <Route path="/workspaces/:slug/shows" component={Shows} />
               <Route path="/workspaces/:slug/shows/calendar" component={ShowsCalendarView} />
               <Route path="/workspaces/:slug/shows/list" component={ShowsListView} />
