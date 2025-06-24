@@ -327,7 +327,11 @@ export default function Landing() {
                     Email support
                   </li>
                 </ul>
-                <Button className="w-full mt-6" variant="outline">
+                <Button 
+                  className="w-full mt-6" 
+                  variant="outline"
+                  onClick={() => window.location.href = '/onboarding'}
+                >
                   Get Started
                 </Button>
               </CardContent>
@@ -369,7 +373,10 @@ export default function Landing() {
                     API access
                   </li>
                 </ul>
-                <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => window.location.href = '/onboarding'}
+                >
                   Get Started
                 </Button>
               </CardContent>
