@@ -33,7 +33,21 @@ import {
   Clock
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 import type { Production, InsertProduction } from "@/shared/schema";
+
+function ProductionTemplatesButton({ productionId }: { productionId: string }) {
+  const { currentWorkspace } = useCurrentWorkspace();
+  
+  return (
+    <Link href={`/workspaces/${currentWorkspace?.slug}/templates?production=${productionId}`}>
+      <Button size="sm" variant="outline" className="flex-1">
+        <Cog className="h-3 w-3 mr-1" />
+        Templates
+      </Button>
+    </Link>
+  );
+}
 
 interface ProductionFormData {
   name: string;
@@ -370,10 +384,7 @@ export default function ProductionsPage() {
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Cog className="h-3 w-3 mr-1" />
-                      Templates
-                    </Button>
+                    <ProductionTemplatesButton productionId={production.id} />
                     <Button size="sm" variant="outline" className="flex-1">
                       <Calendar className="h-3 w-3 mr-1" />
                       Schedule

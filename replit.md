@@ -116,6 +116,10 @@ npm run start  # Runs production server
    - **Backward Compatibility**: Legacy shows API maintained during transition period
    - **Template Requirements**: Job and resource requirements at template level
    - **Event Assignments**: Concrete crew and resource assignments at event level
+   - **Template Management**: Complete template creation, editing, and requirements management
+   - **Template Requirements**: Job and resource requirements with quantity management
+   - **Production Integration**: Templates linked to productions with filtering and navigation
+   - **Template Actions**: Duplicate, edit, delete with comprehensive statistics
    - Separated abstract show concepts from concrete calendar instances
    - Added powerful recurring pattern support
    - Enabled flexible one-off event creation

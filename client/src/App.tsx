@@ -13,6 +13,7 @@ import ShowBuilder from "@/pages/shows/show-builder";
 import EditShow from "@/pages/shows/edit";
 import ShowTemplates from "@/pages/shows/templates";
 import Productions from "@/pages/productions";
+import ShowTemplatesNew from "@/pages/show-templates";
 import Landing from "@/pages/landing";
 import Onboarding from "@/pages/onboarding";
 import CrewMembers from "@/pages/crew-members";

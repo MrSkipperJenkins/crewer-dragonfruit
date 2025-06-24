@@ -39,6 +39,12 @@ const navigationItems = [
     ]
   },
   {
+    title: "Templates",
+    href: "/templates",
+    icon: Layers,
+    badge: "New"
+  },
+  {
     title: "Crew Schedule",
     href: "/crew-schedule",
     icon: Clock,
