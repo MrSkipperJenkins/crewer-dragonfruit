@@ -10,7 +10,7 @@ type LayoutProps = {
 export function Layout({ children }: LayoutProps) {
   const isMobile = useMobile();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  
+
   // Close sidebar when switching from mobile to desktop view
   useEffect(() => {
     if (!isMobile && isMobileOpen) {
@@ -21,10 +21,10 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopNavBar setIsMobileOpen={setIsMobileOpen} />
-        
+
         <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6">
           {children}
         </main>

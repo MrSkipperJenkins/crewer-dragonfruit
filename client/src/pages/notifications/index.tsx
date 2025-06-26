@@ -3,7 +3,14 @@ import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, AlertTriangle, Calendar, Clock, Bell, Info } from "lucide-react";
+import {
+  Check,
+  AlertTriangle,
+  Calendar,
+  Clock,
+  Bell,
+  Info,
+} from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +22,11 @@ export default function Notifications() {
   // Hardcoded user ID for demo purposes - in a real app this would come from auth
   const userId = "38ccfc25-287d-4ac1-b832-5a5f3a1b1575";
 
-  const { data: notifications = [], isLoading, isError } = useQuery({
+  const {
+    data: notifications = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: [`/api/users/${userId}/notifications`],
     enabled: !!userId,
   });
@@ -23,9 +34,11 @@ export default function Notifications() {
   const markAsRead = async (notificationId: string) => {
     try {
       await apiRequest(`/api/notifications/${notificationId}/read`, "PUT");
-      
+
       // Invalidate the query to refresh the notifications list
-      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/notifications`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/users/${userId}/notifications`],
+      });
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
     }
@@ -90,10 +103,13 @@ export default function Notifications() {
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2 text-red-600">
               <AlertTriangle />
-              <h2 className="text-lg font-semibold">Error loading notifications</h2>
+              <h2 className="text-lg font-semibold">
+                Error loading notifications
+              </h2>
             </div>
             <p className="mt-2 text-gray-600">
-              There was a problem loading your notifications. Please try again later.
+              There was a problem loading your notifications. Please try again
+              later.
             </p>
           </CardContent>
         </Card>
@@ -117,36 +133,49 @@ export default function Notifications() {
             <Bell className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium">No notifications</h3>
             <p className="text-sm text-gray-500 mt-2">
-              You're all caught up! You'll see notifications here when there are updates.
+              You're all caught up! You'll see notifications here when there are
+              updates.
             </p>
           </CardContent>
         </Card>
       ) : (
         notifications.map((notification: any) => (
-          <Card key={notification.id} className={notification.read ? "opacity-75" : ""}>
+          <Card
+            key={notification.id}
+            className={notification.read ? "opacity-75" : ""}
+          >
             <CardContent className="pt-6 pb-4">
               <div className="flex items-start space-x-4">
-                <div className={`rounded-full p-2.5 ${getNotificationColor(notification.type)}`}>
+                <div
+                  className={`rounded-full p-2.5 ${getNotificationColor(notification.type)}`}
+                >
                   {getNotificationIcon(notification.type)}
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex justify-between items-start">
-                    <h3 className="font-medium text-base">{notification.title}</h3>
+                    <h3 className="font-medium text-base">
+                      {notification.title}
+                    </h3>
                     <span className="text-xs text-gray-500">
-                      {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(notification.createdAt), {
+                        addSuffix: true,
+                      })}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600">{notification.message}</p>
+                  <p className="text-sm text-gray-600">
+                    {notification.message}
+                  </p>
                   {notification.relatedEntityType && (
                     <div className="text-xs text-gray-500">
-                      Related to: {notification.relatedEntityType.replace('_', ' ')}
+                      Related to:{" "}
+                      {notification.relatedEntityType.replace("_", " ")}
                     </div>
                   )}
                   {!notification.read && (
                     <div className="pt-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => markAsRead(notification.id)}
                         className="text-xs"
                       >

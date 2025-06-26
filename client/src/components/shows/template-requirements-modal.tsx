@@ -19,21 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Plus,
-  Trash2,
-  Users,
-  Package,
-  Briefcase
-} from "lucide-react";
+import { Plus, Trash2, Users, Package, Briefcase } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { ShowTemplate, Job, Resource } from "@/shared/schema";
 
@@ -43,7 +32,11 @@ interface TemplateRequirementsModalProps {
   onClose: () => void;
 }
 
-export function TemplateRequirementsModal({ template, isOpen, onClose }: TemplateRequirementsModalProps) {
+export function TemplateRequirementsModal({
+  template,
+  isOpen,
+  onClose,
+}: TemplateRequirementsModalProps) {
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -75,14 +68,24 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
   });
 
   const addJobMutation = useMutation({
-    mutationFn: async (data: { jobId: string; quantity: number; notes: string }) => {
-      return await apiRequest("POST", `/api/show-templates/${template.id}/required-jobs`, {
-        ...data,
-        workspaceId: currentWorkspace?.id,
-      });
+    mutationFn: async (data: {
+      jobId: string;
+      quantity: number;
+      notes: string;
+    }) => {
+      return await apiRequest(
+        "POST",
+        `/api/show-templates/${template.id}/required-jobs`,
+        {
+          ...data,
+          workspaceId: currentWorkspace?.id,
+        },
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/show-templates", template.id, "required-jobs"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/show-templates", template.id, "required-jobs"],
+      });
       toast({ title: "Job requirement added" });
       setNewJobId("");
       setNewJobQuantity(1);
@@ -90,7 +93,7 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
     },
     onError: () => {
       toast({ title: "Failed to add job requirement", variant: "destructive" });
-    }
+    },
   });
 
   const removeJobMutation = useMutation({
@@ -98,31 +101,49 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
       return await apiRequest("DELETE", `/api/template-required-jobs/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/show-templates", template.id, "required-jobs"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/show-templates", template.id, "required-jobs"],
+      });
       toast({ title: "Job requirement removed" });
     },
     onError: () => {
-      toast({ title: "Failed to remove job requirement", variant: "destructive" });
-    }
+      toast({
+        title: "Failed to remove job requirement",
+        variant: "destructive",
+      });
+    },
   });
 
   const addResourceMutation = useMutation({
-    mutationFn: async (data: { resourceId: string; quantity: number; notes: string }) => {
-      return await apiRequest("POST", `/api/show-templates/${template.id}/resources`, {
-        ...data,
-        workspaceId: currentWorkspace?.id,
-      });
+    mutationFn: async (data: {
+      resourceId: string;
+      quantity: number;
+      notes: string;
+    }) => {
+      return await apiRequest(
+        "POST",
+        `/api/show-templates/${template.id}/resources`,
+        {
+          ...data,
+          workspaceId: currentWorkspace?.id,
+        },
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/show-templates", template.id, "resources"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/show-templates", template.id, "resources"],
+      });
       toast({ title: "Resource requirement added" });
       setNewResourceId("");
       setNewResourceQuantity(1);
       setNewResourceNotes("");
     },
     onError: () => {
-      toast({ title: "Failed to add resource requirement", variant: "destructive" });
-    }
+      toast({
+        title: "Failed to add resource requirement",
+        variant: "destructive",
+      });
+    },
   });
 
   const removeResourceMutation = useMutation({
@@ -130,12 +151,17 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
       return await apiRequest("DELETE", `/api/template-resources/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/show-templates", template.id, "resources"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/show-templates", template.id, "resources"],
+      });
       toast({ title: "Resource requirement removed" });
     },
     onError: () => {
-      toast({ title: "Failed to remove resource requirement", variant: "destructive" });
-    }
+      toast({
+        title: "Failed to remove resource requirement",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleAddJob = (e: React.FormEvent) => {
@@ -170,12 +196,13 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
     return resource?.name || "Unknown Resource";
   };
 
-  const availableJobs = allJobs.filter((job: Job) => 
-    !templateJobs.some((tj: any) => tj.jobId === job.id)
+  const availableJobs = allJobs.filter(
+    (job: Job) => !templateJobs.some((tj: any) => tj.jobId === job.id),
   );
 
-  const availableResources = allResources.filter((resource: Resource) => 
-    !templateResources.some((tr: any) => tr.resourceId === resource.id)
+  const availableResources = allResources.filter(
+    (resource: Resource) =>
+      !templateResources.some((tr: any) => tr.resourceId === resource.id),
   );
 
   return (
@@ -224,20 +251,22 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div>
                       <Label>Quantity</Label>
                       <Input
                         type="number"
                         value={newJobQuantity}
-                        onChange={(e) => setNewJobQuantity(parseInt(e.target.value) || 1)}
+                        onChange={(e) =>
+                          setNewJobQuantity(parseInt(e.target.value) || 1)
+                        }
                         min="1"
                       />
                     </div>
-                    
+
                     <div className="flex items-end">
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={!newJobId || addJobMutation.isPending}
                         className="w-full"
                       >
@@ -246,7 +275,7 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label>Notes (Optional)</Label>
                     <Textarea
@@ -267,7 +296,9 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                 <Card>
                   <CardContent className="text-center py-8">
                     <Users className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                    <p className="text-slate-600 dark:text-slate-300">No job requirements yet</p>
+                    <p className="text-slate-600 dark:text-slate-300">
+                      No job requirements yet
+                    </p>
                   </CardContent>
                 </Card>
               ) : (
@@ -279,7 +310,9 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                           <div className="flex items-center gap-3">
                             <Users className="h-4 w-4 text-slate-500" />
                             <div>
-                              <p className="font-medium">{getJobName(templateJob.jobId)}</p>
+                              <p className="font-medium">
+                                {getJobName(templateJob.jobId)}
+                              </p>
                               {templateJob.notes && (
                                 <p className="text-sm text-slate-600 dark:text-slate-300">
                                   {templateJob.notes}
@@ -294,7 +327,9 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => removeJobMutation.mutate(templateJob.id)}
+                              onClick={() =>
+                                removeJobMutation.mutate(templateJob.id)
+                              }
                               disabled={removeJobMutation.isPending}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -313,14 +348,19 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
             {/* Add Resource Form */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Add Resource Requirement</CardTitle>
+                <CardTitle className="text-lg">
+                  Add Resource Requirement
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAddResource} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <Label>Resource</Label>
-                      <Select value={newResourceId} onValueChange={setNewResourceId}>
+                      <Select
+                        value={newResourceId}
+                        onValueChange={setNewResourceId}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select resource" />
                         </SelectTrigger>
@@ -333,21 +373,25 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div>
                       <Label>Quantity</Label>
                       <Input
                         type="number"
                         value={newResourceQuantity}
-                        onChange={(e) => setNewResourceQuantity(parseInt(e.target.value) || 1)}
+                        onChange={(e) =>
+                          setNewResourceQuantity(parseInt(e.target.value) || 1)
+                        }
                         min="1"
                       />
                     </div>
-                    
+
                     <div className="flex items-end">
-                      <Button 
-                        type="submit" 
-                        disabled={!newResourceId || addResourceMutation.isPending}
+                      <Button
+                        type="submit"
+                        disabled={
+                          !newResourceId || addResourceMutation.isPending
+                        }
                         className="w-full"
                       >
                         <Plus className="h-4 w-4 mr-2" />
@@ -355,7 +399,7 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label>Notes (Optional)</Label>
                     <Textarea
@@ -371,12 +415,16 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
 
             {/* Current Resource Requirements */}
             <div className="space-y-2">
-              <h3 className="text-lg font-medium">Current Resource Requirements</h3>
+              <h3 className="text-lg font-medium">
+                Current Resource Requirements
+              </h3>
               {templateResources.length === 0 ? (
                 <Card>
                   <CardContent className="text-center py-8">
                     <Package className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                    <p className="text-slate-600 dark:text-slate-300">No resource requirements yet</p>
+                    <p className="text-slate-600 dark:text-slate-300">
+                      No resource requirements yet
+                    </p>
                   </CardContent>
                 </Card>
               ) : (
@@ -388,7 +436,9 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                           <div className="flex items-center gap-3">
                             <Package className="h-4 w-4 text-slate-500" />
                             <div>
-                              <p className="font-medium">{getResourceName(templateResource.resourceId)}</p>
+                              <p className="font-medium">
+                                {getResourceName(templateResource.resourceId)}
+                              </p>
                               {templateResource.notes && (
                                 <p className="text-sm text-slate-600 dark:text-slate-300">
                                   {templateResource.notes}
@@ -403,7 +453,11 @@ export function TemplateRequirementsModal({ template, isOpen, onClose }: Templat
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => removeResourceMutation.mutate(templateResource.id)}
+                              onClick={() =>
+                                removeResourceMutation.mutate(
+                                  templateResource.id,
+                                )
+                              }
                               disabled={removeResourceMutation.isPending}
                             >
                               <Trash2 className="h-4 w-4" />

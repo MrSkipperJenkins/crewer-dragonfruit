@@ -1,24 +1,29 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Users, 
-  Clock, 
-  Briefcase, 
-  Package, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  Clock,
+  Briefcase,
+  Package,
+  BarChart3,
   Plus,
   ChevronRight,
   Settings,
   UserPlus,
-  LogOut
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -42,8 +47,8 @@ const navigationItems = [
     items: [
       { title: "Calendar View", href: "/shows/calendar" },
       { title: "List View", href: "/shows/list" },
-      { title: "Show Builder", href: "/shows/builder" }
-    ]
+      { title: "Show Builder", href: "/shows/builder" },
+    ],
   },
   {
     title: "Crew Schedule",
@@ -69,21 +74,25 @@ const navigationItems = [
     title: "Reports",
     href: "/reports",
     icon: BarChart3,
-    badge: "New"
-  }
+    badge: "New",
+  },
 ];
 
-export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: MobileNavDrawerProps) {
+export function MobileNavDrawer({
+  isOpen,
+  onOpenChange,
+  currentWorkspace,
+}: MobileNavDrawerProps) {
   const [location, setLocation] = useLocation();
-  const [expandedSections, setExpandedSections] = useState<string[]>(['Shows']);
+  const [expandedSections, setExpandedSections] = useState<string[]>(["Shows"]);
   const { toast } = useToast();
 
   const { data: workspaces = [] } = useQuery({
-    queryKey: ['/api/workspaces'],
+    queryKey: ["/api/workspaces"],
     queryFn: async () => {
-      const response = await fetch('/api/workspaces');
+      const response = await fetch("/api/workspaces");
       return response.json();
-    }
+    },
   });
 
   const switchWorkspaceMutation = useMutation({
@@ -91,36 +100,45 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
       return apiRequest("POST", "/api/workspaces/switch", { workspaceSlug });
     },
     onSuccess: (_, workspaceSlug) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
       setLocation(`/workspaces/${workspaceSlug}/dashboard`);
       onOpenChange(false);
       toast({
         title: "Workspace switched",
-        description: "Successfully switched workspace"
+        description: "Successfully switched workspace",
       });
     },
     onError: () => {
       toast({
         title: "Error",
         description: "Failed to switch workspace",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const isActiveRoute = (href: string) => {
     if (href === "/") {
-      return location === "/" || location === "" || 
-             location === "/dashboard" ||
-             (currentWorkspace && location === `/workspaces/${currentWorkspace.slug}`) ||
-             (currentWorkspace && location === `/workspaces/${currentWorkspace.slug}/dashboard`);
+      return (
+        location === "/" ||
+        location === "" ||
+        location === "/dashboard" ||
+        (currentWorkspace &&
+          location === `/workspaces/${currentWorkspace.slug}`) ||
+        (currentWorkspace &&
+          location === `/workspaces/${currentWorkspace.slug}/dashboard`)
+      );
     }
-    
+
     if (currentWorkspace) {
       const workspaceHref = `/workspaces/${currentWorkspace.slug}${href}`;
-      return location === href || location === workspaceHref || location.startsWith(workspaceHref);
+      return (
+        location === href ||
+        location === workspaceHref ||
+        location.startsWith(workspaceHref)
+      );
     }
-    
+
     return location === href || location.startsWith(href);
   };
 
@@ -129,10 +147,10 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
   };
 
   const toggleSection = (sectionTitle: string) => {
-    setExpandedSections(prev => 
-      prev.includes(sectionTitle) 
-        ? prev.filter(s => s !== sectionTitle)
-        : [...prev, sectionTitle]
+    setExpandedSections((prev) =>
+      prev.includes(sectionTitle)
+        ? prev.filter((s) => s !== sectionTitle)
+        : [...prev, sectionTitle],
     );
   };
 
@@ -173,7 +191,7 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" className="flex-1">
                     <Settings className="h-3 w-3 mr-1" />
@@ -222,8 +240,10 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
             <nav className="space-y-2">
               {navigationItems.map((item) => {
                 if (item.items) {
-                  const isExpanded = expandedSections.includes(item.title) || item.items.some(subItem => isActiveRoute(subItem.href));
-                  
+                  const isExpanded =
+                    expandedSections.includes(item.title) ||
+                    item.items.some((subItem) => isActiveRoute(subItem.href));
+
                   return (
                     <div key={item.title} className="space-y-1">
                       <Button
@@ -235,11 +255,11 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
                           <item.icon className="h-5 w-5" />
                           <span className="font-medium">{item.title}</span>
                         </div>
-                        <ChevronRight 
+                        <ChevronRight
                           className={cn(
                             "h-4 w-4 transition-transform",
-                            isExpanded && "rotate-90"
-                          )} 
+                            isExpanded && "rotate-90",
+                          )}
                         />
                       </Button>
                       {isExpanded && (
@@ -247,13 +267,21 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
                           {item.items.map((subItem) => (
                             <Button
                               key={subItem.href}
-                              variant={isActiveRoute(subItem.href) ? "secondary" : "ghost"}
-                              onClick={() => handleNavigation(`${getWorkspaceBasePath()}${subItem.href}`)}
+                              variant={
+                                isActiveRoute(subItem.href)
+                                  ? "secondary"
+                                  : "ghost"
+                              }
+                              onClick={() =>
+                                handleNavigation(
+                                  `${getWorkspaceBasePath()}${subItem.href}`,
+                                )
+                              }
                               className={cn(
                                 "w-full justify-start h-11 px-3",
-                                isActiveRoute(subItem.href) 
-                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" 
-                                  : "text-gray-600 dark:text-gray-400"
+                                isActiveRoute(subItem.href)
+                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                                  : "text-gray-600 dark:text-gray-400",
                               )}
                             >
                               {subItem.title}
@@ -265,22 +293,28 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
                   );
                 }
 
-                const href = item.href ? `${getWorkspaceBasePath()}${item.href}` : "#";
-                
+                const href = item.href
+                  ? `${getWorkspaceBasePath()}${item.href}`
+                  : "#";
+
                 return (
                   <Button
                     key={item.title}
-                    variant={isActiveRoute(item.href || "") ? "secondary" : "ghost"}
+                    variant={
+                      isActiveRoute(item.href || "") ? "secondary" : "ghost"
+                    }
                     onClick={() => handleNavigation(href)}
                     className={cn(
                       "w-full justify-start h-12 px-3",
-                      isActiveRoute(item.href || "") 
-                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" 
-                        : "text-gray-600 dark:text-gray-400"
+                      isActiveRoute(item.href || "")
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                        : "text-gray-600 dark:text-gray-400",
                     )}
                   >
                     <item.icon className="h-5 w-5 mr-3" />
-                    <span className="flex-1 text-left font-medium">{item.title}</span>
+                    <span className="flex-1 text-left font-medium">
+                      {item.title}
+                    </span>
                     {item.badge && (
                       <Badge variant="secondary" className="ml-2 text-xs">
                         {item.badge}
@@ -297,16 +331,16 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
               <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Quick Actions
               </div>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => onOpenChange(false)}
                 className="w-full justify-start h-12 px-3 text-gray-600 dark:text-gray-400"
               >
                 <Plus className="h-5 w-5 mr-3" />
                 <span className="font-medium">New Show</span>
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => onOpenChange(false)}
                 className="w-full justify-start h-12 px-3 text-gray-600 dark:text-gray-400"
               >
@@ -317,8 +351,8 @@ export function MobileNavDrawer({ isOpen, onOpenChange, currentWorkspace }: Mobi
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => onOpenChange(false)}
               className="w-full justify-start h-12 px-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
             >

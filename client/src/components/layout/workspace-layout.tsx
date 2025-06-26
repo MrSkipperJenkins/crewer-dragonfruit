@@ -33,7 +33,9 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading workspace...</p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Loading workspace...
+          </p>
         </div>
       </div>
     );
@@ -42,23 +44,19 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col overscroll-none">
       {/* Top Navbar */}
-      <WorkspaceNavbar 
+      <WorkspaceNavbar
         currentWorkspace={currentWorkspace || undefined}
         pageTitle={getPageTitle()}
       />
       <div className="flex flex-1 overflow-hidden overscroll-none">
         {/* Sidebar - Hidden on mobile, visible on desktop */}
         <div className="hidden lg:block">
-          <WorkspaceSidebar 
-            currentWorkspace={currentWorkspace || undefined}
-          />
+          <WorkspaceSidebar currentWorkspace={currentWorkspace || undefined} />
         </div>
-        
+
         {/* Main Content */}
         <main className="flex-1 overflow-auto bg-white dark:bg-gray-900 main-content">
-          <div className="p-6 h-full bg-[#fafafa]">
-            {children}
-          </div>
+          <div className="p-6 h-full bg-[#fafafa]">{children}</div>
         </main>
       </div>
     </div>

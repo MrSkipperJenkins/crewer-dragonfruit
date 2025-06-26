@@ -35,40 +35,42 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [templateMode, setTemplateMode] = useState<"template" | "single">("single");
+  const [templateMode, setTemplateMode] = useState<"template" | "single">(
+    "single",
+  );
   const [editedShow, setEditedShow] = useState({
-    title: '',
-    description: '',
-    startTime: '',
-    endTime: '',
-    status: '',
-    notes: ''
+    title: "",
+    description: "",
+    startTime: "",
+    endTime: "",
+    status: "",
+    notes: "",
   });
-  
+
   // Fetch show details
   const { data: show, isLoading: isLoadingShow } = useQuery({
     queryKey: [`/api/shows/${showId}`],
     enabled: !!showId,
   });
-  
+
   // Fetch resources assigned to this show
   const { data: showResources = [], isLoading: isLoadingResources } = useQuery({
     queryKey: [`/api/shows/${showId}/resources`],
     enabled: !!showId,
   });
-  
+
   // Fetch crew assignments for this show
   const { data: crewAssignments = [], isLoading: isLoadingCrew } = useQuery({
     queryKey: [`/api/shows/${showId}/crew-assignments`],
     enabled: !!showId,
   });
-  
+
   // Fetch required jobs for this show
   const { data: requiredJobs = [], isLoading: isLoadingJobs } = useQuery({
     queryKey: [`/api/shows/${showId}/required-jobs`],
     enabled: !!showId,
   });
-  
+
   // Fetch all resources to get their details
   const { data: allResources = [] } = useQuery({
     queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/resources`],
@@ -80,27 +82,27 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
     queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/crew-members`],
     enabled: !!(show as any)?.workspaceId,
   });
-  
+
   // Fetch all jobs to get their details
   const { data: jobs = [] } = useQuery({
     queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/jobs`],
     enabled: !!(show as any)?.workspaceId,
   });
-  
+
   // Set initial form data from show data
   useEffect(() => {
     if (show) {
       setEditedShow({
-        title: (show as any).title || '',
-        description: (show as any).description || '',
-        startTime: (show as any).startTime || '',
-        endTime: (show as any).endTime || '',
-        status: (show as any).status || '',
-        notes: (show as any).notes || ''
+        title: (show as any).title || "",
+        description: (show as any).description || "",
+        startTime: (show as any).startTime || "",
+        endTime: (show as any).endTime || "",
+        status: (show as any).status || "",
+        notes: (show as any).notes || "",
       });
     }
   }, [show]);
-  
+
   // Update show mutation
   const updateShowMutation = useMutation({
     mutationFn: async (updatedShow: any) => {
@@ -112,7 +114,9 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
         description: "Show updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/shows`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${(show as any)?.workspaceId}/shows`],
+      });
       setIsEditing(false);
     },
     onError: () => {
@@ -123,22 +127,22 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
       });
     },
   });
-  
+
   // Get resource by id
   const getResource = (resourceId: string) => {
     return (allResources as any[]).find((r: any) => r.id === resourceId);
   };
-  
+
   // Get crew member by id
   const getCrewMember = (crewMemberId: string) => {
     return (crewMembers as any[]).find((c: any) => c.id === crewMemberId);
   };
-  
+
   // Get job by id
   const getJob = (jobId: string) => {
     return (jobs as any[]).find((j: any) => j.id === jobId);
   };
-  
+
   // Handle save changes
   const handleSaveChanges = () => {
     updateShowMutation.mutate(editedShow);
@@ -149,35 +153,36 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
     setIsEditing(false);
     if (show) {
       setEditedShow({
-        title: (show as any).title || '',
-        description: (show as any).description || '',
-        startTime: (show as any).startTime || '',
-        endTime: (show as any).endTime || '',
-        status: (show as any).status || '',
-        notes: (show as any).notes || ''
+        title: (show as any).title || "",
+        description: (show as any).description || "",
+        startTime: (show as any).startTime || "",
+        endTime: (show as any).endTime || "",
+        status: (show as any).status || "",
+        notes: (show as any).notes || "",
       });
     }
   };
 
   // Format datetime for input fields
   const formatDateTimeForInput = (dateString: string) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
     return date.toISOString().slice(0, 16);
   };
-  
+
   // Format crew name for avatar fallback
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   };
-  
-  const isLoading = isLoadingShow || isLoadingResources || isLoadingCrew || isLoadingJobs;
-  
+
+  const isLoading =
+    isLoadingShow || isLoadingResources || isLoadingCrew || isLoadingJobs;
+
   return (
     <Dialog open={!!showId} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
@@ -194,9 +199,14 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="status">Status</Label>
-                        <Select 
-                          value={editedShow.status} 
-                          onValueChange={(value) => setEditedShow(prev => ({...prev, status: value}))}
+                        <Select
+                          value={editedShow.status}
+                          onValueChange={(value) =>
+                            setEditedShow((prev) => ({
+                              ...prev,
+                              status: value,
+                            }))
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -214,7 +224,12 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                         <Input
                           id="title"
                           value={editedShow.title}
-                          onChange={(e) => setEditedShow(prev => ({...prev, title: e.target.value}))}
+                          onChange={(e) =>
+                            setEditedShow((prev) => ({
+                              ...prev,
+                              title: e.target.value,
+                            }))
+                          }
                           placeholder="Show title"
                         />
                       </div>
@@ -223,7 +238,12 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                         <Textarea
                           id="description"
                           value={editedShow.description}
-                          onChange={(e) => setEditedShow(prev => ({...prev, description: e.target.value}))}
+                          onChange={(e) =>
+                            setEditedShow((prev) => ({
+                              ...prev,
+                              description: e.target.value,
+                            }))
+                          }
                           placeholder="Show description"
                           rows={2}
                         />
@@ -231,28 +251,40 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                     </div>
                   ) : (
                     <>
-                      <Badge 
+                      <Badge
                         className={getStatusColor((show as any)?.status)}
                         variant="secondary"
                       >
-                        {(show as any)?.status === 'scheduled' ? 'Active' : (show as any)?.status}
+                        {(show as any)?.status === "scheduled"
+                          ? "Active"
+                          : (show as any)?.status}
                       </Badge>
-                      <h2 className="text-xl font-semibold text-gray-900 mt-2">{(show as any)?.title}</h2>
-                      <p className="text-sm text-gray-500 mt-1">{(show as any)?.description}</p>
+                      <h2 className="text-xl font-semibold text-gray-900 mt-2">
+                        {(show as any)?.title}
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {(show as any)?.description}
+                      </p>
                     </>
                   )}
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => isEditing ? handleCancelEdit() : setIsEditing(true)}
+                  onClick={() =>
+                    isEditing ? handleCancelEdit() : setIsEditing(true)
+                  }
                   className="ml-4"
                 >
-                  {isEditing ? <X className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+                  {isEditing ? (
+                    <X className="h-4 w-4" />
+                  ) : (
+                    <Edit2 className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </DialogHeader>
-            
+
             <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               {isEditing ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -262,7 +294,14 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                       id="startTime"
                       type="datetime-local"
                       value={formatDateTimeForInput(editedShow.startTime)}
-                      onChange={(e) => setEditedShow(prev => ({...prev, startTime: e.target.value ? new Date(e.target.value).toISOString() : ''}))}
+                      onChange={(e) =>
+                        setEditedShow((prev) => ({
+                          ...prev,
+                          startTime: e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : "",
+                        }))
+                      }
                     />
                   </div>
                   <div>
@@ -271,7 +310,14 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                       id="endTime"
                       type="datetime-local"
                       value={formatDateTimeForInput(editedShow.endTime)}
-                      onChange={(e) => setEditedShow(prev => ({...prev, endTime: e.target.value ? new Date(e.target.value).toISOString() : ''}))}
+                      onChange={(e) =>
+                        setEditedShow((prev) => ({
+                          ...prev,
+                          endTime: e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : "",
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -280,7 +326,7 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                   <div className="bg-gray-50 p-3 rounded-md">
                     <div className="text-sm text-gray-500">Schedule</div>
                     <div className="font-medium">
-                      {(show as any)?.recurringPattern?.includes("WEEKLY") 
+                      {(show as any)?.recurringPattern?.includes("WEEKLY")
                         ? `Weekdays, ${formatTime((show as any)?.startTime)} - ${formatTime((show as any)?.endTime)}`
                         : `${formatDateTime((show as any)?.startTime)} - ${formatDateTime((show as any)?.endTime)}`}
                     </div>
@@ -291,93 +337,144 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                   </div>
                   <div className="bg-gray-50 p-3 rounded-md">
                     <div className="text-sm text-gray-500">Status</div>
-                    <div className="font-medium text-green-600">Fully Staffed</div>
+                    <div className="font-medium text-green-600">
+                      Fully Staffed
+                    </div>
                   </div>
                 </div>
               )}
-              
+
               <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Resources</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">
+                  Resources
+                </h3>
                 <div className="bg-gray-50 rounded-md divide-y divide-gray-200 max-h-48 overflow-y-auto">
-                  {(showResources as any[]).length > 0 ? (showResources as any[]).map((sr: any) => {
-                    const resource = getResource(sr.resourceId);
-                    return (
-                      <div key={sr.id} className="p-3 flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">{resource?.name || 'Unknown Resource'}</div>
-                          <div className="text-sm text-gray-500">{resource?.type}</div>
+                  {(showResources as any[]).length > 0 ? (
+                    (showResources as any[]).map((sr: any) => {
+                      const resource = getResource(sr.resourceId);
+                      return (
+                        <div
+                          key={sr.id}
+                          className="p-3 flex items-center justify-between"
+                        >
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">
+                              {resource?.name || "Unknown Resource"}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {resource?.type}
+                            </div>
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className="bg-green-100 text-green-800 border-green-200"
+                          >
+                            Confirmed
+                          </Badge>
                         </div>
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
-                          Confirmed
-                        </Badge>
-                      </div>
-                    );
-                  }) : (
+                      );
+                    })
+                  ) : (
                     <div className="p-4 text-center text-gray-500">
                       No resources assigned to this show
                     </div>
                   )}
                 </div>
               </div>
-              
+
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-medium text-gray-900">Crew Members</h3>
-                  <Button variant="link" size="sm" className="text-primary-600 font-medium">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Crew Members
+                  </h3>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="text-primary-600 font-medium"
+                  >
                     Manage Crew
                   </Button>
                 </div>
-                
+
                 <div className="bg-gray-50 rounded-md divide-y divide-gray-200 max-h-60 overflow-y-auto">
-                  {(crewAssignments as any[]).length > 0 ? (crewAssignments as any[]).map((assignment: any) => {
-                    const crewMember = getCrewMember(assignment.crewMemberId);
-                    const job = getJob(assignment.jobId);
-                    return (
-                      <div key={assignment.id} className="p-4 flex items-center space-x-3">
-                        <Avatar className="h-10 w-10 flex-shrink-0">
-                          <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(crewMember?.name || '')}&background=random`} />
-                          <AvatarFallback className="bg-blue-100 text-blue-700">{getInitials(crewMember?.name || 'UN')}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900">{crewMember?.name || 'Unknown Member'}</div>
-                          <div className="text-sm text-gray-500">{job?.title || 'Unknown Role'}</div>
-                        </div>
-                        <Badge 
-                          variant="secondary"
-                          className={
-                            assignment.status === 'confirmed' 
-                              ? 'bg-green-100 text-green-800 border-green-200' 
-                              : assignment.status === 'pending' 
-                              ? 'bg-amber-100 text-amber-800 border-amber-200' 
-                              : 'bg-red-100 text-red-800 border-red-200'
-                          }
-                        >
-                          {assignment.status === 'confirmed' ? 'Confirmed' : 
-                           assignment.status === 'pending' ? 'Unconfirmed' : 'Declined'}
-                        </Badge>
-                      </div>
-                    );
-                  }) : null}
-                  
+                  {(crewAssignments as any[]).length > 0
+                    ? (crewAssignments as any[]).map((assignment: any) => {
+                        const crewMember = getCrewMember(
+                          assignment.crewMemberId,
+                        );
+                        const job = getJob(assignment.jobId);
+                        return (
+                          <div
+                            key={assignment.id}
+                            className="p-4 flex items-center space-x-3"
+                          >
+                            <Avatar className="h-10 w-10 flex-shrink-0">
+                              <AvatarImage
+                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(crewMember?.name || "")}&background=random`}
+                              />
+                              <AvatarFallback className="bg-blue-100 text-blue-700">
+                                {getInitials(crewMember?.name || "UN")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900">
+                                {crewMember?.name || "Unknown Member"}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {job?.title || "Unknown Role"}
+                              </div>
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className={
+                                assignment.status === "confirmed"
+                                  ? "bg-green-100 text-green-800 border-green-200"
+                                  : assignment.status === "pending"
+                                    ? "bg-amber-100 text-amber-800 border-amber-200"
+                                    : "bg-red-100 text-red-800 border-red-200"
+                              }
+                            >
+                              {assignment.status === "confirmed"
+                                ? "Confirmed"
+                                : assignment.status === "pending"
+                                  ? "Unconfirmed"
+                                  : "Declined"}
+                            </Badge>
+                          </div>
+                        );
+                      })
+                    : null}
+
                   {requiredJobs
                     .filter((requiredJob: any) => {
                       // Find jobs that don't have assignments
-                      return !crewAssignments.some((ca: any) => ca.jobId === requiredJob.jobId);
+                      return !crewAssignments.some(
+                        (ca: any) => ca.jobId === requiredJob.jobId,
+                      );
                     })
                     .map((requiredJob: any) => {
                       const job = getJob(requiredJob.jobId);
                       return (
-                        <div key={requiredJob.id} className="p-4 flex items-center space-x-3">
+                        <div
+                          key={requiredJob.id}
+                          className="p-4 flex items-center space-x-3"
+                        >
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                            <span className="text-gray-500 text-lg font-light">+</span>
+                            <span className="text-gray-500 text-lg font-light">
+                              +
+                            </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-red-600">{job?.title || 'Unknown Position'}</div>
-                            <div className="text-sm text-red-500">Unfilled Position</div>
+                            <div className="font-medium text-red-600">
+                              {job?.title || "Unknown Position"}
+                            </div>
+                            <div className="text-sm text-red-500">
+                              Unfilled Position
+                            </div>
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                           >
                             Assign
@@ -385,42 +482,55 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                         </div>
                       );
                     })}
-                    
-                  {crewAssignments.length === 0 && requiredJobs.length === 0 && (
-                    <div className="p-4 text-center text-gray-500">
-                      No crew assignments for this show
-                    </div>
-                  )}
+
+                  {crewAssignments.length === 0 &&
+                    requiredJobs.length === 0 && (
+                      <div className="p-4 text-center text-gray-500">
+                        No crew assignments for this show
+                      </div>
+                    )}
                 </div>
               </div>
-              
+
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Notes</h3>
-                <Textarea 
+                <h3 className="text-lg font-medium text-gray-900 mb-3">
+                  Notes
+                </h3>
+                <Textarea
                   className="w-full border border-gray-300 rounded-md px-3 py-2 h-24"
                   placeholder="Add show notes here..."
                   value={editedShow.notes}
-                  onChange={(e) => setEditedShow(prev => ({...prev, notes: e.target.value}))}
+                  onChange={(e) =>
+                    setEditedShow((prev) => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
+                  }
                   disabled={!isEditing}
                 />
               </div>
             </div>
-            
+
             <DialogFooter className="p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
               {isEditing ? (
                 <>
                   <Button variant="outline" onClick={handleCancelEdit}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveChanges} disabled={updateShowMutation.isPending}>
-                    {updateShowMutation.isPending ? "Saving..." : "Save Changes"}
+                  <Button
+                    onClick={handleSaveChanges}
+                    disabled={updateShowMutation.isPending}
+                  >
+                    {updateShowMutation.isPending
+                      ? "Saving..."
+                      : "Save Changes"}
                   </Button>
                 </>
               ) : (
                 <div className="flex justify-between w-full">
                   <div className="flex gap-2">
                     {(show as any)?.recurringPattern && (
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={() => {
                           setTemplateMode("template");
@@ -432,7 +542,7 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
                         Edit Template
                       </Button>
                     )}
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={() => {
                         setTemplateMode("single");
@@ -453,7 +563,7 @@ export function ShowDetailModal({ showId, onClose }: ShowDetailModalProps) {
           </>
         )}
       </DialogContent>
-      
+
       {/* Show Template Modal */}
       <ShowTemplateModal
         open={showTemplateModal}

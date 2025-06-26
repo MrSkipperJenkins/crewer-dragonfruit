@@ -7,7 +7,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertShowCategorySchema, insertWorkspaceSchema } from "@shared/schema";
+import {
+  insertShowCategorySchema,
+  insertWorkspaceSchema,
+} from "@shared/schema";
 
 import {
   Card,
@@ -26,12 +29,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -44,13 +42,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/theme-provider";
-import { 
-  PlusIcon, 
-  MoonIcon, 
-  SunIcon, 
+import {
+  PlusIcon,
+  MoonIcon,
+  SunIcon,
   MonitorIcon,
   Pencil,
-  Trash2
+  Trash2,
 } from "lucide-react";
 
 // Category form schema
@@ -76,22 +74,22 @@ type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
 export default function Settings() {
   const { currentWorkspace } = useCurrentWorkspace();
   const [, setLocation] = useLocation();
-  
+
   // Fetch workspaces data
   const { data: workspaces = [] } = useQuery({
-    queryKey: ['/api/workspaces'],
+    queryKey: ["/api/workspaces"],
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("general");
-  
+
   // Fetch show categories
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
     enabled: !!currentWorkspace?.id,
   });
-  
+
   // Category form
   const categoryForm = useForm<CategoryFormValues>({
     resolver: zodResolver(categoryFormSchema),
@@ -101,7 +99,7 @@ export default function Settings() {
       workspaceId: currentWorkspace?.id || "",
     },
   });
-  
+
   // Workspace form
   const workspaceForm = useForm<WorkspaceFormValues>({
     resolver: zodResolver(workspaceFormSchema),
@@ -109,7 +107,7 @@ export default function Settings() {
       name: currentWorkspace?.name || "",
     },
   });
-  
+
   // Create category mutation
   const createCategoryMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
@@ -120,7 +118,9 @@ export default function Settings() {
         title: "Success",
         description: "Category created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-categories`],
+      });
       categoryForm.reset({
         name: "",
         color: "#3B82F6",
@@ -135,7 +135,7 @@ export default function Settings() {
       });
     },
   });
-  
+
   // Update workspace mutation
   const updateWorkspaceMutation = useMutation({
     mutationFn: async (data: WorkspaceFormValues) => {
@@ -147,7 +147,7 @@ export default function Settings() {
         title: "Success",
         description: "Workspace updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
     },
     onError: () => {
       toast({
@@ -157,7 +157,7 @@ export default function Settings() {
       });
     },
   });
-  
+
   // Create workspace mutation
   const createWorkspaceMutation = useMutation({
     mutationFn: async (data: WorkspaceFormValues) => {
@@ -169,7 +169,7 @@ export default function Settings() {
           title: "Success",
           description: "Workspace created successfully",
         });
-        queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
+        queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
         // Workspace will be automatically selected by URL routing
       });
     },
@@ -181,7 +181,7 @@ export default function Settings() {
       });
     },
   });
-  
+
   // Category form submission handler
   const onCategorySubmit = (data: CategoryFormValues) => {
     if (!currentWorkspace?.id) {
@@ -192,14 +192,14 @@ export default function Settings() {
       });
       return;
     }
-    
+
     // Add workspaceId to the data
     data.workspaceId = currentWorkspace.id;
-    
+
     // Submit mutation
     createCategoryMutation.mutate(data);
   };
-  
+
   // Workspace form submission handler
   const onWorkspaceSubmit = (data: WorkspaceFormValues) => {
     if (currentWorkspace?.id) {
@@ -210,12 +210,12 @@ export default function Settings() {
       createWorkspaceMutation.mutate(data);
     }
   };
-  
+
   return (
     <div className="space-y-6">
-      <Tabs 
-        defaultValue="general" 
-        value={activeTab} 
+      <Tabs
+        defaultValue="general"
+        value={activeTab}
         onValueChange={setActiveTab}
         className="space-y-4"
       >
@@ -224,7 +224,7 @@ export default function Settings() {
           <TabsTrigger value="categories">Show Categories</TabsTrigger>
           <TabsTrigger value="workspace">Workspace</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
@@ -268,7 +268,7 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Notifications</CardTitle>
@@ -278,11 +278,13 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Notification settings would go here */}
-              <p className="text-sm text-gray-500">Notification settings are coming soon.</p>
+              <p className="text-sm text-gray-500">
+                Notification settings are coming soon.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="categories" className="space-y-4">
           <Card>
             <CardHeader>
@@ -293,7 +295,10 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-6">
               <Form {...categoryForm}>
-                <form onSubmit={categoryForm.handleSubmit(onCategorySubmit)} className="space-y-4">
+                <form
+                  onSubmit={categoryForm.handleSubmit(onCategorySubmit)}
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <FormField
                       control={categoryForm.control}
@@ -302,13 +307,16 @@ export default function Settings() {
                         <FormItem className="sm:col-span-2">
                           <FormLabel>Category Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. News, Sports, Entertainment" {...field} />
+                            <Input
+                              placeholder="e.g. News, Sports, Entertainment"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={categoryForm.control}
                       name="color"
@@ -316,7 +324,7 @@ export default function Settings() {
                         <FormItem>
                           <FormLabel>Color</FormLabel>
                           <div className="flex items-center space-x-2">
-                            <div 
+                            <div
                               className="w-6 h-6 rounded-full border"
                               style={{ backgroundColor: field.value }}
                             />
@@ -329,14 +337,19 @@ export default function Settings() {
                       )}
                     />
                   </div>
-                  
-                  <Button type="submit" disabled={createCategoryMutation.isPending}>
+
+                  <Button
+                    type="submit"
+                    disabled={createCategoryMutation.isPending}
+                  >
                     <PlusIcon className="h-4 w-4 mr-1" />
-                    {createCategoryMutation.isPending ? "Adding..." : "Add Category"}
+                    {createCategoryMutation.isPending
+                      ? "Adding..."
+                      : "Add Category"}
                   </Button>
                 </form>
               </Form>
-              
+
               <div className="border rounded-md">
                 <Table>
                   <TableHeader>
@@ -357,17 +370,22 @@ export default function Settings() {
                       </TableRow>
                     ) : categories.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center py-4 text-gray-500">
+                        <TableCell
+                          colSpan={3}
+                          className="text-center py-4 text-gray-500"
+                        >
                           No categories found
                         </TableCell>
                       </TableRow>
                     ) : (
                       categories.map((category: any) => (
                         <TableRow key={category.id}>
-                          <TableCell className="font-medium">{category.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {category.name}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <div 
+                              <div
                                 className="w-4 h-4 rounded-full"
                                 style={{ backgroundColor: category.color }}
                               />
@@ -393,7 +411,7 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="workspace" className="space-y-4">
           <Card>
             <CardHeader>
@@ -404,7 +422,10 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Form {...workspaceForm}>
-                <form onSubmit={workspaceForm.handleSubmit(onWorkspaceSubmit)} className="space-y-4">
+                <form
+                  onSubmit={workspaceForm.handleSubmit(onWorkspaceSubmit)}
+                  className="space-y-4"
+                >
                   <FormField
                     control={workspaceForm.control}
                     name="name"
@@ -412,27 +433,36 @@ export default function Settings() {
                       <FormItem>
                         <FormLabel>Workspace Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. My Production Company" {...field} />
+                          <Input
+                            placeholder="e.g. My Production Company"
+                            {...field}
+                          />
                         </FormControl>
                         <FormDescription>
-                          This is the name of your workspace as it appears throughout the app.
+                          This is the name of your workspace as it appears
+                          throughout the app.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  <Button 
-                    type="submit" 
-                    disabled={updateWorkspaceMutation.isPending || createWorkspaceMutation.isPending}
+
+                  <Button
+                    type="submit"
+                    disabled={
+                      updateWorkspaceMutation.isPending ||
+                      createWorkspaceMutation.isPending
+                    }
                   >
-                    {currentWorkspace?.id ? "Update Workspace" : "Create Workspace"}
+                    {currentWorkspace?.id
+                      ? "Update Workspace"
+                      : "Create Workspace"}
                   </Button>
                 </form>
               </Form>
             </CardContent>
           </Card>
-          
+
           {workspaces.length > 0 && (
             <Card>
               <CardHeader>
@@ -444,18 +474,23 @@ export default function Settings() {
               <CardContent>
                 <div className="space-y-2">
                   {workspaces.map((workspace: any) => (
-                    <div 
+                    <div
                       key={workspace.id}
                       className={`flex items-center justify-between p-3 rounded-md border ${
-                        currentWorkspace?.id === workspace.id 
-                          ? "bg-primary-50 border-primary-200" 
+                        currentWorkspace?.id === workspace.id
+                          ? "bg-primary-50 border-primary-200"
                           : "hover:bg-gray-50 cursor-pointer"
                       }`}
-                      onClick={() => setLocation(`/workspaces/${workspace.slug}`)}
+                      onClick={() =>
+                        setLocation(`/workspaces/${workspace.slug}`)
+                      }
                     >
                       <div>
                         <h3 className="font-medium">{workspace.name}</h3>
-                        <p className="text-sm text-gray-500">Created: {new Date(workspace.createdAt).toLocaleString()}</p>
+                        <p className="text-sm text-gray-500">
+                          Created:{" "}
+                          {new Date(workspace.createdAt).toLocaleString()}
+                        </p>
                       </div>
                       {currentWorkspace?.id === workspace.id && (
                         <Badge>Current</Badge>

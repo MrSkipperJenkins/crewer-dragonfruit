@@ -14,12 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -51,13 +46,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Save, 
-  Calendar, 
-  X,
-  AlertTriangle,
-  Plus
-} from "lucide-react";
+import { Save, Calendar, X, AlertTriangle, Plus } from "lucide-react";
 
 // Form schema for show templates
 const showTemplateSchema = insertShowSchema.extend({
@@ -80,7 +69,12 @@ interface ShowTemplateModalProps {
   mode: "template" | "single";
 }
 
-export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateModalProps) {
+export function ShowTemplateModal({
+  open,
+  onClose,
+  show,
+  mode,
+}: ShowTemplateModalProps) {
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -102,9 +96,19 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
     defaultValues: {
       title: show?.title || "",
       description: show?.description || "",
-      startDate: show?.startTime ? format(new Date(show.startTime), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-      startTime: show?.startTime ? format(new Date(show.startTime), "HH:mm") : "09:00",
-      duration: show ? Math.floor((new Date(show.endTime).getTime() - new Date(show.startTime).getTime()) / (1000 * 60)) : 60,
+      startDate: show?.startTime
+        ? format(new Date(show.startTime), "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd"),
+      startTime: show?.startTime
+        ? format(new Date(show.startTime), "HH:mm")
+        : "09:00",
+      duration: show
+        ? Math.floor(
+            (new Date(show.endTime).getTime() -
+              new Date(show.startTime).getTime()) /
+              (1000 * 60),
+          )
+        : 60,
       frequency: "weekly",
       weekdays: [1],
       endType: "never",
@@ -118,24 +122,24 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
   // Create recurring pattern string
   const createRecurringPattern = (data: ShowTemplateFormValues): string => {
     if (mode === "single") return "";
-    
+
     const freq = data.frequency;
     let pattern = `FREQ=${freq.toUpperCase()}`;
-    
+
     if (data.frequency === "weekly" && data.weekdays?.length) {
-      const days = data.weekdays.map(day => 
-        ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][day]
-      ).join(",");
+      const days = data.weekdays
+        .map((day) => ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][day])
+        .join(",");
       pattern += `;BYDAY=${days}`;
     }
-    
+
     if (data.endType === "date" && data.endDate) {
       const endDate = new Date(data.endDate);
       pattern += `;UNTIL=${endDate.toISOString().replace(/[-:]/g, "").split(".")[0]}Z`;
     } else if (data.endType === "count" && data.endCount) {
       pattern += `;COUNT=${data.endCount}`;
     }
-    
+
     return pattern;
   };
 
@@ -143,7 +147,9 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
   const saveMutation = useMutation({
     mutationFn: async (data: ShowTemplateFormValues) => {
       const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
-      const endDateTime = new Date(startDateTime.getTime() + data.duration * 60 * 1000);
+      const endDateTime = new Date(
+        startDateTime.getTime() + data.duration * 60 * 1000,
+      );
       const recurringPattern = createRecurringPattern(data);
 
       const showData = {
@@ -179,10 +185,15 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
     onSuccess: () => {
       toast({
         title: mode === "template" ? "Template Saved" : "Show Saved",
-        description: mode === "template" ? "Show template updated successfully" : "Show updated successfully",
+        description:
+          mode === "template"
+            ? "Show template updated successfully"
+            : "Show updated successfully",
       });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
       onClose();
     },
     onError: (error: any) => {
@@ -198,7 +209,7 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!show?.id) throw new Error("No show to delete");
-      
+
       const response = await fetch(`/api/shows/${show.id}`, {
         method: "DELETE",
       });
@@ -208,10 +219,15 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
     onSuccess: () => {
       toast({
         title: "Show Deleted",
-        description: mode === "template" ? "Show series cancelled" : "Show occurrence deleted",
+        description:
+          mode === "template"
+            ? "Show series cancelled"
+            : "Show occurrence deleted",
       });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
       onClose();
     },
     onError: (error: any) => {
@@ -239,10 +255,9 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
             {mode === "template" ? "Edit Show Template" : "Edit This Show"}
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            {mode === "template" 
+            {mode === "template"
               ? "Changes here will apply to the recurring pattern of shows"
-              : "Changes here will only apply to this date"
-            }
+              : "Changes here will only apply to this date"}
           </p>
         </DialogHeader>
 
@@ -279,7 +294,7 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea 
+                          <Textarea
                             placeholder="Enter show description"
                             rows={3}
                             {...field}
@@ -298,7 +313,10 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select status" />
@@ -306,10 +324,20 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="draft">Draft</SelectItem>
-                              <SelectItem value="scheduled">Scheduled</SelectItem>
-                              <SelectItem value="in_progress">In Progress</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
-                              {mode === "single" && <SelectItem value="cancelled">Cancelled</SelectItem>}
+                              <SelectItem value="scheduled">
+                                Scheduled
+                              </SelectItem>
+                              <SelectItem value="in_progress">
+                                In Progress
+                              </SelectItem>
+                              <SelectItem value="completed">
+                                Completed
+                              </SelectItem>
+                              {mode === "single" && (
+                                <SelectItem value="cancelled">
+                                  Cancelled
+                                </SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -324,8 +352,8 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                         <FormItem>
                           <FormLabel>Color</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="color" 
+                            <Input
+                              type="color"
                               {...field}
                               value={field.value || "#3b82f6"}
                             />
@@ -384,12 +412,14 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                       <FormItem>
                         <FormLabel>Duration (minutes)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            min="15" 
+                          <Input
+                            type="number"
+                            min="15"
                             max="1440"
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -405,7 +435,10 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Frequency</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select frequency" />
@@ -439,16 +472,26 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                                   { value: 5, label: "Fri" },
                                   { value: 6, label: "Sat" },
                                 ].map((day) => (
-                                  <div key={day.value} className="flex items-center space-x-2">
+                                  <div
+                                    key={day.value}
+                                    className="flex items-center space-x-2"
+                                  >
                                     <Checkbox
                                       id={`day-${day.value}`}
                                       checked={field.value?.includes(day.value)}
                                       onCheckedChange={(checked) => {
                                         const current = field.value || [];
                                         if (checked) {
-                                          field.onChange([...current, day.value]);
+                                          field.onChange([
+                                            ...current,
+                                            day.value,
+                                          ]);
                                         } else {
-                                          field.onChange(current.filter((d: number) => d !== day.value));
+                                          field.onChange(
+                                            current.filter(
+                                              (d: number) => d !== day.value,
+                                            ),
+                                          );
                                         }
                                       }}
                                     />
@@ -473,16 +516,25 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>End Condition</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select end condition" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="never">Never ends</SelectItem>
-                                <SelectItem value="date">End on date</SelectItem>
-                                <SelectItem value="count">End after count</SelectItem>
+                                <SelectItem value="never">
+                                  Never ends
+                                </SelectItem>
+                                <SelectItem value="date">
+                                  End on date
+                                </SelectItem>
+                                <SelectItem value="count">
+                                  End after count
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -514,11 +566,13 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                             <FormItem>
                               <FormLabel>Number of Occurrences</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="number" 
+                                <Input
+                                  type="number"
                                   min="1"
                                   {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                  onChange={(e) =>
+                                    field.onChange(parseInt(e.target.value))
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />
@@ -544,7 +598,7 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Add any additional notes..."
                           rows={3}
                           {...field}
@@ -567,30 +621,38 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                   className="flex items-center gap-2"
                 >
                   <Save className="h-4 w-4" />
-                  {saveMutation.isPending ? "Saving..." : 
-                    mode === "template" ? "Save Series" : "Save This Only"
-                  }
+                  {saveMutation.isPending
+                    ? "Saving..."
+                    : mode === "template"
+                      ? "Save Series"
+                      : "Save This Only"}
                 </Button>
               </div>
 
               {show?.id && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
+                    <Button
+                      variant="outline"
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
                       <AlertTriangle className="h-4 w-4 mr-2" />
-                      {mode === "template" ? "Cancel Series" : "Delete This Occurrence"}
+                      {mode === "template"
+                        ? "Cancel Series"
+                        : "Delete This Occurrence"}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {mode === "template" ? "Cancel Show Series" : "Delete Show Occurrence"}
+                        {mode === "template"
+                          ? "Cancel Show Series"
+                          : "Delete Show Occurrence"}
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        {mode === "template" 
+                        {mode === "template"
                           ? "This will cancel the entire recurring show series. All future occurrences will be cancelled. This action cannot be undone."
-                          : "This will delete only this specific show occurrence. Other shows in the series will not be affected. This action cannot be undone."
-                        }
+                          : "This will delete only this specific show occurrence. Other shows in the series will not be affected. This action cannot be undone."}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -600,9 +662,11 @@ export function ShowTemplateModal({ open, onClose, show, mode }: ShowTemplateMod
                         className="bg-red-600 hover:bg-red-700"
                         disabled={deleteMutation.isPending}
                       >
-                        {deleteMutation.isPending ? "Deleting..." : 
-                          mode === "template" ? "Cancel Series" : "Delete Occurrence"
-                        }
+                        {deleteMutation.isPending
+                          ? "Deleting..."
+                          : mode === "template"
+                            ? "Cancel Series"
+                            : "Delete Occurrence"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

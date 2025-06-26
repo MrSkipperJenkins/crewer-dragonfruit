@@ -33,7 +33,10 @@ interface JobAssignment {
   crewMemberId?: string;
 }
 
-export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModalProps) {
+export default function CrewStaffingModal({
+  showId,
+  onClose,
+}: CrewStaffingModalProps) {
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const [assignments, setAssignments] = useState<JobAssignment[]>([]);
@@ -52,10 +55,11 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
   });
 
   // Fetch current crew assignments for this show
-  const { data: crewAssignments = [], isLoading: isLoadingAssignments } = useQuery({
-    queryKey: [`/api/shows/${showId}/crew-assignments`],
-    enabled: !!showId,
-  });
+  const { data: crewAssignments = [], isLoading: isLoadingAssignments } =
+    useQuery({
+      queryKey: [`/api/shows/${showId}/crew-assignments`],
+      enabled: !!showId,
+    });
 
   // Fetch all crew members
   const { data: crewMembers = [] } = useQuery({
@@ -73,18 +77,18 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
   useEffect(() => {
     if (requiredJobs.length > 0 && crewAssignments.length >= 0) {
       const initialAssignments: JobAssignment[] = [];
-      
+
       requiredJobs.forEach((job: any) => {
         const existingAssignment = crewAssignments.find(
-          (assignment: any) => assignment.jobId === job.jobId
+          (assignment: any) => assignment.jobId === job.jobId,
         );
-        
+
         initialAssignments.push({
           jobId: job.jobId,
           crewMemberId: existingAssignment?.crewMemberId,
         });
       });
-      
+
       setAssignments(initialAssignments);
     }
   }, [requiredJobs, crewAssignments]);
@@ -100,9 +104,13 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
   };
 
   // Handle assignment change
-  const handleAssignmentChange = (index: number, crewMemberId: string | undefined) => {
+  const handleAssignmentChange = (
+    index: number,
+    crewMemberId: string | undefined,
+  ) => {
     const newAssignments = [...assignments];
-    newAssignments[index].crewMemberId = crewMemberId === "unassigned" ? undefined : crewMemberId;
+    newAssignments[index].crewMemberId =
+      crewMemberId === "unassigned" ? undefined : crewMemberId;
     setAssignments(newAssignments);
     setHasChanges(true);
   };
@@ -116,7 +124,7 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
       }
 
       // Then create new assignments
-      const newAssignments = assignments.filter(a => a.crewMemberId);
+      const newAssignments = assignments.filter((a) => a.crewMemberId);
       for (let index = 0; index < newAssignments.length; index++) {
         const assignment = newAssignments[index];
         await apiRequest("POST", "/api/crew-assignments", {
@@ -129,8 +137,12 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-assignments`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${showId}/crew-assignments`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-assignments`],
+      });
       setHasChanges(false);
       toast({
         title: "Success",
@@ -150,12 +162,15 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
   const isLoading = isLoadingShow || isLoadingJobs || isLoadingAssignments;
 
   // Since we removed quantity, each required job should have exactly one assignment
-  const groupedAssignments = assignments.reduce((groups: any, assignment, index) => {
-    const jobId = assignment.jobId;
-    // Each job should have only one assignment now
-    groups[jobId] = [{ ...assignment, index }];
-    return groups;
-  }, {});
+  const groupedAssignments = assignments.reduce(
+    (groups: any, assignment, index) => {
+      const jobId = assignment.jobId;
+      // Each job should have only one assignment now
+      groups[jobId] = [{ ...assignment, index }];
+      return groups;
+    },
+    {},
+  );
 
   if (isLoading) {
     return (
@@ -203,68 +218,92 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
               </CardContent>
             </Card>
           ) : (
-            Object.entries(groupedAssignments).map(([jobId, jobAssignments]: [string, any]) => {
-              const job = getJobById(jobId);
-              const assignedCount = jobAssignments.filter((a: any) => a.crewMemberId).length;
-              const totalCount = jobAssignments.length;
+            Object.entries(groupedAssignments).map(
+              ([jobId, jobAssignments]: [string, any]) => {
+                const job = getJobById(jobId);
+                const assignedCount = jobAssignments.filter(
+                  (a: any) => a.crewMemberId,
+                ).length;
+                const totalCount = jobAssignments.length;
 
-              return (
-                <Card key={jobId} className="rounded-lg border">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center space-x-2">
-                        <UserCheck className="h-5 w-5" />
-                        <span>{job?.title || "Unknown Job"}</span>
-                      </CardTitle>
-                      <Badge variant={assignedCount === totalCount ? "default" : "secondary"}>
-                        {assignedCount} / {totalCount} Assigned
-                      </Badge>
-                    </div>
-                    {job?.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {job.description}
-                      </p>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {jobAssignments.map((assignment: any) => (
-                      <div key={assignment.index} className="flex items-center space-x-3">
-                        <div className="flex-1">
-                          <Select
-                            value={assignment.crewMemberId || "unassigned"}
-                            onValueChange={(value) => handleAssignmentChange(assignment.index, value)}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select crew member" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="unassigned">
-                                <span className="text-gray-500">Unassigned</span>
-                              </SelectItem>
-                              {crewMembers.map((member: any) => (
-                                <SelectItem key={member.id} value={member.id}>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-medium">{member.name}</span>
-                                    <span className="text-sm text-gray-500">({member.title})</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        {assignment.crewMemberId && (
-                          <div className="flex-shrink-0">
-                            <Badge variant="outline" className="text-xs">
-                              {getCrewMemberById(assignment.crewMemberId)?.title}
-                            </Badge>
-                          </div>
-                        )}
+                return (
+                  <Card key={jobId} className="rounded-lg border">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center space-x-2">
+                          <UserCheck className="h-5 w-5" />
+                          <span>{job?.title || "Unknown Job"}</span>
+                        </CardTitle>
+                        <Badge
+                          variant={
+                            assignedCount === totalCount
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {assignedCount} / {totalCount} Assigned
+                        </Badge>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              );
-            })
+                      {job?.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {job.description}
+                        </p>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {jobAssignments.map((assignment: any) => (
+                        <div
+                          key={assignment.index}
+                          className="flex items-center space-x-3"
+                        >
+                          <div className="flex-1">
+                            <Select
+                              value={assignment.crewMemberId || "unassigned"}
+                              onValueChange={(value) =>
+                                handleAssignmentChange(assignment.index, value)
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select crew member" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="unassigned">
+                                  <span className="text-gray-500">
+                                    Unassigned
+                                  </span>
+                                </SelectItem>
+                                {crewMembers.map((member: any) => (
+                                  <SelectItem key={member.id} value={member.id}>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="font-medium">
+                                        {member.name}
+                                      </span>
+                                      <span className="text-sm text-gray-500">
+                                        ({member.title})
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {assignment.crewMemberId && (
+                            <div className="flex-shrink-0">
+                              <Badge variant="outline" className="text-xs">
+                                {
+                                  getCrewMemberById(assignment.crewMemberId)
+                                    ?.title
+                                }
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                );
+              },
+            )
           )}
         </div>
 
@@ -273,7 +312,7 @@ export default function CrewStaffingModal({ showId, onClose }: CrewStaffingModal
             <X className="h-4 w-4 mr-2" />
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={() => saveAssignmentsMutation.mutate()}
             disabled={!hasChanges || saveAssignmentsMutation.isPending}
           >

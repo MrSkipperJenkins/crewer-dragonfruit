@@ -9,30 +9,38 @@ interface CurrentWorkspaceContextType {
   isLoading: boolean;
 }
 
-const CurrentWorkspaceContext = createContext<CurrentWorkspaceContextType | undefined>(undefined);
+const CurrentWorkspaceContext = createContext<
+  CurrentWorkspaceContextType | undefined
+>(undefined);
 
-export function CurrentWorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
+export function CurrentWorkspaceProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
+    null,
+  );
   const [location] = useLocation();
 
   // Get all workspaces
   const { data: workspaces = [], isLoading } = useQuery({
-    queryKey: ['/api/workspaces'],
+    queryKey: ["/api/workspaces"],
     queryFn: async () => {
-      const response = await fetch('/api/workspaces');
+      const response = await fetch("/api/workspaces");
       return response.json();
-    }
+    },
   });
 
   // Get most recently used workspace
   const { data: recentWorkspace } = useQuery({
-    queryKey: ['/api/workspaces/recent'],
+    queryKey: ["/api/workspaces/recent"],
     queryFn: async () => {
-      const response = await fetch('/api/workspaces/recent');
+      const response = await fetch("/api/workspaces/recent");
       if (response.status === 404) return null;
       return response.json();
     },
-    enabled: !currentWorkspace && workspaces.length > 0
+    enabled: !currentWorkspace && workspaces.length > 0,
   });
 
   // Extract workspace slug from URL and set current workspace
@@ -41,7 +49,7 @@ export function CurrentWorkspaceProvider({ children }: { children: React.ReactNo
 
     // Check if we're in a workspace-specific route
     const workspaceMatch = location.match(/^\/workspaces\/([^\/]+)/);
-    
+
     if (workspaceMatch) {
       const slug = workspaceMatch[1];
       const workspace = workspaces.find((w: Workspace) => w.slug === slug);
@@ -58,7 +66,9 @@ export function CurrentWorkspaceProvider({ children }: { children: React.ReactNo
       } else {
         const storedWorkspaceId = localStorage.getItem("currentWorkspaceId");
         if (storedWorkspaceId) {
-          const workspace = workspaces.find((w: Workspace) => w.id === storedWorkspaceId);
+          const workspace = workspaces.find(
+            (w: Workspace) => w.id === storedWorkspaceId,
+          );
           if (workspace && workspace.id !== currentWorkspace?.id) {
             setCurrentWorkspace(workspace);
           }
@@ -72,11 +82,13 @@ export function CurrentWorkspaceProvider({ children }: { children: React.ReactNo
   }, [location, workspaces, currentWorkspace, recentWorkspace]);
 
   return (
-    <CurrentWorkspaceContext.Provider value={{
-      currentWorkspace,
-      setCurrentWorkspace,
-      isLoading
-    }}>
+    <CurrentWorkspaceContext.Provider
+      value={{
+        currentWorkspace,
+        setCurrentWorkspace,
+        isLoading,
+      }}
+    >
       {children}
     </CurrentWorkspaceContext.Provider>
   );
@@ -85,7 +97,9 @@ export function CurrentWorkspaceProvider({ children }: { children: React.ReactNo
 export function useCurrentWorkspace() {
   const context = useContext(CurrentWorkspaceContext);
   if (context === undefined) {
-    throw new Error('useCurrentWorkspace must be used within a CurrentWorkspaceProvider');
+    throw new Error(
+      "useCurrentWorkspace must be used within a CurrentWorkspaceProvider",
+    );
   }
   return context;
 }

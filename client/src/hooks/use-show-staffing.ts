@@ -58,24 +58,30 @@ export function useShowStaffing(showIds: string[]) {
   const getCrewStaffingStatus = (showId: string): ShowStaffingStatus => {
     const showRequiredJobs = requiredJobQueries.data?.[showId] || [];
     const showCrewAssignments = crewAssignmentQueries.data?.[showId] || [];
-    
+
     const totalRequired = showRequiredJobs.length;
-    
+
     // Count assignments by status
-    const confirmed = showCrewAssignments.filter((ca: any) => ca.status === 'confirmed').length;
-    const pending = showCrewAssignments.filter((ca: any) => ca.status === 'pending').length;
-    const declined = showCrewAssignments.filter((ca: any) => ca.status === 'declined').length;
-    
+    const confirmed = showCrewAssignments.filter(
+      (ca: any) => ca.status === "confirmed",
+    ).length;
+    const pending = showCrewAssignments.filter(
+      (ca: any) => ca.status === "pending",
+    ).length;
+    const declined = showCrewAssignments.filter(
+      (ca: any) => ca.status === "declined",
+    ).length;
+
     // Total assigned is any crew member assigned regardless of status
     const totalAssigned = showCrewAssignments.length;
-    
+
     return {
       assigned: totalAssigned,
       required: totalRequired,
       isFullyStaffed: confirmed >= totalRequired,
       pending,
       declined,
-      confirmed
+      confirmed,
     };
   };
 
@@ -83,6 +89,6 @@ export function useShowStaffing(showIds: string[]) {
     crewAssignmentQueries,
     requiredJobQueries,
     getCrewStaffingStatus,
-    isLoading: crewAssignmentQueries.isLoading || requiredJobQueries.isLoading
+    isLoading: crewAssignmentQueries.isLoading || requiredJobQueries.isLoading,
   };
 }

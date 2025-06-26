@@ -15,13 +15,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
-  PlusIcon, 
-  SearchIcon, 
-  FilterIcon, 
+import {
+  PlusIcon,
+  SearchIcon,
+  FilterIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  Users
+  Users,
 } from "lucide-react";
 import {
   Select,
@@ -60,7 +60,9 @@ export default function ShowsListView() {
 
   // Fetch show category assignments
   const { data: categoryAssignments = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
+    queryKey: [
+      `/api/workspaces/${currentWorkspace?.id}/show-category-assignments`,
+    ],
     enabled: !!currentWorkspace?.id,
   });
 
@@ -71,17 +73,15 @@ export default function ShowsListView() {
   // Function to get show category
   const getShowCategory = (showId: string) => {
     const assignment = (categoryAssignments as any[])?.find(
-      (ca: any) => ca.showId === showId
+      (ca: any) => ca.showId === showId,
     );
-    
+
     if (!assignment) return null;
-    
+
     return (categories as any[])?.find(
-      (c: any) => c.id === assignment.categoryId
+      (c: any) => c.id === assignment.categoryId,
     );
   };
-
-
 
   // Helper function to handle sorting
   const handleSort = (field: SortField) => {
@@ -94,49 +94,54 @@ export default function ShowsListView() {
   };
 
   // Filter and sort shows
-  const filteredShows = (shows as any[]).filter((show: any) => {
-    const matchesStatus = statusFilter === "all" || show.status === statusFilter;
-    const matchesSearch = !searchQuery || 
-      show.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (show.description && show.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    return matchesStatus && matchesSearch;
-  }).sort((a: any, b: any) => {
-    let aValue: any;
-    let bValue: any;
+  const filteredShows = (shows as any[])
+    .filter((show: any) => {
+      const matchesStatus =
+        statusFilter === "all" || show.status === statusFilter;
+      const matchesSearch =
+        !searchQuery ||
+        show.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (show.description &&
+          show.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    switch (sortField) {
-      case "title":
-        aValue = a.title.toLowerCase();
-        bValue = b.title.toLowerCase();
-        break;
-      case "datetime":
-        aValue = new Date(a.startTime);
-        bValue = new Date(b.startTime);
-        break;
-      case "status":
-        aValue = a.status;
-        bValue = b.status;
-        break;
-      case "category":
-        const aCat = getShowCategory(a.id);
-        const bCat = getShowCategory(b.id);
-        aValue = aCat?.name || "";
-        bValue = bCat?.name || "";
-        break;
-      default:
-        aValue = a.startTime;
-        bValue = b.startTime;
-    }
+      return matchesStatus && matchesSearch;
+    })
+    .sort((a: any, b: any) => {
+      let aValue: any;
+      let bValue: any;
 
-    if (aValue < bValue) {
-      return sortDirection === "asc" ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortDirection === "asc" ? 1 : -1;
-    }
-    return 0;
-  });
+      switch (sortField) {
+        case "title":
+          aValue = a.title.toLowerCase();
+          bValue = b.title.toLowerCase();
+          break;
+        case "datetime":
+          aValue = new Date(a.startTime);
+          bValue = new Date(b.startTime);
+          break;
+        case "status":
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        case "category":
+          const aCat = getShowCategory(a.id);
+          const bCat = getShowCategory(b.id);
+          aValue = aCat?.name || "";
+          bValue = bCat?.name || "";
+          break;
+        default:
+          aValue = a.startTime;
+          bValue = b.startTime;
+      }
+
+      if (aValue < bValue) {
+        return sortDirection === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
 
   // Function to handle row click
   const handleRowClick = (showId: string) => {
@@ -176,10 +181,7 @@ export default function ShowsListView() {
             <div className="flex space-x-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-auto">
                 <FilterIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Select
-                  value={statusFilter}
-                  onValueChange={setStatusFilter}
-                >
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="pl-8 w-[150px]">
                     <SelectValue placeholder="Filter Status" />
                   </SelectTrigger>
@@ -200,57 +202,61 @@ export default function ShowsListView() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead 
+                  <TableHead
                     className="cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort("title")}
                   >
                     <div className="flex items-center gap-1">
                       Show
-                      {sortField === "title" && (
-                        sortDirection === "asc" ? 
-                          <ChevronUpIcon className="h-4 w-4" /> : 
+                      {sortField === "title" &&
+                        (sortDirection === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
                           <ChevronDownIcon className="h-4 w-4" />
-                      )}
+                        ))}
                     </div>
                   </TableHead>
-                  <TableHead 
+                  <TableHead
                     className="cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort("datetime")}
                   >
                     <div className="flex items-center gap-1">
                       Date & Time
-                      {sortField === "datetime" && (
-                        sortDirection === "asc" ? 
-                          <ChevronUpIcon className="h-4 w-4" /> : 
+                      {sortField === "datetime" &&
+                        (sortDirection === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
                           <ChevronDownIcon className="h-4 w-4" />
-                      )}
+                        ))}
                     </div>
                   </TableHead>
-                  <TableHead 
+                  <TableHead
                     className="cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort("status")}
                   >
                     <div className="flex items-center gap-1">
                       Status
-                      {sortField === "status" && (
-                        sortDirection === "asc" ? 
-                          <ChevronUpIcon className="h-4 w-4" /> : 
+                      {sortField === "status" &&
+                        (sortDirection === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
                           <ChevronDownIcon className="h-4 w-4" />
-                      )}
+                        ))}
                     </div>
                   </TableHead>
                   <TableHead>Crew Staffing</TableHead>
-                  <TableHead 
+                  <TableHead
                     className="text-right cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort("category")}
                   >
                     <div className="flex items-center justify-end gap-1">
                       Category
-                      {sortField === "category" && (
-                        sortDirection === "asc" ? 
-                          <ChevronUpIcon className="h-4 w-4" /> : 
+                      {sortField === "category" &&
+                        (sortDirection === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
                           <ChevronDownIcon className="h-4 w-4" />
-                      )}
+                        ))}
                     </div>
                   </TableHead>
                 </TableRow>
@@ -268,7 +274,10 @@ export default function ShowsListView() {
 
                 {!isLoading && filteredShows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-gray-500"
+                    >
                       No shows found
                     </TableCell>
                   </TableRow>
@@ -278,7 +287,7 @@ export default function ShowsListView() {
                   const category = getShowCategory(show.id);
                   const staffingStatus = getCrewStaffingStatus(show.id);
                   return (
-                    <TableRow 
+                    <TableRow
                       key={show.id}
                       className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => handleRowClick(show.id)}
@@ -292,14 +301,22 @@ export default function ShowsListView() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{formatDate(show.startTime)}</div>
+                        <div className="font-medium">
+                          {formatDate(show.startTime)}
+                        </div>
                         <div className="text-sm text-gray-500">
-                          {formatTime(show.startTime)} - {formatTime(show.endTime)}
+                          {formatTime(show.startTime)} -{" "}
+                          {formatTime(show.endTime)}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(show.status || 'scheduled')}>
-                          {(show.status || 'scheduled').charAt(0).toUpperCase() + (show.status || 'scheduled').slice(1)}
+                        <Badge
+                          className={getStatusColor(show.status || "scheduled")}
+                        >
+                          {(show.status || "scheduled")
+                            .charAt(0)
+                            .toUpperCase() +
+                            (show.status || "scheduled").slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -312,9 +329,11 @@ export default function ShowsListView() {
                           <Users className="h-4 w-4 mr-1" />
                           <div className="flex flex-col items-start">
                             <span className="text-sm font-medium">
-                              {staffingStatus.assigned} of {staffingStatus.required} Jobs Assigned
+                              {staffingStatus.assigned} of{" "}
+                              {staffingStatus.required} Jobs Assigned
                             </span>
-                            {(staffingStatus.pending > 0 || staffingStatus.declined > 0) && (
+                            {(staffingStatus.pending > 0 ||
+                              staffingStatus.declined > 0) && (
                               <div className="text-xs space-x-2">
                                 {staffingStatus.pending > 0 && (
                                   <span className="text-yellow-600 dark:text-yellow-400">
@@ -333,12 +352,12 @@ export default function ShowsListView() {
                       </TableCell>
                       <TableCell className="text-right">
                         {category && (
-                          <Badge 
-                            className="bg-opacity-20 text-opacity-100" 
-                            style={{ 
-                              backgroundColor: `${category.color}20`, 
+                          <Badge
+                            className="bg-opacity-20 text-opacity-100"
+                            style={{
+                              backgroundColor: `${category.color}20`,
                               color: category.color,
-                              borderColor: `${category.color}40`
+                              borderColor: `${category.color}40`,
                             }}
                             variant="outline"
                           >

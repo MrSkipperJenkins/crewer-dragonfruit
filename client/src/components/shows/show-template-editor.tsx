@@ -5,16 +5,17 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertShowSchema, Show, Job, Resource, CrewMember } from "@shared/schema";
+import {
+  insertShowSchema,
+  Show,
+  Job,
+  Resource,
+  CrewMember,
+} from "@shared/schema";
 import { format } from "date-fns";
 import { RRule } from "rrule";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -47,15 +48,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Save, 
-  Calendar, 
+import {
+  Save,
+  Calendar,
   X,
   Plus,
   Users,
   Briefcase,
   Monitor,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
 import { ColorPicker } from "@/components/ui/color-picker";
 
@@ -80,13 +81,19 @@ interface ShowTemplateEditorProps {
   onSave?: (data: any) => void;
 }
 
-export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditorProps) {
+export function ShowTemplateEditor({
+  show,
+  onClose,
+  onSave,
+}: ShowTemplateEditorProps) {
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
-  const [selectedCrewAssignments, setSelectedCrewAssignments] = useState<any[]>([]);
+  const [selectedCrewAssignments, setSelectedCrewAssignments] = useState<any[]>(
+    [],
+  );
 
   // Fetch workspace data
   const { data: jobs = [] } = useQuery({
@@ -110,9 +117,19 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
     defaultValues: {
       title: show?.title || "",
       description: show?.description || "",
-      startDate: show?.startTime ? format(new Date(show.startTime), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-      startTime: show?.startTime ? format(new Date(show.startTime), "HH:mm") : "09:00",
-      duration: show ? Math.floor((new Date(show.endTime).getTime() - new Date(show.startTime).getTime()) / (1000 * 60)) : 60,
+      startDate: show?.startTime
+        ? format(new Date(show.startTime), "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd"),
+      startTime: show?.startTime
+        ? format(new Date(show.startTime), "HH:mm")
+        : "09:00",
+      duration: show
+        ? Math.floor(
+            (new Date(show.endTime).getTime() -
+              new Date(show.startTime).getTime()) /
+              (1000 * 60),
+          )
+        : 60,
       frequency: "weekly",
       weekdays: [1], // Monday
       endType: "never",
@@ -129,19 +146,29 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
       try {
         const rule = RRule.fromString(show.recurringPattern);
         const options = rule.options;
-        
-        form.setValue("frequency", 
-          options.freq === RRule.DAILY ? "daily" :
-          options.freq === RRule.WEEKLY ? "weekly" : "monthly"
+
+        form.setValue(
+          "frequency",
+          options.freq === RRule.DAILY
+            ? "daily"
+            : options.freq === RRule.WEEKLY
+              ? "weekly"
+              : "monthly",
         );
-        
+
         if (options.byweekday) {
-          const weekdays = Array.isArray(options.byweekday) 
-            ? options.byweekday.map((day: any) => typeof day === 'number' ? day : (day as any).weekday)
-            : [typeof options.byweekday === 'number' ? options.byweekday : (options.byweekday as any).weekday];
+          const weekdays = Array.isArray(options.byweekday)
+            ? options.byweekday.map((day: any) =>
+                typeof day === "number" ? day : (day as any).weekday,
+              )
+            : [
+                typeof options.byweekday === "number"
+                  ? options.byweekday
+                  : (options.byweekday as any).weekday,
+              ];
           form.setValue("weekdays", weekdays);
         }
-        
+
         if (options.until) {
           form.setValue("endType", "date");
           form.setValue("endDate", format(options.until, "yyyy-MM-dd"));
@@ -150,7 +177,10 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
           form.setValue("endCount", options.count);
         }
       } catch (error) {
-        console.warn("Could not parse recurring pattern:", show.recurringPattern);
+        console.warn(
+          "Could not parse recurring pattern:",
+          show.recurringPattern,
+        );
       }
     }
   }, [show, form]);
@@ -160,20 +190,22 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
     if (show?.id) {
       // Load required jobs
       fetch(`/api/shows/${show.id}/required-jobs`)
-        .then(res => res.json())
-        .then(data => setSelectedJobs(data.map((rj: any) => rj.jobId)))
+        .then((res) => res.json())
+        .then((data) => setSelectedJobs(data.map((rj: any) => rj.jobId)))
         .catch(console.error);
 
       // Load resources
       fetch(`/api/shows/${show.id}/resources`)
-        .then(res => res.json())
-        .then(data => setSelectedResources(data.map((sr: any) => sr.resourceId)))
+        .then((res) => res.json())
+        .then((data) =>
+          setSelectedResources(data.map((sr: any) => sr.resourceId)),
+        )
         .catch(console.error);
 
       // Load crew assignments
       fetch(`/api/shows/${show.id}/crew-assignments`)
-        .then(res => res.json())
-        .then(data => setSelectedCrewAssignments(data))
+        .then((res) => res.json())
+        .then((data) => setSelectedCrewAssignments(data))
         .catch(console.error);
     }
   }, [show?.id]);
@@ -181,7 +213,7 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
   // Create recurring pattern string
   const createRecurringPattern = (data: ShowTemplateFormValues): string => {
     const startDate = new Date(`${data.startDate}T${data.startTime}`);
-    
+
     let freq = RRule.WEEKLY;
     if (data.frequency === "daily") freq = RRule.DAILY;
     else if (data.frequency === "monthly") freq = RRule.MONTHLY;
@@ -208,7 +240,9 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
   const saveTemplateMutation = useMutation({
     mutationFn: async (data: ShowTemplateFormValues) => {
       const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
-      const endDateTime = new Date(startDateTime.getTime() + data.duration * 60 * 1000);
+      const endDateTime = new Date(
+        startDateTime.getTime() + data.duration * 60 * 1000,
+      );
       const recurringPattern = createRecurringPattern(data);
 
       const showData = {
@@ -239,10 +273,14 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
     onSuccess: (savedShow) => {
       toast({
         title: "Template Saved",
-        description: show?.id ? "Show template updated successfully" : "Show template created successfully",
+        description: show?.id
+          ? "Show template updated successfully"
+          : "Show template created successfully",
       });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
       onSave?.(savedShow);
       onClose();
     },
@@ -259,7 +297,9 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
   const saveFutureOnlyMutation = useMutation({
     mutationFn: async (data: ShowTemplateFormValues) => {
       const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
-      const endDateTime = new Date(startDateTime.getTime() + data.duration * 60 * 1000);
+      const endDateTime = new Date(
+        startDateTime.getTime() + data.duration * 60 * 1000,
+      );
       const recurringPattern = createRecurringPattern(data);
 
       const showData = {
@@ -280,8 +320,10 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
         title: "Future Template Saved",
         description: "New template created for future shows",
       });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
       onClose();
     },
     onError: (error: any) => {
@@ -297,7 +339,7 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
   const cancelSeriesMutation = useMutation({
     mutationFn: async () => {
       if (!show?.id) throw new Error("No show to cancel");
-      
+
       return apiRequest(`/api/shows/${show.id}`, {
         method: "PUT",
         body: JSON.stringify({ status: "cancelled" }),
@@ -308,8 +350,10 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
         title: "Series Cancelled",
         description: "The recurring show series has been cancelled",
       });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
       onClose();
     },
     onError: (error: any) => {
@@ -384,7 +428,7 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Enter show description"
                           rows={3}
                           {...field}
@@ -402,7 +446,10 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select status" />
@@ -411,7 +458,9 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                           <SelectContent>
                             <SelectItem value="draft">Draft</SelectItem>
                             <SelectItem value="scheduled">Scheduled</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="in_progress">
+                              In Progress
+                            </SelectItem>
                             <SelectItem value="completed">Completed</SelectItem>
                           </SelectContent>
                         </Select>
@@ -486,12 +535,14 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                     <FormItem>
                       <FormLabel>Duration (minutes)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          min="15" 
+                        <Input
+                          type="number"
+                          min="15"
                           max="1440"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -505,7 +556,10 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Frequency</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select frequency" />
@@ -539,7 +593,10 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                             { value: 5, label: "Fri" },
                             { value: 6, label: "Sat" },
                           ].map((day) => (
-                            <div key={day.value} className="flex items-center space-x-2">
+                            <div
+                              key={day.value}
+                              className="flex items-center space-x-2"
+                            >
                               <Checkbox
                                 id={`day-${day.value}`}
                                 checked={field.value?.includes(day.value)}
@@ -548,7 +605,11 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                                   if (checked) {
                                     field.onChange([...current, day.value]);
                                   } else {
-                                    field.onChange(current.filter((d: number) => d !== day.value));
+                                    field.onChange(
+                                      current.filter(
+                                        (d: number) => d !== day.value,
+                                      ),
+                                    );
                                   }
                                 }}
                               />
@@ -573,7 +634,10 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>End Condition</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select end condition" />
@@ -614,11 +678,13 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                       <FormItem>
                         <FormLabel>Number of Occurrences</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             min="1"
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -644,13 +710,21 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                   {selectedJobs.map((jobId) => {
                     const job = jobs.find((j: any) => j.id === jobId);
                     return job ? (
-                      <Badge key={jobId} variant="secondary" className="flex items-center gap-2">
+                      <Badge
+                        key={jobId}
+                        variant="secondary"
+                        className="flex items-center gap-2"
+                      >
                         {job.title}
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedJobs(selectedJobs.filter(id => id !== jobId))}
+                          onClick={() =>
+                            setSelectedJobs(
+                              selectedJobs.filter((id) => id !== jobId),
+                            )
+                          }
                           className="h-4 w-4 p-0 hover:bg-transparent"
                         >
                           <X className="h-3 w-3" />
@@ -670,11 +744,13 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                     <SelectValue placeholder="Add required job..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {jobs.filter((job: any) => !selectedJobs.includes(job.id)).map((job: any) => (
-                      <SelectItem key={job.id} value={job.id}>
-                        {job.title}
-                      </SelectItem>
-                    ))}
+                    {jobs
+                      .filter((job: any) => !selectedJobs.includes(job.id))
+                      .map((job: any) => (
+                        <SelectItem key={job.id} value={job.id}>
+                          {job.title}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -693,15 +769,27 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                   {selectedResources.map((resourceId) => {
-                    const resource = resources.find((r: any) => r.id === resourceId);
+                    const resource = resources.find(
+                      (r: any) => r.id === resourceId,
+                    );
                     return resource ? (
-                      <Badge key={resourceId} variant="secondary" className="flex items-center gap-2">
+                      <Badge
+                        key={resourceId}
+                        variant="secondary"
+                        className="flex items-center gap-2"
+                      >
                         {resource.name}
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedResources(selectedResources.filter(id => id !== resourceId))}
+                          onClick={() =>
+                            setSelectedResources(
+                              selectedResources.filter(
+                                (id) => id !== resourceId,
+                              ),
+                            )
+                          }
                           className="h-4 w-4 p-0 hover:bg-transparent"
                         >
                           <X className="h-3 w-3" />
@@ -721,11 +809,16 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                     <SelectValue placeholder="Add default resource..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {resources.filter((resource: any) => !selectedResources.includes(resource.id)).map((resource: any) => (
-                      <SelectItem key={resource.id} value={resource.id}>
-                        {resource.name} ({resource.type})
-                      </SelectItem>
-                    ))}
+                    {resources
+                      .filter(
+                        (resource: any) =>
+                          !selectedResources.includes(resource.id),
+                      )
+                      .map((resource: any) => (
+                        <SelectItem key={resource.id} value={resource.id}>
+                          {resource.name} ({resource.type})
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -744,7 +837,7 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Add any additional notes..."
                         rows={3}
                         {...field}
@@ -778,7 +871,9 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                   className="flex items-center gap-2"
                 >
                   <Calendar className="h-4 w-4" />
-                  {saveFutureOnlyMutation.isPending ? "Saving..." : "Save Future Only"}
+                  {saveFutureOnlyMutation.isPending
+                    ? "Saving..."
+                    : "Save Future Only"}
                 </Button>
               )}
             </div>
@@ -786,7 +881,10 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
             {show?.recurringPattern && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
+                  <Button
+                    variant="outline"
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
                     <AlertTriangle className="h-4 w-4 mr-2" />
                     Cancel Series
                   </Button>
@@ -795,7 +893,9 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                   <AlertDialogHeader>
                     <AlertDialogTitle>Cancel Show Series</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will cancel the entire recurring show series. All future occurrences will be cancelled. This action cannot be undone.
+                      This will cancel the entire recurring show series. All
+                      future occurrences will be cancelled. This action cannot
+                      be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -805,7 +905,9 @@ export function ShowTemplateEditor({ show, onClose, onSave }: ShowTemplateEditor
                       className="bg-red-600 hover:bg-red-700"
                       disabled={cancelSeriesMutation.isPending}
                     >
-                      {cancelSeriesMutation.isPending ? "Cancelling..." : "Cancel Series"}
+                      {cancelSeriesMutation.isPending
+                        ? "Cancelling..."
+                        : "Cancel Series"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

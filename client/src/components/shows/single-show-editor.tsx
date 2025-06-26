@@ -9,12 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertShowSchema } from "@shared/schema";
 import { format } from "date-fns";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -46,15 +41,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Save, 
-  Calendar, 
+import {
+  Save,
+  Calendar,
   X,
   Users,
   Briefcase,
   Monitor,
   Trash2,
-  Copy
+  Copy,
 } from "lucide-react";
 import { ColorPicker } from "@/components/ui/color-picker";
 
@@ -74,7 +69,11 @@ interface SingleShowEditorProps {
   onSave?: (data: any) => void;
 }
 
-export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProps) {
+export function SingleShowEditor({
+  show,
+  onClose,
+  onSave,
+}: SingleShowEditorProps) {
   const { currentWorkspace } = useCurrentWorkspace();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -120,10 +119,18 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
     defaultValues: {
       title: show?.title || "",
       description: show?.description || "",
-      startDate: show?.startTime ? format(new Date(show.startTime), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-      startTime: show?.startTime ? format(new Date(show.startTime), "HH:mm") : "09:00",
-      endDate: show?.endTime ? format(new Date(show.endTime), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-      endTime: show?.endTime ? format(new Date(show.endTime), "HH:mm") : "10:00",
+      startDate: show?.startTime
+        ? format(new Date(show.startTime), "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd"),
+      startTime: show?.startTime
+        ? format(new Date(show.startTime), "HH:mm")
+        : "09:00",
+      endDate: show?.endTime
+        ? format(new Date(show.endTime), "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd"),
+      endTime: show?.endTime
+        ? format(new Date(show.endTime), "HH:mm")
+        : "10:00",
       status: show?.status || "scheduled",
       color: show?.color || "#3b82f6",
       notes: show?.notes || "",
@@ -176,8 +183,10 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
         title: "Show Updated",
         description: "Changes saved to this show only",
       });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${show.id}`] });
       onSave?.(savedShow);
       onClose();
@@ -216,8 +225,10 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
         title: "Applied to Future",
         description: "Changes applied to this and all future occurrences",
       });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
       onClose();
     },
     onError: (error: any) => {
@@ -241,8 +252,10 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
         title: "Show Deleted",
         description: "This show occurrence has been deleted",
       });
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
       onClose();
     },
     onError: (error: any) => {
@@ -267,7 +280,9 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${show.id}/required-jobs`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${show.id}/required-jobs`],
+      });
     },
   });
 
@@ -278,7 +293,9 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${show.id}/required-jobs`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${show.id}/required-jobs`],
+      });
     },
   });
 
@@ -295,7 +312,9 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${show.id}/resources`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${show.id}/resources`],
+      });
     },
   });
 
@@ -306,7 +325,9 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${show.id}/resources`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${show.id}/resources`],
+      });
     },
   });
 
@@ -333,7 +354,7 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
   const handleRemoveJob = (jobId: string) => {
     const requiredJob = requiredJobs.find((rj: any) => rj.jobId === jobId);
     if (requiredJob) {
-      setSelectedJobs(selectedJobs.filter(id => id !== jobId));
+      setSelectedJobs(selectedJobs.filter((id) => id !== jobId));
       removeRequiredJobMutation.mutate(requiredJob.id);
     }
   };
@@ -346,9 +367,11 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
   };
 
   const handleRemoveResource = (resourceId: string) => {
-    const showResource = showResources.find((sr: any) => sr.resourceId === resourceId);
+    const showResource = showResources.find(
+      (sr: any) => sr.resourceId === resourceId,
+    );
     if (showResource) {
-      setSelectedResources(selectedResources.filter(id => id !== resourceId));
+      setSelectedResources(selectedResources.filter((id) => id !== resourceId));
       removeShowResourceMutation.mutate(showResource.id);
     }
   };
@@ -403,7 +426,7 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Enter show description"
                           rows={3}
                           {...field}
@@ -421,7 +444,10 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select status" />
@@ -430,7 +456,9 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                           <SelectContent>
                             <SelectItem value="draft">Draft</SelectItem>
                             <SelectItem value="scheduled">Scheduled</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="in_progress">
+                              In Progress
+                            </SelectItem>
                             <SelectItem value="completed">Completed</SelectItem>
                             <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
@@ -546,7 +574,11 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                   {selectedJobs.map((jobId) => {
                     const job = jobs.find((j: any) => j.id === jobId);
                     return job ? (
-                      <Badge key={jobId} variant="secondary" className="flex items-center gap-2">
+                      <Badge
+                        key={jobId}
+                        variant="secondary"
+                        className="flex items-center gap-2"
+                      >
                         {job.title}
                         <Button
                           type="button"
@@ -566,11 +598,13 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                     <SelectValue placeholder="Add required job..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {jobs.filter((job: any) => !selectedJobs.includes(job.id)).map((job: any) => (
-                      <SelectItem key={job.id} value={job.id}>
-                        {job.title}
-                      </SelectItem>
-                    ))}
+                    {jobs
+                      .filter((job: any) => !selectedJobs.includes(job.id))
+                      .map((job: any) => (
+                        <SelectItem key={job.id} value={job.id}>
+                          {job.title}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -589,9 +623,15 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                   {selectedResources.map((resourceId) => {
-                    const resource = resources.find((r: any) => r.id === resourceId);
+                    const resource = resources.find(
+                      (r: any) => r.id === resourceId,
+                    );
                     return resource ? (
-                      <Badge key={resourceId} variant="secondary" className="flex items-center gap-2">
+                      <Badge
+                        key={resourceId}
+                        variant="secondary"
+                        className="flex items-center gap-2"
+                      >
                         {resource.name}
                         <Badge variant="outline" className="text-xs">
                           {resource.type}
@@ -614,11 +654,16 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                     <SelectValue placeholder="Add resource..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {resources.filter((resource: any) => !selectedResources.includes(resource.id)).map((resource: any) => (
-                      <SelectItem key={resource.id} value={resource.id}>
-                        {resource.name} ({resource.type})
-                      </SelectItem>
-                    ))}
+                    {resources
+                      .filter(
+                        (resource: any) =>
+                          !selectedResources.includes(resource.id),
+                      )
+                      .map((resource: any) => (
+                        <SelectItem key={resource.id} value={resource.id}>
+                          {resource.name} ({resource.type})
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -637,20 +682,34 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
               {crewAssignments.length > 0 ? (
                 <div className="space-y-2">
                   {crewAssignments.map((assignment: any) => {
-                    const crewMember = crewMembers.find((cm: any) => cm.id === assignment.crewMemberId);
-                    const job = jobs.find((j: any) => j.id === assignment.jobId);
-                    
+                    const crewMember = crewMembers.find(
+                      (cm: any) => cm.id === assignment.crewMemberId,
+                    );
+                    const job = jobs.find(
+                      (j: any) => j.id === assignment.jobId,
+                    );
+
                     return (
-                      <div key={assignment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div
+                        key={assignment.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
                         <div className="flex items-center gap-3">
                           <div>
                             <p className="font-medium">{crewMember?.name}</p>
-                            <p className="text-sm text-gray-600">{job?.title}</p>
+                            <p className="text-sm text-gray-600">
+                              {job?.title}
+                            </p>
                           </div>
-                          <Badge variant={
-                            assignment.status === "confirmed" ? "default" :
-                            assignment.status === "declined" ? "destructive" : "secondary"
-                          }>
+                          <Badge
+                            variant={
+                              assignment.status === "confirmed"
+                                ? "default"
+                                : assignment.status === "declined"
+                                  ? "destructive"
+                                  : "secondary"
+                            }
+                          >
                             {assignment.status}
                           </Badge>
                         </div>
@@ -659,7 +718,9 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                   })}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">No crew assignments yet</p>
+                <p className="text-gray-500 text-center py-4">
+                  No crew assignments yet
+                </p>
               )}
             </CardContent>
           </Card>
@@ -676,7 +737,7 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Add any notes specific to this show..."
                         rows={3}
                         {...field}
@@ -710,14 +771,19 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                   className="flex items-center gap-2"
                 >
                   <Copy className="h-4 w-4" />
-                  {applyToFutureMutation.isPending ? "Applying..." : "Apply to Future"}
+                  {applyToFutureMutation.isPending
+                    ? "Applying..."
+                    : "Apply to Future"}
                 </Button>
               )}
             </div>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
+                <Button
+                  variant="outline"
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete This Occurrence
                 </Button>
@@ -726,7 +792,9 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Show Occurrence</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will delete only this specific show occurrence. Other shows in the series will not be affected. This action cannot be undone.
+                    This will delete only this specific show occurrence. Other
+                    shows in the series will not be affected. This action cannot
+                    be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -736,7 +804,9 @@ export function SingleShowEditor({ show, onClose, onSave }: SingleShowEditorProp
                     className="bg-red-600 hover:bg-red-700"
                     disabled={deleteOccurrenceMutation.isPending}
                   >
-                    {deleteOccurrenceMutation.isPending ? "Deleting..." : "Delete This Occurrence"}
+                    {deleteOccurrenceMutation.isPending
+                      ? "Deleting..."
+                      : "Delete This Occurrence"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

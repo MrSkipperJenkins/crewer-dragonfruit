@@ -53,7 +53,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlusIcon, SearchIcon, ChevronUpIcon, ChevronDownIcon, Pencil, Trash2 } from "lucide-react";
+import {
+  PlusIcon,
+  SearchIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 // Extend the insert schema for form validation
 const formSchema = insertCrewMemberSchema.extend({
@@ -72,8 +79,8 @@ type FormValues = z.infer<typeof formSchema> & {
   selectedJobs: string[];
 };
 
-type SortField = 'name' | 'title';
-type SortDirection = 'asc' | 'desc';
+type SortField = "name" | "title";
+type SortDirection = "asc" | "desc";
 
 export default function CrewMembers() {
   const { currentWorkspace } = useCurrentWorkspace();
@@ -83,21 +90,21 @@ export default function CrewMembers() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CrewMember | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
   // Fetch crew members with qualified jobs
   const { data: crewMembers = [], isLoading } = useQuery<any[]>({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
     enabled: !!currentWorkspace?.id,
   });
-  
+
   // Fetch jobs for selection
   const { data: jobs = [] } = useQuery<any[]>({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
     enabled: !!currentWorkspace?.id,
   });
-  
+
   // Initialize form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -123,27 +130,31 @@ export default function CrewMembers() {
       selectedJobs: [],
     },
   });
-  
+
   // Create crew member mutation
   const createCrewMemberMutation = useMutation({
     mutationFn: async (data: FormValues) => {
       const { selectedJobs, ...crewMemberData } = data;
-      
+
       // Create crew member
-      const response = await apiRequest("POST", "/api/crew-members", crewMemberData);
+      const response = await apiRequest(
+        "POST",
+        "/api/crew-members",
+        crewMemberData,
+      );
       const crewMember = await response.json();
-      
+
       // Assign jobs to crew member
-      const promises = selectedJobs.map(jobId => 
+      const promises = selectedJobs.map((jobId) =>
         apiRequest("POST", "/api/crew-member-jobs", {
           crewMemberId: crewMember.id,
           jobId,
           workspaceId: currentWorkspace?.id,
-        })
+        }),
       );
-      
+
       await Promise.all(promises);
-      
+
       return crewMember;
     },
     onSuccess: () => {
@@ -151,7 +162,9 @@ export default function CrewMembers() {
         title: "Success",
         description: "Crew member created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
+      });
       form.reset();
       setIsDialogOpen(false);
     },
@@ -163,7 +176,7 @@ export default function CrewMembers() {
       });
     },
   });
-  
+
   // Form submission handler
   const onSubmit = (data: FormValues) => {
     if (!currentWorkspace?.id) {
@@ -174,10 +187,10 @@ export default function CrewMembers() {
       });
       return;
     }
-    
+
     // Add workspaceId to the data
     data.workspaceId = currentWorkspace.id;
-    
+
     // Submit mutation
     createCrewMemberMutation.mutate(data);
   };
@@ -192,10 +205,10 @@ export default function CrewMembers() {
       });
       return;
     }
-    
+
     // Add workspaceId and member id to the data
     data.workspaceId = currentWorkspace.id;
-    
+
     // Submit update mutation
     updateCrewMemberMutation.mutate({ ...data, id: editingMember.id });
   };
@@ -203,10 +216,10 @@ export default function CrewMembers() {
   // Handle sorting
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -228,37 +241,48 @@ export default function CrewMembers() {
   const updateCrewMemberMutation = useMutation({
     mutationFn: async (data: FormValues & { id: string }) => {
       const { selectedJobs, id, ...crewMemberData } = data;
-      
+
       // Update crew member
-      const response = await apiRequest("PUT", `/api/crew-members/${id}`, crewMemberData);
+      const response = await apiRequest(
+        "PUT",
+        `/api/crew-members/${id}`,
+        crewMemberData,
+      );
       const crewMember = await response.json();
-      
+
       // Get existing job assignments
-      const existingJobs = await apiRequest("GET", `/api/crew-members/${id}/jobs`);
+      const existingJobs = await apiRequest(
+        "GET",
+        `/api/crew-members/${id}/jobs`,
+      );
       const existingJobsData = await existingJobs.json();
       const existingJobIds = existingJobsData.map((job: any) => job.jobId);
-      
+
       // Find jobs to remove and jobs to add
-      const jobsToRemove = existingJobsData.filter((job: any) => !selectedJobs.includes(job.jobId));
-      const jobsToAdd = selectedJobs.filter((jobId: string) => !existingJobIds.includes(jobId));
-      
-      // Remove unselected jobs
-      const deletePromises = jobsToRemove.map((job: any) => 
-        apiRequest("DELETE", `/api/crew-member-jobs/${job.id}`)
+      const jobsToRemove = existingJobsData.filter(
+        (job: any) => !selectedJobs.includes(job.jobId),
       );
-      
+      const jobsToAdd = selectedJobs.filter(
+        (jobId: string) => !existingJobIds.includes(jobId),
+      );
+
+      // Remove unselected jobs
+      const deletePromises = jobsToRemove.map((job: any) =>
+        apiRequest("DELETE", `/api/crew-member-jobs/${job.id}`),
+      );
+
       // Add new selected jobs
-      const createPromises = jobsToAdd.map((jobId: string) => 
+      const createPromises = jobsToAdd.map((jobId: string) =>
         apiRequest("POST", "/api/crew-member-jobs", {
           crewMemberId: id,
           jobId,
           workspaceId: currentWorkspace?.id,
-        })
+        }),
       );
-      
+
       // Execute all operations
       await Promise.all([...deletePromises, ...createPromises]);
-      
+
       return crewMember;
     },
     onSuccess: () => {
@@ -266,7 +290,9 @@ export default function CrewMembers() {
         title: "Success",
         description: "Crew member updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
+      });
       editForm.reset();
       setIsEditDialogOpen(false);
     },
@@ -289,7 +315,9 @@ export default function CrewMembers() {
         title: "Success",
         description: "Crew member deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
+      });
     },
     onError: () => {
       toast({
@@ -306,12 +334,12 @@ export default function CrewMembers() {
       deleteCrewMemberMutation.mutate(member.id);
     }
   };
-  
+
   // Filter and sort crew members
   const filteredAndSortedCrewMembers = crewMembers
     .filter((member) => {
       if (!searchQuery) return true;
-      
+
       return (
         member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -321,20 +349,20 @@ export default function CrewMembers() {
     .sort((a, b) => {
       const aValue = a[sortField].toLowerCase();
       const bValue = b[sortField].toLowerCase();
-      
-      if (sortDirection === 'asc') {
+
+      if (sortDirection === "asc") {
         return aValue.localeCompare(bValue);
       } else {
         return bValue.localeCompare(aValue);
       }
     });
-  
+
   // Get initials for avatar
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   };
@@ -357,7 +385,8 @@ export default function CrewMembers() {
                   <DialogHeader>
                     <DialogTitle>Add New Crew Member</DialogTitle>
                     <DialogDescription>
-                      Enter the details of the crew member and assign their qualified jobs.
+                      Enter the details of the crew member and assign their
+                      qualified jobs.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -374,7 +403,7 @@ export default function CrewMembers() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -383,13 +412,17 @@ export default function CrewMembers() {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Email address" {...field} />
+                              <Input
+                                type="email"
+                                placeholder="Email address"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="phone"
@@ -397,14 +430,18 @@ export default function CrewMembers() {
                           <FormItem>
                             <FormLabel>Phone</FormLabel>
                             <FormControl>
-                              <Input placeholder="Phone number" value={field.value || ""} onChange={field.onChange} />
+                              <Input
+                                placeholder="Phone number"
+                                value={field.value || ""}
+                                onChange={field.onChange}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-                    
+
                     <FormField
                       control={form.control}
                       name="title"
@@ -412,13 +449,16 @@ export default function CrewMembers() {
                         <FormItem>
                           <FormLabel>Title/Position</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Camera Operator" {...field} />
+                            <Input
+                              placeholder="e.g. Camera Operator"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="space-y-2">
                       <FormLabel>Qualified Jobs</FormLabel>
                       <div className="grid grid-cols-2 gap-2">
@@ -437,12 +477,19 @@ export default function CrewMembers() {
                                     <Checkbox
                                       checked={field.value?.includes(job.id)}
                                       onCheckedChange={(checked) => {
-                                        const currentValue = [...(field.value || [])];
+                                        const currentValue = [
+                                          ...(field.value || []),
+                                        ];
                                         if (checked) {
-                                          field.onChange([...currentValue, job.id]);
+                                          field.onChange([
+                                            ...currentValue,
+                                            job.id,
+                                          ]);
                                         } else {
                                           field.onChange(
-                                            currentValue.filter((value) => value !== job.id)
+                                            currentValue.filter(
+                                              (value) => value !== job.id,
+                                            ),
                                           );
                                         }
                                       }}
@@ -463,11 +510,13 @@ export default function CrewMembers() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={createCrewMemberMutation.isPending}
                     >
-                      {createCrewMemberMutation.isPending ? "Saving..." : "Save Crew Member"}
+                      {createCrewMemberMutation.isPending
+                        ? "Saving..."
+                        : "Save Crew Member"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -492,36 +541,40 @@ export default function CrewMembers() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[250px]">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="h-auto p-0 font-semibold hover:bg-transparent"
-                      onClick={() => handleSort('name')}
+                      onClick={() => handleSort("name")}
                     >
                       Name
-                      {sortField === 'name' && (
-                        sortDirection === 'asc' ? 
-                        <ChevronUpIcon className="ml-1 h-4 w-4" /> : 
-                        <ChevronDownIcon className="ml-1 h-4 w-4" />
-                      )}
+                      {sortField === "name" &&
+                        (sortDirection === "asc" ? (
+                          <ChevronUpIcon className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="ml-1 h-4 w-4" />
+                        ))}
                     </Button>
                   </TableHead>
                   <TableHead>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="h-auto p-0 font-semibold hover:bg-transparent"
-                      onClick={() => handleSort('title')}
+                      onClick={() => handleSort("title")}
                     >
                       Title
-                      {sortField === 'title' && (
-                        sortDirection === 'asc' ? 
-                        <ChevronUpIcon className="ml-1 h-4 w-4" /> : 
-                        <ChevronDownIcon className="ml-1 h-4 w-4" />
-                      )}
+                      {sortField === "title" &&
+                        (sortDirection === "asc" ? (
+                          <ChevronUpIcon className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="ml-1 h-4 w-4" />
+                        ))}
                     </Button>
                   </TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Qualified Jobs</TableHead>
-                  <TableHead className="text-right w-[100px]">Actions</TableHead>
+                  <TableHead className="text-right w-[100px]">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -537,7 +590,10 @@ export default function CrewMembers() {
 
                 {!isLoading && filteredAndSortedCrewMembers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-8 text-gray-500"
+                    >
                       No crew members found
                     </TableCell>
                   </TableRow>
@@ -548,8 +604,12 @@ export default function CrewMembers() {
                     <TableCell className="font-medium">
                       <div className="flex items-center space-x-3">
                         <Avatar>
-                          <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`} />
-                          <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                          <AvatarImage
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`}
+                          />
+                          <AvatarFallback>
+                            {getInitials(member.name)}
+                          </AvatarFallback>
                         </Avatar>
                         <div>{member.name}</div>
                       </div>
@@ -557,11 +617,14 @@ export default function CrewMembers() {
                     <TableCell>{member.title}</TableCell>
                     <TableCell>
                       <div>{member.email}</div>
-                      <div className="text-gray-500 text-sm">{member.phone}</div>
+                      <div className="text-gray-500 text-sm">
+                        {member.phone}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {member.qualifiedJobs && member.qualifiedJobs.length > 0 ? (
+                        {member.qualifiedJobs &&
+                        member.qualifiedJobs.length > 0 ? (
                           member.qualifiedJobs.map((job: any) => (
                             <span
                               key={job.id}
@@ -571,21 +634,23 @@ export default function CrewMembers() {
                             </span>
                           ))
                         ) : (
-                          <span className="text-gray-400 text-sm">No jobs assigned</span>
+                          <span className="text-gray-400 text-sm">
+                            No jobs assigned
+                          </span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleEditClick(member)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteClick(member)}
                           disabled={deleteCrewMemberMutation.isPending}
@@ -627,7 +692,7 @@ export default function CrewMembers() {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={editForm.control}
@@ -636,13 +701,17 @@ export default function CrewMembers() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="Email address" {...field} />
+                          <Input
+                            type="email"
+                            placeholder="Email address"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={editForm.control}
                     name="phone"
@@ -650,14 +719,18 @@ export default function CrewMembers() {
                       <FormItem>
                         <FormLabel>Phone</FormLabel>
                         <FormControl>
-                          <Input placeholder="Phone number" value={field.value || ""} onChange={field.onChange} />
+                          <Input
+                            placeholder="Phone number"
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                
+
                 <FormField
                   control={editForm.control}
                   name="title"
@@ -671,7 +744,7 @@ export default function CrewMembers() {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="space-y-2">
                   <FormLabel>Qualified Jobs</FormLabel>
                   <div className="grid grid-cols-2 gap-2">
@@ -690,12 +763,16 @@ export default function CrewMembers() {
                                 <Checkbox
                                   checked={field.value?.includes(job.id)}
                                   onCheckedChange={(checked) => {
-                                    const currentValue = [...(field.value || [])];
+                                    const currentValue = [
+                                      ...(field.value || []),
+                                    ];
                                     if (checked) {
                                       field.onChange([...currentValue, job.id]);
                                     } else {
                                       field.onChange(
-                                        currentValue.filter((value) => value !== job.id)
+                                        currentValue.filter(
+                                          (value) => value !== job.id,
+                                        ),
                                       );
                                     }
                                   }}
@@ -716,14 +793,19 @@ export default function CrewMembers() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={updateCrewMemberMutation.isPending}
                 >
-                  {updateCrewMemberMutation.isPending ? "Updating..." : "Update Crew Member"}
+                  {updateCrewMemberMutation.isPending
+                    ? "Updating..."
+                    : "Update Crew Member"}
                 </Button>
               </DialogFooter>
             </form>

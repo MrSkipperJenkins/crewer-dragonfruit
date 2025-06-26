@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 /* Prevent over-scrolling and ensure proper height constraints */
-html, body {
+html,
+body {
   height: 100%;
   overflow-x: hidden;
   overscroll-behavior: none;
@@ -223,7 +224,9 @@ html, body {
 
 .fc .fc-event:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .fc .fc-event-title {
@@ -360,7 +363,9 @@ html, body {
 .fc .fc-popover {
   border: 1px solid var(--fc-border-color);
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   background-color: white;
 }
 
@@ -404,16 +409,16 @@ html, body {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .fc .fc-toolbar-chunk {
     display: flex;
     justify-content: center;
   }
-  
+
   .fc .fc-daygrid-day-number {
     font-size: 0.75rem;
   }
-  
+
   .fc .fc-event {
     font-size: 0.6875rem;
     padding: 0.125rem 0.25rem;
@@ -421,73 +426,73 @@ html, body {
 }
 
 :root {
-      --background: 0 0% 100%;
---foreground: 20 14.3% 4.1%;
---muted: 60 4.8% 95.9%;
---muted-foreground: 25 5.3% 44.7%;
---popover: 0 0% 100%;
---popover-foreground: 20 14.3% 4.1%;
---card: 0 0% 100%;
---card-foreground: 20 14.3% 4.1%;
---border: 20 5.9% 90%;
---input: 20 5.9% 90%;
---primary: 207 90% 54%;
---primary-foreground: 211 100% 99%;
---secondary: 60 4.8% 95.9%;
---secondary-foreground: 24 9.8% 10%;
---accent: 60 4.8% 95.9%;
---accent-foreground: 24 9.8% 10%;
---destructive: 0 84.2% 60.2%;
---destructive-foreground: 60 9.1% 97.8%;
---ring: 20 14.3% 4.1%;
---radius: 0.5rem;
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 207 90% 54%;
+  --primary-foreground: 211 100% 99%;
+  --secondary: 60 4.8% 95.9%;
+  --secondary-foreground: 24 9.8% 10%;
+  --accent: 60 4.8% 95.9%;
+  --accent-foreground: 24 9.8% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.5rem;
 
-/* FullCalendar theme variables */
---fc-default-bg: #3b82f6;
---fc-default-text: #ffffff;
---fc-theme-border: hsl(var(--border));
---fc-theme-button-bg: hsl(var(--primary));
---fc-theme-button-text: hsl(var(--primary-foreground));
-  }
-  .dark {
-      --background: 240 10% 3.9%;
---foreground: 0 0% 98%;
---muted: 240 3.7% 15.9%;
---muted-foreground: 240 5% 64.9%;
---popover: 240 10% 3.9%;
---popover-foreground: 0 0% 98%;
---card: 240 10% 3.9%;
---card-foreground: 0 0% 98%;
---border: 240 3.7% 15.9%;
---input: 240 3.7% 15.9%;
---primary: 207 90% 54%;
---primary-foreground: 211 100% 99%;
---secondary: 240 3.7% 15.9%;
---secondary-foreground: 0 0% 98%;
---accent: 240 3.7% 15.9%;
---accent-foreground: 0 0% 98%;
---destructive: 0 62.8% 30.6%;
---destructive-foreground: 0 0% 98%;
---ring: 240 4.9% 83.9%;
---radius: 0.5rem;
+  /* FullCalendar theme variables */
+  --fc-default-bg: #3b82f6;
+  --fc-default-text: #ffffff;
+  --fc-theme-border: hsl(var(--border));
+  --fc-theme-button-bg: hsl(var(--primary));
+  --fc-theme-button-text: hsl(var(--primary-foreground));
+}
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 207 90% 54%;
+  --primary-foreground: 211 100% 99%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
 
-/* FullCalendar dark theme variables */
---fc-default-bg: #2563eb;
---fc-default-text: #e5e7eb;
---fc-theme-border: hsl(var(--border));
---fc-theme-button-bg: hsl(var(--primary));
---fc-theme-button-text: hsl(var(--primary-foreground));
+  /* FullCalendar dark theme variables */
+  --fc-default-bg: #2563eb;
+  --fc-default-text: #e5e7eb;
+  --fc-theme-border: hsl(var(--border));
+  --fc-theme-button-bg: hsl(var(--primary));
+  --fc-theme-button-text: hsl(var(--primary-foreground));
 
-/* Dark mode button colors */
---fc-button-text-color: #e5e7eb;
---fc-button-bg-color: #374151;
---fc-button-border-color: #4b5563;
---fc-button-hover-bg-color: #4b5563;
---fc-button-hover-border-color: #6b7280;
---fc-button-active-bg-color: #3b82f6;
---fc-button-active-border-color: #3b82f6;
---fc-border-color: #374151;
-  }
+  /* Dark mode button colors */
+  --fc-button-text-color: #e5e7eb;
+  --fc-button-bg-color: #374151;
+  --fc-button-border-color: #4b5563;
+  --fc-button-hover-bg-color: #4b5563;
+  --fc-button-hover-border-color: #6b7280;
+  --fc-button-active-bg-color: #3b82f6;
+  --fc-button-active-border-color: #3b82f6;
+  --fc-border-color: #374151;
+}
 
 @layer base {
   * {

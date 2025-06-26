@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { 
+import {
   insertWorkspaceSchema,
   workspaceInviteSchema,
   insertUserSchema,
@@ -19,7 +19,7 @@ import {
   insertCrewScheduleSchema,
   insertCrewTimeOffSchema,
   insertNotificationSchema,
-  insertEarlyAccessSignupSchema
+  insertEarlyAccessSignupSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -47,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!slug) {
       return res.status(400).json({ message: "Slug parameter is required" });
     }
-    
+
     try {
       const isAvailable = await storage.isWorkspaceSlugAvailable(slug);
       res.json({ available: isAvailable });
@@ -68,7 +68,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertWorkspaceSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid workspace data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid workspace data",
+          errors: validation.error.errors,
+        });
       }
       const workspace = await storage.createWorkspace(validation.data);
       res.status(201).json(workspace);
@@ -83,46 +86,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!workspaceSlug) {
         return res.status(400).json({ message: "Workspace slug is required" });
       }
-      
+
       const workspace = await storage.getWorkspaceBySlug(workspaceSlug);
       if (!workspace) {
         return res.status(404).json({ message: "Workspace not found" });
       }
-      
+
       // Update last accessed timestamp
       await storage.updateWorkspaceLastAccessed(workspace.id);
-      
+
       res.json({ success: true, workspace });
     } catch (error) {
       res.status(500).json({ message: "Failed to switch workspace" });
     }
   });
 
-
-
   // Workspace invitations
   app.post("/api/workspaces/:slug/invites", async (req, res) => {
     try {
       const validation = workspaceInviteSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid invite data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid invite data",
+          errors: validation.error.errors,
+        });
       }
-      
+
       const workspace = await storage.getWorkspaceBySlug(req.params.slug);
       if (!workspace) {
         return res.status(404).json({ message: "Workspace not found" });
       }
 
       // For now, just return success - in a real app you'd send actual emails
-      const invites = validation.data.emails.map(email => ({
+      const invites = validation.data.emails.map((email) => ({
         id: crypto.randomUUID(),
         email,
         workspaceId: workspace.id,
         token: crypto.randomUUID(),
-        invitedAt: new Date().toISOString()
+        invitedAt: new Date().toISOString(),
       }));
-      
-      res.status(201).json({ invites, inviteLink: `${req.get('origin')}/join/${workspace.slug}` });
+
+      res.status(201).json({
+        invites,
+        inviteLink: `${req.get("origin")}/join/${workspace.slug}`,
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to send invites" });
     }
@@ -132,9 +139,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertWorkspaceSchema.partial().safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid workspace data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid workspace data",
+          errors: validation.error.errors,
+        });
       }
-      const workspace = await storage.updateWorkspace(req.params.id, validation.data);
+      const workspace = await storage.updateWorkspace(
+        req.params.id,
+        validation.data,
+      );
       if (!workspace) {
         return res.status(404).json({ message: "Workspace not found" });
       }
@@ -170,7 +183,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertUserSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid user data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid user data",
+          errors: validation.error.errors,
+        });
       }
       const user = await storage.createUser(validation.data);
       res.status(201).json(user);
@@ -197,7 +213,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertCrewMemberSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid crew member data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew member data",
+          errors: validation.error.errors,
+        });
       }
       const crewMember = await storage.createCrewMember(validation.data);
       res.status(201).json(crewMember);
@@ -210,9 +229,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertCrewMemberSchema.partial().safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid crew member data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew member data",
+          errors: validation.error.errors,
+        });
       }
-      const crewMember = await storage.updateCrewMember(req.params.id, validation.data);
+      const crewMember = await storage.updateCrewMember(
+        req.params.id,
+        validation.data,
+      );
       if (!crewMember) {
         return res.status(404).json({ message: "Crew member not found" });
       }
@@ -252,7 +277,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertJobSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid job data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid job data",
+          errors: validation.error.errors,
+        });
       }
       const job = await storage.createJob(validation.data);
       res.status(201).json(job);
@@ -265,7 +293,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertJobSchema.partial().safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid job data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid job data",
+          errors: validation.error.errors,
+        });
       }
       const job = await storage.updateJob(req.params.id, validation.data);
       if (!job) {
@@ -291,7 +322,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Crew Member Jobs
   app.get("/api/crew-members/:crewMemberId/jobs", async (req, res) => {
-    const crewMemberJobs = await storage.getCrewMemberJobsByCrewMember(req.params.crewMemberId);
+    const crewMemberJobs = await storage.getCrewMemberJobsByCrewMember(
+      req.params.crewMemberId,
+    );
     res.json(crewMemberJobs);
   });
 
@@ -299,7 +332,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertCrewMemberJobSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid crew member job data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew member job data",
+          errors: validation.error.errors,
+        });
       }
       const crewMemberJob = await storage.createCrewMemberJob(validation.data);
       res.status(201).json(crewMemberJob);
@@ -338,7 +374,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertResourceSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid resource data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid resource data",
+          errors: validation.error.errors,
+        });
       }
       const resource = await storage.createResource(validation.data);
       res.status(201).json(resource);
@@ -351,9 +390,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertResourceSchema.partial().safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid resource data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid resource data",
+          errors: validation.error.errors,
+        });
       }
-      const resource = await storage.updateResource(req.params.id, validation.data);
+      const resource = await storage.updateResource(
+        req.params.id,
+        validation.data,
+      );
       if (!resource) {
         return res.status(404).json({ message: "Resource not found" });
       }
@@ -385,7 +430,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertShowCategorySchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid show category data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid show category data",
+          errors: validation.error.errors,
+        });
       }
       const category = await storage.createShowCategory(validation.data);
       res.status(201).json(category);
@@ -455,7 +503,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/productions/:productionId/show-templates", async (req, res) => {
     try {
       const { productionId } = req.params;
-      const templates = await storage.getShowTemplatesByProduction(productionId);
+      const templates =
+        await storage.getShowTemplatesByProduction(productionId);
       res.json(templates);
     } catch (error) {
       console.error("Error fetching production templates:", error);
@@ -509,28 +558,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/show-templates/:templateId/scheduled-events", async (req, res) => {
-    try {
-      const { templateId } = req.params;
-      const events = await storage.getScheduledEventsByTemplate(templateId);
-      res.json(events);
-    } catch (error) {
-      console.error("Error fetching template events:", error);
-      res.status(500).json({ error: "Failed to fetch template events" });
-    }
-  });
+  app.get(
+    "/api/show-templates/:templateId/scheduled-events",
+    async (req, res) => {
+      try {
+        const { templateId } = req.params;
+        const events = await storage.getScheduledEventsByTemplate(templateId);
+        res.json(events);
+      } catch (error) {
+        console.error("Error fetching template events:", error);
+        res.status(500).json({ error: "Failed to fetch template events" });
+      }
+    },
+  );
 
-  app.post("/api/workspaces/:workspaceId/scheduled-events", async (req, res) => {
-    try {
-      const { workspaceId } = req.params;
-      const eventData = { ...req.body, workspaceId };
-      const event = await storage.createScheduledEvent(eventData);
-      res.status(201).json(event);
-    } catch (error) {
-      console.error("Error creating scheduled event:", error);
-      res.status(500).json({ error: "Failed to create scheduled event" });
-    }
-  });
+  app.post(
+    "/api/workspaces/:workspaceId/scheduled-events",
+    async (req, res) => {
+      try {
+        const { workspaceId } = req.params;
+        const eventData = { ...req.body, workspaceId };
+        const event = await storage.createScheduledEvent(eventData);
+        res.status(201).json(event);
+      } catch (error) {
+        console.error("Error creating scheduled event:", error);
+        res.status(500).json({ error: "Failed to create scheduled event" });
+      }
+    },
+  );
 
   app.put("/api/scheduled-events/:id", async (req, res) => {
     try {
@@ -566,17 +621,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/show-templates/:templateId/required-jobs", async (req, res) => {
-    try {
-      const { templateId } = req.params;
-      const requiredJobData = { ...req.body, templateId };
-      const requiredJob = await storage.createTemplateRequiredJob(requiredJobData);
-      res.status(201).json(requiredJob);
-    } catch (error) {
-      console.error("Error creating template required job:", error);
-      res.status(500).json({ error: "Failed to create template required job" });
-    }
-  });
+  app.post(
+    "/api/show-templates/:templateId/required-jobs",
+    async (req, res) => {
+      try {
+        const { templateId } = req.params;
+        const requiredJobData = { ...req.body, templateId };
+        const requiredJob =
+          await storage.createTemplateRequiredJob(requiredJobData);
+        res.status(201).json(requiredJob);
+      } catch (error) {
+        console.error("Error creating template required job:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to create template required job" });
+      }
+    },
+  );
 
   app.delete("/api/template-required-jobs/:id", async (req, res) => {
     try {
@@ -624,68 +685,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Event Assignments
-  app.get("/api/scheduled-events/:eventId/crew-assignments", async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const assignments = await storage.getEventCrewAssignments(eventId);
-      res.json(assignments);
-    } catch (error) {
-      console.error("Error fetching event crew assignments:", error);
-      res.status(500).json({ error: "Failed to fetch event crew assignments" });
-    }
-  });
+  app.get(
+    "/api/scheduled-events/:eventId/crew-assignments",
+    async (req, res) => {
+      try {
+        const { eventId } = req.params;
+        const assignments = await storage.getEventCrewAssignments(eventId);
+        res.json(assignments);
+      } catch (error) {
+        console.error("Error fetching event crew assignments:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch event crew assignments" });
+      }
+    },
+  );
 
-  app.post("/api/scheduled-events/:eventId/crew-assignments", async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const assignmentData = { ...req.body, eventId };
-      const assignment = await storage.createEventCrewAssignment(assignmentData);
-      res.status(201).json(assignment);
-    } catch (error) {
-      console.error("Error creating event crew assignment:", error);
-      res.status(500).json({ error: "Failed to create event crew assignment" });
-    }
-  });
+  app.post(
+    "/api/scheduled-events/:eventId/crew-assignments",
+    async (req, res) => {
+      try {
+        const { eventId } = req.params;
+        const assignmentData = { ...req.body, eventId };
+        const assignment =
+          await storage.createEventCrewAssignment(assignmentData);
+        res.status(201).json(assignment);
+      } catch (error) {
+        console.error("Error creating event crew assignment:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to create event crew assignment" });
+      }
+    },
+  );
 
-  app.get("/api/scheduled-events/:eventId/resource-assignments", async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const assignments = await storage.getEventResourceAssignments(eventId);
-      res.json(assignments);
-    } catch (error) {
-      console.error("Error fetching event resource assignments:", error);
-      res.status(500).json({ error: "Failed to fetch event resource assignments" });
-    }
-  });
+  app.get(
+    "/api/scheduled-events/:eventId/resource-assignments",
+    async (req, res) => {
+      try {
+        const { eventId } = req.params;
+        const assignments = await storage.getEventResourceAssignments(eventId);
+        res.json(assignments);
+      } catch (error) {
+        console.error("Error fetching event resource assignments:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch event resource assignments" });
+      }
+    },
+  );
 
-  app.post("/api/scheduled-events/:eventId/resource-assignments", async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const assignmentData = { ...req.body, eventId };
-      const assignment = await storage.createEventResourceAssignment(assignmentData);
-      res.status(201).json(assignment);
-    } catch (error) {
-      console.error("Error creating event resource assignment:", error);
-      res.status(500).json({ error: "Failed to create event resource assignment" });
-    }
-  });
+  app.post(
+    "/api/scheduled-events/:eventId/resource-assignments",
+    async (req, res) => {
+      try {
+        const { eventId } = req.params;
+        const assignmentData = { ...req.body, eventId };
+        const assignment =
+          await storage.createEventResourceAssignment(assignmentData);
+        res.status(201).json(assignment);
+      } catch (error) {
+        console.error("Error creating event resource assignment:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to create event resource assignment" });
+      }
+    },
+  );
 
   // Legacy Shows (maintained for backward compatibility)
   app.get("/api/workspaces/:workspaceId/shows", async (req, res) => {
     const { start, end } = req.query;
-    
+
     if (start && end) {
       const startDate = new Date(start as string);
       const endDate = new Date(end as string);
-      
+
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         return res.status(400).json({ message: "Invalid date range" });
       }
-      
-      const shows = await storage.getShowsInRange(req.params.workspaceId, startDate, endDate);
+
+      const shows = await storage.getShowsInRange(
+        req.params.workspaceId,
+        startDate,
+        endDate,
+      );
       return res.json(shows);
     }
-    
+
     const shows = await storage.getShows(req.params.workspaceId);
     res.json(shows);
   });
@@ -694,25 +781,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/shows/expand-recurring", async (req, res) => {
     try {
       const { start, end, workspaceId } = req.query;
-      
+
       if (!start || !end || !workspaceId) {
-        return res.status(400).json({ message: "start, end, and workspaceId parameters are required" });
+        return res.status(400).json({
+          message: "start, end, and workspaceId parameters are required",
+        });
       }
-      
+
       const startDate = new Date(start as string);
       const endDate = new Date(end as string);
-      
+
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         return res.status(400).json({ message: "Invalid date range" });
       }
-      
+
       // For now, return regular shows in range until RRule is properly implemented
-      const regularShows = await storage.getShowsInRange(workspaceId as string, startDate, endDate);
-      
+      const regularShows = await storage.getShowsInRange(
+        workspaceId as string,
+        startDate,
+        endDate,
+      );
+
       // Transform to match expected format
-      const transformedShows = regularShows.map(show => ({
+      const transformedShows = regularShows.map((show) => ({
         id: show.id,
-        parentId: show.parentId || '',
+        parentId: show.parentId || "",
         title: show.title,
         description: show.description,
         startTime: show.startTime.toISOString(),
@@ -720,11 +813,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: show.status,
         color: show.color,
         workspaceId: show.workspaceId,
-        recurringPattern: show.recurringPattern || '',
+        recurringPattern: show.recurringPattern || "",
         isRecurrence: false,
-        notes: show.notes
+        notes: show.notes,
       }));
-      
+
       res.json(transformedShows);
     } catch (error) {
       console.error("Error expanding recurring shows:", error);
@@ -745,15 +838,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert datetime-local strings to proper Date objects preserving local time
       const processedBody = {
         ...req.body,
-        startTime: req.body.startTime ? new Date(req.body.startTime) : undefined,
+        startTime: req.body.startTime
+          ? new Date(req.body.startTime)
+          : undefined,
         endTime: req.body.endTime ? new Date(req.body.endTime) : undefined,
       };
-      
+
       const validation = insertShowSchema.safeParse(processedBody);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid show data",
+          errors: validation.error.errors,
+        });
       }
-      
+
       const show = await storage.createShow(validation.data);
       res.status(201).json(show);
     } catch (error) {
@@ -764,25 +862,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/shows/:id", async (req, res) => {
     try {
       console.log("Show update request body:", req.body);
-      
+
       // Handle date conversion for calendar drag-and-drop
       const processedBody = { ...req.body };
-      if (processedBody.startTime && typeof processedBody.startTime === 'string') {
+      if (
+        processedBody.startTime &&
+        typeof processedBody.startTime === "string"
+      ) {
         processedBody.startTime = new Date(processedBody.startTime);
       }
-      if (processedBody.endTime && typeof processedBody.endTime === 'string') {
+      if (processedBody.endTime && typeof processedBody.endTime === "string") {
         processedBody.endTime = new Date(processedBody.endTime);
       }
-      
+
       console.log("Processed update data:", processedBody);
-      
+
       const validation = insertShowSchema.partial().safeParse(processedBody);
       if (!validation.success) {
         console.log("Validation errors:", validation.error.errors);
-        return res.status(400).json({ message: "Invalid show data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid show data",
+          errors: validation.error.errors,
+        });
       }
-      
-      console.log("About to call storage.updateShow with:", req.params.id, validation.data);
+
+      console.log(
+        "About to call storage.updateShow with:",
+        req.params.id,
+        validation.data,
+      );
       const show = await storage.updateShow(req.params.id, validation.data);
       console.log("Storage.updateShow returned:", show);
       if (!show) {
@@ -808,13 +916,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Show Categories Assignments
-  app.get("/api/workspaces/:workspaceId/show-category-assignments", async (req, res) => {
-    const assignments = await storage.getShowCategoryAssignments(req.params.workspaceId);
-    res.json(assignments);
-  });
+  app.get(
+    "/api/workspaces/:workspaceId/show-category-assignments",
+    async (req, res) => {
+      const assignments = await storage.getShowCategoryAssignments(
+        req.params.workspaceId,
+      );
+      res.json(assignments);
+    },
+  );
 
   app.get("/api/shows/:showId/categories", async (req, res) => {
-    const assignments = await storage.getShowCategoryAssignmentsByShow(req.params.showId);
+    const assignments = await storage.getShowCategoryAssignmentsByShow(
+      req.params.showId,
+    );
     res.json(assignments);
   });
 
@@ -822,9 +937,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertShowCategoryAssignmentSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid assignment data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid assignment data",
+          errors: validation.error.errors,
+        });
       }
-      const assignment = await storage.createShowCategoryAssignment(validation.data);
+      const assignment = await storage.createShowCategoryAssignment(
+        validation.data,
+      );
       res.status(201).json(assignment);
     } catch (error) {
       console.error("Failed to create category assignment:", error);
@@ -834,13 +954,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/show-category-assignments/:id", async (req, res) => {
     try {
-      const validation = insertShowCategoryAssignmentSchema.partial().safeParse(req.body);
+      const validation = insertShowCategoryAssignmentSchema
+        .partial()
+        .safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid assignment data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid assignment data",
+          errors: validation.error.errors,
+        });
       }
-      const assignment = await storage.updateShowCategoryAssignment(req.params.id, validation.data);
+      const assignment = await storage.updateShowCategoryAssignment(
+        req.params.id,
+        validation.data,
+      );
       if (!assignment) {
-        return res.status(404).json({ message: "Category assignment not found" });
+        return res
+          .status(404)
+          .json({ message: "Category assignment not found" });
       }
       res.json(assignment);
     } catch (error) {
@@ -853,7 +983,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const success = await storage.deleteShowCategoryAssignment(req.params.id);
       if (!success) {
-        return res.status(404).json({ message: "Category assignment not found" });
+        return res
+          .status(404)
+          .json({ message: "Category assignment not found" });
       }
       res.json({ success: true });
     } catch (error) {
@@ -872,7 +1004,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertRequiredJobSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid required job data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid required job data",
+          errors: validation.error.errors,
+        });
       }
       const requiredJob = await storage.createRequiredJob(validation.data);
       res.status(201).json(requiredJob);
@@ -896,7 +1031,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Show Resources
   app.get("/api/shows/:showId/resources", async (req, res) => {
-    const showResources = await storage.getShowResourcesByShow(req.params.showId);
+    const showResources = await storage.getShowResourcesByShow(
+      req.params.showId,
+    );
     res.json(showResources);
   });
 
@@ -904,17 +1041,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertShowResourceSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid show resource data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid show resource data",
+          errors: validation.error.errors,
+        });
       }
-      
+
       // Check for resource conflicts
       const { showId, resourceId } = validation.data;
-      const hasConflict = await storage.detectResourceConflicts(showId, resourceId);
-      
+      const hasConflict = await storage.detectResourceConflicts(
+        showId,
+        resourceId,
+      );
+
       if (hasConflict) {
-        return res.status(409).json({ message: "Resource has scheduling conflict" });
+        return res
+          .status(409)
+          .json({ message: "Resource has scheduling conflict" });
       }
-      
+
       const showResource = await storage.createShowResource(validation.data);
       res.status(201).json(showResource);
     } catch (error) {
@@ -924,51 +1069,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Crew Assignments
   app.get("/api/shows/:showId/crew-assignments", async (req, res) => {
-    const assignments = await storage.getCrewAssignmentsByShow(req.params.showId);
+    const assignments = await storage.getCrewAssignmentsByShow(
+      req.params.showId,
+    );
     res.json(assignments);
   });
 
   app.get("/api/crew-members/:crewMemberId/assignments", async (req, res) => {
-    const assignments = await storage.getCrewAssignmentsByCrewMember(req.params.crewMemberId);
+    const assignments = await storage.getCrewAssignmentsByCrewMember(
+      req.params.crewMemberId,
+    );
     res.json(assignments);
   });
 
   app.post("/api/crew-assignments", async (req, res) => {
     try {
       console.log("Creating crew assignment with data:", req.body);
-      
+
       const validation = insertCrewAssignmentSchema.safeParse(req.body);
       if (!validation.success) {
         console.log("Validation failed:", validation.error.errors);
-        return res.status(400).json({ message: "Invalid crew assignment data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew assignment data",
+          errors: validation.error.errors,
+        });
       }
-      
+
       // Check for crew conflicts
       const { showId, crewMemberId } = validation.data;
-      const hasConflict = await storage.detectCrewConflicts(showId, crewMemberId);
-      
+      const hasConflict = await storage.detectCrewConflicts(
+        showId,
+        crewMemberId,
+      );
+
       if (hasConflict) {
         console.log("Crew conflict detected for:", { showId, crewMemberId });
-        return res.status(409).json({ message: "Crew member has scheduling conflict" });
+        return res
+          .status(409)
+          .json({ message: "Crew member has scheduling conflict" });
       }
-      
-      console.log("About to create assignment with validated data:", validation.data);
+
+      console.log(
+        "About to create assignment with validated data:",
+        validation.data,
+      );
       const assignment = await storage.createCrewAssignment(validation.data);
       console.log("Assignment created successfully:", assignment);
       res.status(201).json(assignment);
     } catch (error) {
       console.error("Error creating crew assignment:", error);
-      res.status(500).json({ message: "Failed to create crew assignment", error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({
+        message: "Failed to create crew assignment",
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   });
 
   app.put("/api/crew-assignments/:id", async (req, res) => {
     try {
-      const validation = insertCrewAssignmentSchema.partial().safeParse(req.body);
+      const validation = insertCrewAssignmentSchema
+        .partial()
+        .safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid crew assignment data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew assignment data",
+          errors: validation.error.errors,
+        });
       }
-      const assignment = await storage.updateCrewAssignment(req.params.id, validation.data);
+      const assignment = await storage.updateCrewAssignment(
+        req.params.id,
+        validation.data,
+      );
       if (!assignment) {
         return res.status(404).json({ message: "Crew assignment not found" });
       }
@@ -983,22 +1154,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { showId } = req.params;
       const { assignments } = req.body;
-      
+
       if (!Array.isArray(assignments)) {
-        return res.status(400).json({ message: "Assignments must be an array" });
+        return res
+          .status(400)
+          .json({ message: "Assignments must be an array" });
       }
 
       // Validate each assignment
       for (const assignment of assignments) {
-        const validation = insertCrewAssignmentSchema.omit({ showId: true }).safeParse(assignment);
+        const validation = insertCrewAssignmentSchema
+          .omit({ showId: true })
+          .safeParse(assignment);
         if (!validation.success) {
-          return res.status(400).json({ message: "Invalid assignment data", errors: validation.error.errors });
+          return res.status(400).json({
+            message: "Invalid assignment data",
+            errors: validation.error.errors,
+          });
         }
       }
 
       // Replace all assignments for this show
-      await storage.replaceCrewAssignments(showId, assignments.map(a => ({ ...a, showId })));
-      
+      await storage.replaceCrewAssignments(
+        showId,
+        assignments.map((a) => ({ ...a, showId })),
+      );
+
       res.json({ message: "Crew assignments updated successfully" });
     } catch (error) {
       console.error("Error updating crew assignments:", error);
@@ -1013,7 +1194,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/crew-members/:crewMemberId/schedules", async (req, res) => {
-    const schedules = await storage.getCrewSchedulesByCrewMember(req.params.crewMemberId);
+    const schedules = await storage.getCrewSchedulesByCrewMember(
+      req.params.crewMemberId,
+    );
     res.json(schedules);
   });
 
@@ -1021,7 +1204,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertCrewScheduleSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid crew schedule data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew schedule data",
+          errors: validation.error.errors,
+        });
       }
       const schedule = await storage.createCrewSchedule(validation.data);
       res.status(201).json(schedule);
@@ -1034,9 +1220,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertCrewScheduleSchema.partial().safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid crew schedule data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew schedule data",
+          errors: validation.error.errors,
+        });
       }
-      const schedule = await storage.updateCrewSchedule(req.params.id, validation.data);
+      const schedule = await storage.updateCrewSchedule(
+        req.params.id,
+        validation.data,
+      );
       if (!schedule) {
         return res.status(404).json({ message: "Crew schedule not found" });
       }
@@ -1065,7 +1257,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/crew-members/:crewMemberId/time-off", async (req, res) => {
-    const timeOffs = await storage.getCrewTimeOffsByCrewMember(req.params.crewMemberId);
+    const timeOffs = await storage.getCrewTimeOffsByCrewMember(
+      req.params.crewMemberId,
+    );
     res.json(timeOffs);
   });
 
@@ -1073,7 +1267,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertCrewTimeOffSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid crew time off data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew time off data",
+          errors: validation.error.errors,
+        });
       }
       const timeOff = await storage.createCrewTimeOff(validation.data);
       res.status(201).json(timeOff);
@@ -1086,9 +1283,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertCrewTimeOffSchema.partial().safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid crew time off data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid crew time off data",
+          errors: validation.error.errors,
+        });
       }
-      const timeOff = await storage.updateCrewTimeOff(req.params.id, validation.data);
+      const timeOff = await storage.updateCrewTimeOff(
+        req.params.id,
+        validation.data,
+      );
       if (!timeOff) {
         return res.status(404).json({ message: "Crew time off not found" });
       }
@@ -1112,7 +1315,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Notifications
   app.get("/api/users/:userId/notifications", async (req, res) => {
-    const notifications = await storage.getNotificationsByUser(req.params.userId);
+    const notifications = await storage.getNotificationsByUser(
+      req.params.userId,
+    );
     res.json(notifications);
   });
 
@@ -1120,7 +1325,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertNotificationSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid notification data", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid notification data",
+          errors: validation.error.errors,
+        });
       }
       const notification = await storage.createNotification(validation.data);
       res.status(201).json(notification);
@@ -1142,14 +1350,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validation = insertEarlyAccessSignupSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ message: "Invalid email address", errors: validation.error.errors });
+        return res.status(400).json({
+          message: "Invalid email address",
+          errors: validation.error.errors,
+        });
       }
-      
+
       const signup = await storage.createEarlyAccessSignup(validation.data);
-      res.status(201).json({ message: "Successfully signed up for early access", signup });
+      res
+        .status(201)
+        .json({ message: "Successfully signed up for early access", signup });
     } catch (error: any) {
-      if (error.code === '23505' || error.message?.includes('unique')) {
-        return res.status(409).json({ message: "Email already registered for early access" });
+      if (error.code === "23505" || error.message?.includes("unique")) {
+        return res
+          .status(409)
+          .json({ message: "Email already registered for early access" });
       }
       res.status(500).json({ message: "Failed to sign up for early access" });
     }

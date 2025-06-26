@@ -6,24 +6,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, List, Plus, BarChart, ArrowRight, Tag,
-  Clock, AlertTriangle, CheckCircle, Settings
+import {
+  Calendar,
+  List,
+  Plus,
+  BarChart,
+  ArrowRight,
+  Tag,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  Settings,
 } from "lucide-react";
 
 export default function Shows() {
   const { currentWorkspace } = useCurrentWorkspace();
   const [view, setView] = useState("upcoming");
-  
+
   // Fetch shows from API
   const { data: shows = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'shows'],
+    queryKey: ["/api/workspaces", currentWorkspace?.id, "shows"],
     enabled: !!currentWorkspace?.id,
   });
-  
+
   // Fetch show categories
   const { data: categories = [] } = useQuery({
-    queryKey: ['/api/workspaces', currentWorkspace?.id, 'show-categories'],
+    queryKey: ["/api/workspaces", currentWorkspace?.id, "show-categories"],
     enabled: !!currentWorkspace?.id,
   });
 
@@ -31,25 +39,41 @@ export default function Shows() {
   const upcomingShows = shows.filter((show: any) => {
     const showDate = new Date(show.startTime);
     const today = new Date();
-    return showDate > today && show.status !== 'completed';
+    return showDate > today && show.status !== "completed";
   });
 
   const pastShows = shows.filter((show: any) => {
     const showDate = new Date(show.startTime);
     const today = new Date();
-    return showDate < today || show.status === 'completed';
+    return showDate < today || show.status === "completed";
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'scheduled':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Scheduled</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">In Progress</Badge>;
-      case 'completed':
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Completed</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Cancelled</Badge>;
+      case "scheduled":
+        return (
+          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+            Scheduled
+          </Badge>
+        );
+      case "in_progress":
+        return (
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+            In Progress
+          </Badge>
+        );
+      case "completed":
+        return (
+          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
+            Completed
+          </Badge>
+        );
+      case "cancelled":
+        return (
+          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+            Cancelled
+          </Badge>
+        );
       default:
         return <Badge>{status}</Badge>;
     }
@@ -57,12 +81,12 @@ export default function Shows() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -113,7 +137,7 @@ export default function Shows() {
             <p className="text-xs text-gray-500 mt-1">All productions</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
@@ -124,7 +148,7 @@ export default function Shows() {
             <p className="text-xs text-gray-500 mt-1">Shows scheduled</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Categories</CardTitle>
@@ -135,7 +159,7 @@ export default function Shows() {
             <p className="text-xs text-gray-500 mt-1">Show types</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Conflicts</CardTitle>
@@ -171,17 +195,28 @@ export default function Shows() {
             ) : (
               <div className="space-y-4">
                 {upcomingShows.map((show: any) => (
-                  <div key={show.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div
+                    key={show.id}
+                    className="border rounded-lg p-4 hover:bg-gray-50"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-medium text-gray-900">{show.title}</h3>
+                        <h3 className="font-medium text-gray-900">
+                          {show.title}
+                        </h3>
                         <p className="text-sm text-gray-600 mt-1">
-                          {formatDate(show.startTime)} - {formatDate(show.endTime)}
+                          {formatDate(show.startTime)} -{" "}
+                          {formatDate(show.endTime)}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        {getStatusBadge(show.status || 'scheduled')}
-                        <Button asChild variant="ghost" size="sm" className="text-xs">
+                        {getStatusBadge(show.status || "scheduled")}
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                        >
                           <Link href={`/shows/builder?id=${show.id}`}>
                             <span>View Details</span>
                             <ArrowRight className="ml-1 h-3 w-3" />
@@ -193,37 +228,46 @@ export default function Shows() {
                 ))}
               </div>
             )
+          ) : pastShows.length === 0 ? (
+            <div className="text-center py-10">
+              <CheckCircle className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500">No past shows</p>
+            </div>
           ) : (
-            pastShows.length === 0 ? (
-              <div className="text-center py-10">
-                <CheckCircle className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">No past shows</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pastShows.map((show: any) => (
-                  <div key={show.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{show.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {formatDate(show.startTime)} - {formatDate(show.endTime)}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        {getStatusBadge(show.status || 'scheduled')}
-                        <Button asChild variant="ghost" size="sm" className="text-xs">
-                          <Link href={`/shows/builder?id=${show.id}`}>
-                            <span>View Details</span>
-                            <ArrowRight className="ml-1 h-3 w-3" />
-                          </Link>
-                        </Button>
-                      </div>
+            <div className="space-y-4">
+              {pastShows.map((show: any) => (
+                <div
+                  key={show.id}
+                  className="border rounded-lg p-4 hover:bg-gray-50"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium text-gray-900">
+                        {show.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {formatDate(show.startTime)} -{" "}
+                        {formatDate(show.endTime)}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      {getStatusBadge(show.status || "scheduled")}
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                      >
+                        <Link href={`/shows/builder?id=${show.id}`}>
+                          <span>View Details</span>
+                          <ArrowRight className="ml-1 h-3 w-3" />
+                        </Link>
+                      </Button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

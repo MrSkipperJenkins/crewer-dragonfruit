@@ -4,12 +4,7 @@ import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -19,14 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ShowTemplateModal } from "@/components/shows/show-template-modal";
-import { 
-  Plus, 
-  Search, 
-  Calendar,
-  Settings,
-  Clock,
-  Repeat
-} from "lucide-react";
+import { Plus, Search, Calendar, Settings, Clock, Repeat } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ShowTemplates() {
@@ -34,19 +22,22 @@ export default function ShowTemplates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedShow, setSelectedShow] = useState<any>(null);
-  const [templateMode, setTemplateMode] = useState<"template" | "single">("template");
+  const [templateMode, setTemplateMode] = useState<"template" | "single">(
+    "template",
+  );
 
   // Fetch shows for current workspace
   const { data: shows = [], isLoading } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
     enabled: !!currentWorkspace?.id,
-  }) as { data: any[], isLoading: boolean };
+  }) as { data: any[]; isLoading: boolean };
 
   // Filter shows to only show those with recurring patterns (templates)
-  const recurringShows = shows.filter((show: any) => 
-    show.recurringPattern && 
-    show.recurringPattern !== "null" &&
-    show.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const recurringShows = shows.filter(
+    (show: any) =>
+      show.recurringPattern &&
+      show.recurringPattern !== "null" &&
+      show.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleCreateTemplate = () => {
@@ -69,16 +60,21 @@ export default function ShowTemplates() {
 
   const parseRecurringPattern = (pattern: string) => {
     if (!pattern || pattern === "null") return "One-time";
-    
+
     try {
       if (pattern.includes("FREQ=DAILY")) return "Daily";
       if (pattern.includes("FREQ=WEEKLY")) {
         const byDay = pattern.match(/BYDAY=([^;]+)/);
         if (byDay) {
-          const days = byDay[1].split(",").map(day => {
+          const days = byDay[1].split(",").map((day) => {
             const dayMap: Record<string, string> = {
-              "MO": "Mon", "TU": "Tue", "WE": "Wed", 
-              "TH": "Thu", "FR": "Fri", "SA": "Sat", "SU": "Sun"
+              MO: "Mon",
+              TU: "Tue",
+              WE: "Wed",
+              TH: "Thu",
+              FR: "Fri",
+              SA: "Sat",
+              SU: "Sun",
             };
             return dayMap[day] || day;
           });
@@ -128,7 +124,10 @@ export default function ShowTemplates() {
             Manage recurring show patterns and individual show overrides
           </p>
         </div>
-        <Button onClick={handleCreateTemplate} className="flex items-center gap-2">
+        <Button
+          onClick={handleCreateTemplate}
+          className="flex items-center gap-2"
+        >
           <Plus className="h-4 w-4" />
           Create Template
         </Button>
@@ -156,8 +155,12 @@ export default function ShowTemplates() {
             <div className="flex items-center">
               <Repeat className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Templates</p>
-                <p className="text-2xl font-bold text-gray-900">{recurringShows.length}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Templates
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {recurringShows.length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -168,9 +171,14 @@ export default function ShowTemplates() {
             <div className="flex items-center">
               <Calendar className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Series</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Active Series
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {recurringShows.filter(show => show.status === "scheduled").length}
+                  {
+                    recurringShows.filter((show) => show.status === "scheduled")
+                      .length
+                  }
                 </p>
               </div>
             </div>
@@ -184,10 +192,14 @@ export default function ShowTemplates() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">This Week</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {recurringShows.filter(show => 
-                    show.recurringPattern && 
-                    (show.recurringPattern.includes("DAILY") || show.recurringPattern.includes("WEEKLY"))
-                  ).length}
+                  {
+                    recurringShows.filter(
+                      (show) =>
+                        show.recurringPattern &&
+                        (show.recurringPattern.includes("DAILY") ||
+                          show.recurringPattern.includes("WEEKLY")),
+                    ).length
+                  }
                 </p>
               </div>
             </div>
@@ -204,15 +216,19 @@ export default function ShowTemplates() {
           {recurringShows.length === 0 ? (
             <div className="text-center py-12">
               <Repeat className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Templates Found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Templates Found
+              </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm 
+                {searchTerm
                   ? "No templates match your search criteria."
-                  : "Create your first show template to get started with recurring shows."
-                }
+                  : "Create your first show template to get started with recurring shows."}
               </p>
               {!searchTerm && (
-                <Button onClick={handleCreateTemplate} className="flex items-center gap-2">
+                <Button
+                  onClick={handleCreateTemplate}
+                  className="flex items-center gap-2"
+                >
                   <Plus className="h-4 w-4" />
                   Create Your First Template
                 </Button>
@@ -236,14 +252,21 @@ export default function ShowTemplates() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{show.title}</div>
-                        <div className="text-sm text-gray-600">{show.description}</div>
+                        <div className="text-sm text-gray-600">
+                          {show.description}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         <div>{format(new Date(show.startTime), "h:mm a")}</div>
                         <div className="text-gray-600">
-                          {Math.floor((new Date(show.endTime).getTime() - new Date(show.startTime).getTime()) / (1000 * 60))} min
+                          {Math.floor(
+                            (new Date(show.endTime).getTime() -
+                              new Date(show.startTime).getTime()) /
+                              (1000 * 60),
+                          )}{" "}
+                          min
                         </div>
                       </div>
                     </TableCell>
@@ -253,7 +276,10 @@ export default function ShowTemplates() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(show.status)} variant="outline">
+                      <Badge
+                        className={getStatusColor(show.status)}
+                        variant="outline"
+                      >
                         {show.status}
                       </Badge>
                     </TableCell>

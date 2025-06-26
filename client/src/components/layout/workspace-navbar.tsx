@@ -1,14 +1,24 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ChevronDown, Search, Plus, Bell, Settings, Users, LogOut, UserPlus, Menu } from "lucide-react";
+import {
+  ChevronDown,
+  Search,
+  Plus,
+  Bell,
+  Settings,
+  Users,
+  LogOut,
+  UserPlus,
+  Menu,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -23,27 +33,32 @@ interface WorkspaceNavbarProps {
   pageTitle?: string;
 }
 
-export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbarProps) {
+export function WorkspaceNavbar({
+  currentWorkspace,
+  pageTitle,
+}: WorkspaceNavbarProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Get all workspaces for the dropdown
   const { data: workspaces = [] } = useQuery({
-    queryKey: ['/api/workspaces'],
+    queryKey: ["/api/workspaces"],
     queryFn: async () => {
-      const response = await fetch('/api/workspaces');
+      const response = await fetch("/api/workspaces");
       return response.json();
-    }
+    },
   });
 
   // Get user notifications
   const { data: notifications = [] } = useQuery({
-    queryKey: ['/api/users/38ccfc25-287d-4ac1-b832-5a5f3a1b1575/notifications'],
+    queryKey: ["/api/users/38ccfc25-287d-4ac1-b832-5a5f3a1b1575/notifications"],
     queryFn: async () => {
-      const response = await fetch('/api/users/38ccfc25-287d-4ac1-b832-5a5f3a1b1575/notifications');
+      const response = await fetch(
+        "/api/users/38ccfc25-287d-4ac1-b832-5a5f3a1b1575/notifications",
+      );
       return response.json();
-    }
+    },
   });
 
   // Switch workspace mutation
@@ -52,20 +67,20 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
       return apiRequest("POST", "/api/workspaces/switch", { workspaceSlug });
     },
     onSuccess: (_, workspaceSlug) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workspaces'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
       setLocation(`/workspaces/${workspaceSlug}/dashboard`);
       toast({
         title: "Workspace switched",
-        description: "Successfully switched workspace"
+        description: "Successfully switched workspace",
       });
     },
     onError: () => {
       toast({
         title: "Error",
         description: "Failed to switch workspace",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const handleWorkspaceSwitch = (workspace: Workspace) => {
@@ -74,7 +89,9 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
     }
   };
 
-  const unreadNotifications = notifications.filter((n: any) => !n.readAt).length;
+  const unreadNotifications = notifications.filter(
+    (n: any) => !n.readAt,
+  ).length;
 
   const getWorkspaceInitial = (name: string) => {
     return name.charAt(0).toUpperCase();
@@ -100,7 +117,7 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
             {/* Mobile Page Title */}
             <div className="lg:hidden">
               <h1 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                {pageTitle || 'Dashboard'}
+                {pageTitle || "Dashboard"}
               </h1>
             </div>
 
@@ -108,16 +125,18 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
             <div className="hidden lg:block">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <div className="flex items-center space-x-2">
                       <div className="w-6 h-6 bg-blue-600 text-white rounded flex items-center justify-center text-sm font-medium">
-                        {currentWorkspace ? getWorkspaceInitial(currentWorkspace.name) : 'W'}
+                        {currentWorkspace
+                          ? getWorkspaceInitial(currentWorkspace.name)
+                          : "W"}
                       </div>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {currentWorkspace?.name || 'Select Workspace'}
+                        {currentWorkspace?.name || "Select Workspace"}
                       </span>
                     </div>
                     <ChevronDown className="h-4 w-4 text-gray-500" />
@@ -144,16 +163,24 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
                           </div>
                         </div>
                         <div className="flex space-x-2 mt-3">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="flex-1"
-                            onClick={() => setLocation(`/workspaces/${currentWorkspace.slug}/settings`)}
+                            onClick={() =>
+                              setLocation(
+                                `/workspaces/${currentWorkspace.slug}/settings`,
+                              )
+                            }
                           >
                             <Settings className="h-3 w-3 mr-1" />
                             Settings
                           </Button>
-                          <Button variant="outline" size="sm" className="flex-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                          >
                             <UserPlus className="h-3 w-3 mr-1" />
                             Invite Team
                           </Button>
@@ -170,7 +197,7 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
                         Switch Workspace
                       </div>
                       {workspaces.map((workspace: Workspace) => (
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           key={workspace.id}
                           onClick={() => handleWorkspaceSwitch(workspace)}
                           className="p-3 cursor-pointer"
@@ -191,7 +218,9 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
                   )}
 
                   {/* Quick Actions */}
-                  <DropdownMenuItem onClick={() => setLocation('/workspaces/new')}>
+                  <DropdownMenuItem
+                    onClick={() => setLocation("/workspaces/new")}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Create Workspace
                   </DropdownMenuItem>
@@ -211,9 +240,9 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
           {/* Right: Actions */}
           <div className="flex items-center space-x-2">
             {/* Search - Icons only on mobile */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="w-11 h-11 p-0"
               aria-label="Search"
             >
@@ -221,16 +250,16 @@ export function WorkspaceNavbar({ currentWorkspace, pageTitle }: WorkspaceNavbar
             </Button>
 
             {/* Notifications */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="relative w-11 h-11 p-0"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
               {unreadNotifications > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
                 </span>
               )}
             </Button>

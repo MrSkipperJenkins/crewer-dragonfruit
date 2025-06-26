@@ -7,15 +7,14 @@ import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertShowSchema, insertRequiredJobSchema, insertCrewAssignmentSchema } from "@shared/schema";
+import {
+  insertShowSchema,
+  insertRequiredJobSchema,
+  insertCrewAssignmentSchema,
+} from "@shared/schema";
 import { format } from "date-fns";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -47,15 +46,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Save, 
-  Trash2, 
-  ArrowLeft, 
-  Plus, 
+import {
+  Save,
+  Trash2,
+  ArrowLeft,
+  Plus,
   X,
   Users,
   Briefcase,
-  Monitor
+  Monitor,
 } from "lucide-react";
 import { ColorPicker } from "@/components/ui/color-picker";
 
@@ -88,7 +87,7 @@ export default function EditShow() {
   const { data: show, isLoading: showLoading } = useQuery({
     queryKey: [`/api/shows/${showId}`],
     enabled: !!showId,
-  }) as { data: any, isLoading: boolean };
+  }) as { data: any; isLoading: boolean };
 
   // Fetch workspace data
   const { data: jobs = [] } = useQuery({
@@ -112,7 +111,9 @@ export default function EditShow() {
   });
 
   const { data: categoryAssignments = [] } = useQuery({
-    queryKey: [`/api/workspaces/${currentWorkspace?.id}/show-category-assignments`],
+    queryKey: [
+      `/api/workspaces/${currentWorkspace?.id}/show-category-assignments`,
+    ],
     enabled: !!currentWorkspace?.id,
   });
 
@@ -154,7 +155,7 @@ export default function EditShow() {
     if (show) {
       const startDate = new Date(show.startTime);
       const endDate = new Date(show.endTime);
-      
+
       form.reset({
         id: show.id,
         title: show.title,
@@ -174,7 +175,7 @@ export default function EditShow() {
   useEffect(() => {
     if (show && categoryAssignments && selectedCategory === "") {
       const currentAssignment = (categoryAssignments as any[])?.find(
-        (ca: any) => ca.showId === show.id
+        (ca: any) => ca.showId === show.id,
       );
       setSelectedCategory(currentAssignment?.categoryId || "none");
     }
@@ -185,7 +186,9 @@ export default function EditShow() {
     if (requiredJobs.length > 0) {
       // Use Set to ensure unique job IDs only
       const jobIds = requiredJobs.map((rj: any) => rj.jobId);
-      const uniqueJobIds = jobIds.filter((id, index) => jobIds.indexOf(id) === index);
+      const uniqueJobIds = jobIds.filter(
+        (id, index) => jobIds.indexOf(id) === index,
+      );
       setSelectedJobs(uniqueJobIds);
     }
   }, [requiredJobs]);
@@ -200,16 +203,21 @@ export default function EditShow() {
   useEffect(() => {
     if (crewAssignments.length > 0) {
       // Ensure unique assignments per required job to avoid duplicate keys
-      const uniqueAssignments = crewAssignments.reduce((acc: any[], assignment: any) => {
-        const existingIndex = acc.findIndex(a => a.requiredJobId === assignment.requiredJobId);
-        if (existingIndex === -1) {
-          acc.push(assignment);
-        } else {
-          // Keep the most recent assignment if duplicates exist
-          acc[existingIndex] = assignment;
-        }
-        return acc;
-      }, []);
+      const uniqueAssignments = crewAssignments.reduce(
+        (acc: any[], assignment: any) => {
+          const existingIndex = acc.findIndex(
+            (a) => a.requiredJobId === assignment.requiredJobId,
+          );
+          if (existingIndex === -1) {
+            acc.push(assignment);
+          } else {
+            // Keep the most recent assignment if duplicates exist
+            acc[existingIndex] = assignment;
+          }
+          return acc;
+        },
+        [],
+      );
       setLocalCrewAssignments(uniqueAssignments);
     }
   }, [crewAssignments]);
@@ -220,7 +228,7 @@ export default function EditShow() {
       const { startDate, startTime, endDate, endTime, ...showData } = data;
       const startDateTime = new Date(`${startDate}T${startTime}`);
       const endDateTime = new Date(`${endDate}T${endTime}`);
-      
+
       return apiRequest("PUT", `/api/shows/${showId}`, {
         ...showData,
         startTime: startDateTime.toISOString(),
@@ -233,7 +241,9 @@ export default function EditShow() {
         description: "Show updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
     },
     onError: () => {
       toast({
@@ -275,10 +285,16 @@ export default function EditShow() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/required-jobs`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${showId}/required-jobs`],
+      });
       // Invalidate shows list and staffing data
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/crew-assignments-batch`],
+      });
       queryClient.invalidateQueries({ queryKey: [`/api/required-jobs-batch`] });
     },
   });
@@ -289,11 +305,19 @@ export default function EditShow() {
       return apiRequest("DELETE", `/api/required-jobs/${requiredJobId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/required-jobs`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${showId}/required-jobs`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${showId}/crew-assignments`],
+      });
       // Invalidate shows list and staffing data
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/crew-assignments-batch`],
+      });
       queryClient.invalidateQueries({ queryKey: [`/api/required-jobs-batch`] });
     },
   });
@@ -308,7 +332,9 @@ export default function EditShow() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/resources`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${showId}/resources`],
+      });
     },
   });
 
@@ -318,18 +344,25 @@ export default function EditShow() {
       return apiRequest("DELETE", `/api/show-resources/${showResourceId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/resources`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${showId}/resources`],
+      });
     },
   });
 
   // Local crew assignment handlers (no API calls until save)
-  const handleLocalAssignCrew = (crewMemberId: string, requiredJobId: string) => {
+  const handleLocalAssignCrew = (
+    crewMemberId: string,
+    requiredJobId: string,
+  ) => {
     const requiredJob = requiredJobs.find((rj: any) => rj.id === requiredJobId);
     if (!requiredJob) return;
 
     // Remove existing assignment for this required job if it exists
-    const updatedAssignments = localCrewAssignments.filter(ca => ca.requiredJobId !== requiredJobId);
-    
+    const updatedAssignments = localCrewAssignments.filter(
+      (ca) => ca.requiredJobId !== requiredJobId,
+    );
+
     // Add new assignment
     const newAssignment = {
       id: `temp-${Date.now()}`, // Temporary ID for local state
@@ -339,26 +372,29 @@ export default function EditShow() {
       requiredJobId,
       status: "pending",
       workspaceId: currentWorkspace?.id,
-      isLocal: true // Flag to identify local changes
+      isLocal: true, // Flag to identify local changes
     };
-    
+
     setLocalCrewAssignments([...updatedAssignments, newAssignment]);
     setHasUnsavedChanges(true);
   };
 
   const handleLocalRemoveCrewAssignment = (requiredJobId: string) => {
-    const updatedAssignments = localCrewAssignments.filter(ca => ca.requiredJobId !== requiredJobId);
+    const updatedAssignments = localCrewAssignments.filter(
+      (ca) => ca.requiredJobId !== requiredJobId,
+    );
     setLocalCrewAssignments(updatedAssignments);
     setHasUnsavedChanges(true);
   };
 
-  const handleLocalUpdateAssignmentStatus = (requiredJobId: string, status: string) => {
-    setLocalCrewAssignments(prev => 
-      prev.map(ca => 
-        ca.requiredJobId === requiredJobId 
-          ? { ...ca, status } 
-          : ca
-      )
+  const handleLocalUpdateAssignmentStatus = (
+    requiredJobId: string,
+    status: string,
+  ) => {
+    setLocalCrewAssignments((prev) =>
+      prev.map((ca) =>
+        ca.requiredJobId === requiredJobId ? { ...ca, status } : ca,
+      ),
     );
     setHasUnsavedChanges(true);
   };
@@ -371,30 +407,38 @@ export default function EditShow() {
     try {
       // First update the show details
       await updateShowMutation.mutateAsync(data);
-      
+
       // Save category assignment
       if (selectedCategory !== "none") {
         await saveCategoryAssignment();
       } else {
         await removeCategoryAssignment();
       }
-      
+
       // Then save crew assignment changes if any
       if (hasUnsavedChanges) {
         await saveCrewAssignmentChanges();
       }
-      
+
       // Invalidate shows list and related queries
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${show?.workspaceId}/shows`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${show?.workspaceId}/shows`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/crew-assignments-batch`],
+      });
       queryClient.invalidateQueries({ queryKey: [`/api/required-jobs-batch`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${show?.workspaceId}/show-category-assignments`] });
-      
+      queryClient.invalidateQueries({
+        queryKey: [
+          `/api/workspaces/${show?.workspaceId}/show-category-assignments`,
+        ],
+      });
+
       toast({
         title: "Success",
         description: "Show updated successfully",
       });
-      
+
       // Navigate back to the list view after successful save
       navigate("/shows/list");
     } catch (error) {
@@ -408,36 +452,43 @@ export default function EditShow() {
 
   const saveCategoryAssignment = async () => {
     if (!show) return;
-    
+
     // Check if assignment already exists
     const existingAssignment = (categoryAssignments as any[])?.find(
-      (ca: any) => ca.showId === show.id
+      (ca: any) => ca.showId === show.id,
     );
-    
+
     if (existingAssignment) {
       // Update existing assignment
-      await apiRequest("PATCH", `/api/show-category-assignments/${existingAssignment.id}`, {
-        categoryId: selectedCategory
-      });
+      await apiRequest(
+        "PATCH",
+        `/api/show-category-assignments/${existingAssignment.id}`,
+        {
+          categoryId: selectedCategory,
+        },
+      );
     } else {
       // Create new assignment
       await apiRequest("POST", "/api/show-category-assignments", {
         showId: show.id,
         categoryId: selectedCategory,
-        workspaceId: show.workspaceId
+        workspaceId: show.workspaceId,
       });
     }
   };
 
   const removeCategoryAssignment = async () => {
     if (!show) return;
-    
+
     const existingAssignment = (categoryAssignments as any[])?.find(
-      (ca: any) => ca.showId === show.id
+      (ca: any) => ca.showId === show.id,
     );
-    
+
     if (existingAssignment) {
-      await apiRequest("DELETE", `/api/show-category-assignments/${existingAssignment.id}`);
+      await apiRequest(
+        "DELETE",
+        `/api/show-category-assignments/${existingAssignment.id}`,
+      );
     }
   };
 
@@ -445,22 +496,28 @@ export default function EditShow() {
     try {
       // Use a batch API call to handle the atomic replacement of all assignments
       await apiRequest("PUT", `/api/shows/${showId}/crew-assignments`, {
-        assignments: localCrewAssignments.map(assignment => ({
+        assignments: localCrewAssignments.map((assignment) => ({
           crewMemberId: assignment.crewMemberId,
           jobId: assignment.jobId,
           requiredJobId: assignment.requiredJobId,
           status: assignment.status,
           workspaceId: assignment.workspaceId,
-        }))
+        })),
       });
 
       // Refresh crew assignments data and shows list
-      queryClient.invalidateQueries({ queryKey: [`/api/shows/${showId}/crew-assignments`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/crew-assignments-batch`] });
-      
+      queryClient.invalidateQueries({
+        queryKey: [`/api/shows/${showId}/crew-assignments`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/crew-assignments-batch`],
+      });
+
       setHasUnsavedChanges(false);
-      
+
       toast({
         title: "Success",
         description: "Crew assignments saved successfully",
@@ -485,7 +542,7 @@ export default function EditShow() {
   const handleRemoveJob = (jobId: string) => {
     const requiredJob = requiredJobs.find((rj: any) => rj.jobId === jobId);
     if (requiredJob) {
-      setSelectedJobs(selectedJobs.filter(id => id !== jobId));
+      setSelectedJobs(selectedJobs.filter((id) => id !== jobId));
       removeRequiredJobMutation.mutate(requiredJob.id);
     }
   };
@@ -502,9 +559,11 @@ export default function EditShow() {
   };
 
   const handleRemoveResource = (resourceId: string) => {
-    const showResource = showResources.find((sr: any) => sr.resourceId === resourceId);
+    const showResource = showResources.find(
+      (sr: any) => sr.resourceId === resourceId,
+    );
     if (showResource) {
-      setSelectedResources(selectedResources.filter(id => id !== resourceId));
+      setSelectedResources(selectedResources.filter((id) => id !== resourceId));
       removeShowResourceMutation.mutate(showResource.id);
     }
   };
@@ -535,8 +594,8 @@ export default function EditShow() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => navigate("/shows/list")}
             className="flex items-center"
           >
@@ -545,11 +604,13 @@ export default function EditShow() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Edit Show</h1>
-            <p className="text-gray-500">Update show details, crew assignments, and resources</p>
+            <p className="text-gray-500">
+              Update show details, crew assignments, and resources
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button 
+          <Button
             onClick={form.handleSubmit(onSubmit)}
             disabled={updateShowMutation.isPending}
           >
@@ -567,7 +628,9 @@ export default function EditShow() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Show</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete "{show.title}"? This action cannot be undone and will remove all associated crew assignments and resources.
+                  Are you sure you want to delete "{show.title}"? This action
+                  cannot be undone and will remove all associated crew
+                  assignments and resources.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -609,14 +672,17 @@ export default function EditShow() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="status"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -625,7 +691,9 @@ export default function EditShow() {
                         <SelectContent>
                           <SelectItem value="draft">Draft</SelectItem>
                           <SelectItem value="scheduled">Scheduled</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="in_progress">
+                            In Progress
+                          </SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
                         </SelectContent>
@@ -646,7 +714,7 @@ export default function EditShow() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No Category</SelectItem>
-                      {(categories as any[])?.map(category => (
+                      {(categories as any[])?.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           <div className="flex items-center gap-2">
                             <div
@@ -669,9 +737,9 @@ export default function EditShow() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Show description" 
-                        className="resize-none" 
+                      <Textarea
+                        placeholder="Show description"
+                        className="resize-none"
                         {...field}
                         value={field.value || ""}
                       />
@@ -695,7 +763,7 @@ export default function EditShow() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="startTime"
@@ -709,7 +777,7 @@ export default function EditShow() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="endDate"
@@ -723,7 +791,7 @@ export default function EditShow() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="endTime"
@@ -773,7 +841,9 @@ export default function EditShow() {
               {/* Required Jobs & Crew Assignments */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-medium">Required Jobs & Crew Assignments</h3>
+                  <h3 className="text-lg font-medium">
+                    Required Jobs & Crew Assignments
+                  </h3>
                   <div className="flex items-center gap-3">
                     {hasUnsavedChanges && (
                       <Button
@@ -791,8 +861,8 @@ export default function EditShow() {
                       </SelectTrigger>
                       <SelectContent>
                         {(jobs as any[])
-                          .filter(job => !selectedJobs.includes(job.id))
-                          .map(job => (
+                          .filter((job) => !selectedJobs.includes(job.id))
+                          .map((job) => (
                             <SelectItem key={job.id} value={job.id}>
                               {job.title}
                             </SelectItem>
@@ -801,21 +871,35 @@ export default function EditShow() {
                     </Select>
                   </div>
                 </div>
-                
+
                 {hasUnsavedChanges && (
                   <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">You have unsaved crew assignment changes. Click Save Changes to apply them.</p>
+                    <p className="text-sm text-yellow-800">
+                      You have unsaved crew assignment changes. Click Save
+                      Changes to apply them.
+                    </p>
                   </div>
                 )}
-                
+
                 <div className="space-y-4">
                   {requiredJobs.map((requiredJob: any) => {
-                    const job = (jobs as any[]).find(j => j.id === requiredJob.jobId);
-                    const assignment = localCrewAssignments.find(ca => ca.requiredJobId === requiredJob.id);
-                    const assignedCrewMember = assignment ? (crewMembers as any[]).find(cm => cm.id === assignment.crewMemberId) : null;
-                    
+                    const job = (jobs as any[]).find(
+                      (j) => j.id === requiredJob.jobId,
+                    );
+                    const assignment = localCrewAssignments.find(
+                      (ca) => ca.requiredJobId === requiredJob.id,
+                    );
+                    const assignedCrewMember = assignment
+                      ? (crewMembers as any[]).find(
+                          (cm) => cm.id === assignment.crewMemberId,
+                        )
+                      : null;
+
                     return job ? (
-                      <div key={`required-job-${requiredJob.id}`} className="border rounded-lg p-4">
+                      <div
+                        key={`required-job-${requiredJob.id}`}
+                        className="border rounded-lg p-4"
+                      >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-3">
@@ -826,17 +910,21 @@ export default function EditShow() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-auto p-1 text-gray-400 hover:text-red-600"
-                                onClick={() => handleRemoveRequiredJob(requiredJob.id)}
+                                onClick={() =>
+                                  handleRemoveRequiredJob(requiredJob.id)
+                                }
                                 title="Remove required job"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
-                            
+
                             {requiredJob.notes && (
-                              <p className="text-sm text-gray-600 mb-3">{requiredJob.notes}</p>
+                              <p className="text-sm text-gray-600 mb-3">
+                                {requiredJob.notes}
+                              </p>
                             )}
-                            
+
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
                                 {assignment && assignedCrewMember ? (
@@ -845,29 +933,47 @@ export default function EditShow() {
                                       <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                                           <span className="text-sm font-medium text-blue-700">
-                                            {assignedCrewMember.name.split(' ').map((n: string) => n[0]).join('')}
+                                            {assignedCrewMember.name
+                                              .split(" ")
+                                              .map((n: string) => n[0])
+                                              .join("")}
                                           </span>
                                         </div>
                                         <div>
-                                          <p className="font-medium text-sm">{assignedCrewMember.name}</p>
-                                          <p className="text-xs text-gray-600">{assignedCrewMember.title}</p>
+                                          <p className="font-medium text-sm">
+                                            {assignedCrewMember.name}
+                                          </p>
+                                          <p className="text-xs text-gray-600">
+                                            {assignedCrewMember.title}
+                                          </p>
                                         </div>
                                       </div>
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => handleLocalRemoveCrewAssignment(requiredJob.id)}
+                                        onClick={() =>
+                                          handleLocalRemoveCrewAssignment(
+                                            requiredJob.id,
+                                          )
+                                        }
                                         className="text-gray-400 hover:text-red-600"
                                       >
                                         <X className="h-4 w-4" />
                                       </Button>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-3">
-                                      <label className="text-sm font-medium text-gray-700">Status:</label>
-                                      <Select 
-                                        value={assignment.status} 
-                                        onValueChange={(status) => handleLocalUpdateAssignmentStatus(requiredJob.id, status)}
+                                      <label className="text-sm font-medium text-gray-700">
+                                        Status:
+                                      </label>
+                                      <Select
+                                        value={assignment.status}
+                                        onValueChange={(status) =>
+                                          handleLocalUpdateAssignmentStatus(
+                                            requiredJob.id,
+                                            status,
+                                          )
+                                        }
                                       >
                                         <SelectTrigger className="w-32">
                                           <SelectValue />
@@ -896,31 +1002,52 @@ export default function EditShow() {
                                     </div>
                                   </div>
                                 ) : (
-                                  <Select onValueChange={(crewMemberId) => handleLocalAssignCrew(crewMemberId, requiredJob.id)}>
+                                  <Select
+                                    onValueChange={(crewMemberId) =>
+                                      handleLocalAssignCrew(
+                                        crewMemberId,
+                                        requiredJob.id,
+                                      )
+                                    }
+                                  >
                                     <SelectTrigger className="w-full">
                                       <SelectValue placeholder="Assign crew member" />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {(crewMembers as any[])
-                                        .filter(crewMember => {
+                                        .filter((crewMember) => {
                                           // Filter out crew members already assigned to other jobs in this show
-                                          const isAlreadyAssigned = localCrewAssignments.some(ca => 
-                                            ca.crewMemberId === crewMember.id && ca.requiredJobId !== requiredJob.id
-                                          );
+                                          const isAlreadyAssigned =
+                                            localCrewAssignments.some(
+                                              (ca) =>
+                                                ca.crewMemberId ===
+                                                  crewMember.id &&
+                                                ca.requiredJobId !==
+                                                  requiredJob.id,
+                                            );
                                           return !isAlreadyAssigned;
                                         })
-                                        .map(crewMember => (
-                                        <SelectItem key={`req-${requiredJob.id}-crew-${crewMember.id}`} value={crewMember.id}>
-                                          <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                              <span className="text-xs font-medium text-blue-700">
-                                                {crewMember.name.split(' ').map((n: string) => n[0]).join('')}
+                                        .map((crewMember) => (
+                                          <SelectItem
+                                            key={`req-${requiredJob.id}-crew-${crewMember.id}`}
+                                            value={crewMember.id}
+                                          >
+                                            <div className="flex items-center gap-2">
+                                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <span className="text-xs font-medium text-blue-700">
+                                                  {crewMember.name
+                                                    .split(" ")
+                                                    .map((n: string) => n[0])
+                                                    .join("")}
+                                                </span>
+                                              </div>
+                                              <span>
+                                                {crewMember.name} -{" "}
+                                                {crewMember.title}
                                               </span>
                                             </div>
-                                            <span>{crewMember.name} - {crewMember.title}</span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
+                                          </SelectItem>
+                                        ))}
                                     </SelectContent>
                                   </Select>
                                 )}
@@ -935,7 +1062,9 @@ export default function EditShow() {
                     <div className="text-center py-8 text-gray-500">
                       <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                       <p>No required jobs added yet</p>
-                      <p className="text-sm">Add jobs above to manage crew assignments</p>
+                      <p className="text-sm">
+                        Add jobs above to manage crew assignments
+                      </p>
                     </div>
                   )}
                 </div>
@@ -953,10 +1082,16 @@ export default function EditShow() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2 mb-4">
-                {selectedResources.map(resourceId => {
-                  const resource = (resources as any[]).find(r => r.id === resourceId);
+                {selectedResources.map((resourceId) => {
+                  const resource = (resources as any[]).find(
+                    (r) => r.id === resourceId,
+                  );
                   return resource ? (
-                    <Badge key={resourceId} variant="secondary" className="flex items-center">
+                    <Badge
+                      key={resourceId}
+                      variant="secondary"
+                      className="flex items-center"
+                    >
                       <div
                         className="w-3 h-3 rounded-full mr-2"
                         style={{ backgroundColor: resource.color || "#2094f3" }}
@@ -980,13 +1115,17 @@ export default function EditShow() {
                 </SelectTrigger>
                 <SelectContent>
                   {(resources as any[])
-                    .filter(resource => !selectedResources.includes(resource.id))
-                    .map(resource => (
+                    .filter(
+                      (resource) => !selectedResources.includes(resource.id),
+                    )
+                    .map((resource) => (
                       <SelectItem key={resource.id} value={resource.id}>
                         <div className="flex items-center">
                           <div
                             className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: resource.color || "#2094f3" }}
+                            style={{
+                              backgroundColor: resource.color || "#2094f3",
+                            }}
                           />
                           {resource.name} ({resource.type})
                         </div>

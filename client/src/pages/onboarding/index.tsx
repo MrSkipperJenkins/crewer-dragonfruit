@@ -18,7 +18,7 @@ import {
   ArrowLeft,
   Star,
   Zap,
-  Shield
+  Shield,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -37,7 +37,7 @@ export default function Onboarding() {
     workspaceDescription: "",
     organizationType: "",
     teamSize: "",
-    primaryUse: ""
+    primaryUse: "",
   });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -67,7 +67,7 @@ export default function Onboarding() {
         description: "Failed to create workspace. Please try again.",
         variant: "destructive",
       });
-    }
+    },
   });
 
   const handleNext = () => {
@@ -90,7 +90,7 @@ export default function Onboarding() {
   };
 
   const updateData = (field: keyof OnboardingData, value: string) => {
-    setData(prev => ({ ...prev, [field]: value }));
+    setData((prev) => ({ ...prev, [field]: value }));
   };
 
   const isStepValid = () => {
@@ -157,7 +157,7 @@ export default function Onboarding() {
                       Give your production workspace a name and description
                     </p>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -166,11 +166,13 @@ export default function Onboarding() {
                       <Input
                         placeholder="e.g., ABC Studios Production"
                         value={data.workspaceName}
-                        onChange={(e) => updateData("workspaceName", e.target.value)}
+                        onChange={(e) =>
+                          updateData("workspaceName", e.target.value)
+                        }
                         className="text-lg"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         Description (Optional)
@@ -178,7 +180,9 @@ export default function Onboarding() {
                       <Textarea
                         placeholder="Describe your production studio or company..."
                         value={data.workspaceDescription}
-                        onChange={(e) => updateData("workspaceDescription", e.target.value)}
+                        onChange={(e) =>
+                          updateData("workspaceDescription", e.target.value)
+                        }
                         rows={3}
                       />
                     </div>
@@ -197,15 +201,39 @@ export default function Onboarding() {
                       What type of production organization are you?
                     </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
-                      { value: "tv_station", label: "TV Station", desc: "Local or national broadcaster" },
-                      { value: "production_company", label: "Production Company", desc: "Independent content creator" },
-                      { value: "streaming_service", label: "Streaming Service", desc: "Digital content platform" },
-                      { value: "educational", label: "Educational", desc: "School or university" },
-                      { value: "corporate", label: "Corporate", desc: "Company internal productions" },
-                      { value: "other", label: "Other", desc: "Something else" }
+                      {
+                        value: "tv_station",
+                        label: "TV Station",
+                        desc: "Local or national broadcaster",
+                      },
+                      {
+                        value: "production_company",
+                        label: "Production Company",
+                        desc: "Independent content creator",
+                      },
+                      {
+                        value: "streaming_service",
+                        label: "Streaming Service",
+                        desc: "Digital content platform",
+                      },
+                      {
+                        value: "educational",
+                        label: "Educational",
+                        desc: "School or university",
+                      },
+                      {
+                        value: "corporate",
+                        label: "Corporate",
+                        desc: "Company internal productions",
+                      },
+                      {
+                        value: "other",
+                        label: "Other",
+                        desc: "Something else",
+                      },
                     ].map((type) => (
                       <Card
                         key={type.value}
@@ -214,7 +242,9 @@ export default function Onboarding() {
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
                             : "hover:border-slate-300"
                         }`}
-                        onClick={() => updateData("organizationType", type.value)}
+                        onClick={() =>
+                          updateData("organizationType", type.value)
+                        }
                       >
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
@@ -248,7 +278,7 @@ export default function Onboarding() {
                       Tell us about your team size and primary use case
                     </p>
                   </div>
-                  
+
                   <div className="space-y-6">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
@@ -259,11 +289,15 @@ export default function Onboarding() {
                           { value: "1-5", label: "1-5 people" },
                           { value: "6-15", label: "6-15 people" },
                           { value: "16-50", label: "16-50 people" },
-                          { value: "50+", label: "50+ people" }
+                          { value: "50+", label: "50+ people" },
                         ].map((size) => (
                           <Button
                             key={size.value}
-                            variant={data.teamSize === size.value ? "default" : "outline"}
+                            variant={
+                              data.teamSize === size.value
+                                ? "default"
+                                : "outline"
+                            }
                             className="h-auto py-3"
                             onClick={() => updateData("teamSize", size.value)}
                           >
@@ -279,10 +313,26 @@ export default function Onboarding() {
                       </label>
                       <div className="space-y-3">
                         {[
-                          { value: "live_broadcasts", label: "Live Broadcasts", desc: "News, sports, events" },
-                          { value: "recorded_shows", label: "Recorded Shows", desc: "Series, documentaries, films" },
-                          { value: "mixed_content", label: "Mixed Content", desc: "Both live and recorded" },
-                          { value: "educational", label: "Educational Content", desc: "Training, lectures, courses" }
+                          {
+                            value: "live_broadcasts",
+                            label: "Live Broadcasts",
+                            desc: "News, sports, events",
+                          },
+                          {
+                            value: "recorded_shows",
+                            label: "Recorded Shows",
+                            desc: "Series, documentaries, films",
+                          },
+                          {
+                            value: "mixed_content",
+                            label: "Mixed Content",
+                            desc: "Both live and recorded",
+                          },
+                          {
+                            value: "educational",
+                            label: "Educational Content",
+                            desc: "Training, lectures, courses",
+                          },
                         ].map((use) => (
                           <Card
                             key={use.value}
@@ -338,27 +388,39 @@ export default function Onboarding() {
                       </h3>
                       <div className="space-y-3">
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-300">Name:</span>
+                          <span className="text-slate-600 dark:text-slate-300">
+                            Name:
+                          </span>
                           <span className="font-medium text-slate-900 dark:text-white">
                             {data.workspaceName}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-300">Organization:</span>
+                          <span className="text-slate-600 dark:text-slate-300">
+                            Organization:
+                          </span>
                           <span className="font-medium text-slate-900 dark:text-white">
-                            {data.organizationType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {data.organizationType
+                              .replace("_", " ")
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-300">Team Size:</span>
+                          <span className="text-slate-600 dark:text-slate-300">
+                            Team Size:
+                          </span>
                           <span className="font-medium text-slate-900 dark:text-white">
                             {data.teamSize} people
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-300">Primary Use:</span>
+                          <span className="text-slate-600 dark:text-slate-300">
+                            Primary Use:
+                          </span>
                           <span className="font-medium text-slate-900 dark:text-white">
-                            {data.primaryUse.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {data.primaryUse
+                              .replace("_", " ")
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
                           </span>
                         </div>
                       </div>
@@ -378,7 +440,7 @@ export default function Onboarding() {
                         </p>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="text-center p-4">
                       <CardContent className="p-4">
                         <Briefcase className="h-8 w-8 text-blue-600 mx-auto mb-2" />
@@ -390,7 +452,7 @@ export default function Onboarding() {
                         </p>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="text-center p-4">
                       <CardContent className="p-4">
                         <Monitor className="h-8 w-8 text-blue-600 mx-auto mb-2" />
@@ -435,7 +497,9 @@ export default function Onboarding() {
                     disabled={createWorkspaceMutation.isPending}
                     className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
                   >
-                    {createWorkspaceMutation.isPending ? "Creating..." : "Complete Setup"}
+                    {createWorkspaceMutation.isPending
+                      ? "Creating..."
+                      : "Complete Setup"}
                     <CheckCircle className="h-4 w-4" />
                   </Button>
                 )}

@@ -39,29 +39,33 @@ import {
   Users,
   Package,
   Play,
-  Copy
+  Copy,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { TemplateRequirementsModal } from "@/components/shows/template-requirements-modal";
 import { TemplateSchedulerModal } from "@/components/shows/template-scheduler-modal";
 import { useLocation } from "wouter";
-import type { ShowTemplate, InsertShowTemplate, Production } from "@/shared/schema";
+import type {
+  ShowTemplate,
+  InsertShowTemplate,
+  Production,
+} from "@/shared/schema";
 
 function TemplateRequirementsButton({ template }: { template: ShowTemplate }) {
   const [isRequirementsOpen, setIsRequirementsOpen] = useState(false);
 
   return (
     <>
-      <Button 
-        size="sm" 
-        variant="outline" 
+      <Button
+        size="sm"
+        variant="outline"
         className="flex-1"
         onClick={() => setIsRequirementsOpen(true)}
       >
         <Cog className="h-3 w-3 mr-1" />
         Requirements
       </Button>
-      
+
       <TemplateRequirementsModal
         template={template}
         isOpen={isRequirementsOpen}
@@ -76,16 +80,16 @@ function TemplateScheduleButton({ template }: { template: ShowTemplate }) {
 
   return (
     <>
-      <Button 
-        size="sm" 
-        variant="outline" 
+      <Button
+        size="sm"
+        variant="outline"
         className="flex-1"
         onClick={() => setIsSchedulerOpen(true)}
       >
         <Play className="h-3 w-3 mr-1" />
         Schedule
       </Button>
-      
+
       <TemplateSchedulerModal
         template={template}
         isOpen={isSchedulerOpen}
@@ -117,14 +121,16 @@ const recurringPatterns = [
 export default function ShowTemplatesPage() {
   const { currentWorkspace } = useCurrentWorkspace();
   const [location] = useLocation();
-  
+
   // Extract production filter from URL
-  const searchParams = new URLSearchParams(location.split('?')[1] || '');
-  const productionFilter = searchParams.get('production');
+  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const productionFilter = searchParams.get("production");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<ShowTemplate | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<ShowTemplate | null>(
+    null,
+  );
   const [formData, setFormData] = useState<TemplateFormData>({
     productionId: "",
     name: "",
@@ -132,7 +138,7 @@ export default function ShowTemplatesPage() {
     duration: 60,
     recurringPattern: "",
     notes: "",
-    color: ""
+    color: "",
   });
 
   const { data: templates = [], isLoading } = useQuery({
@@ -152,32 +158,46 @@ export default function ShowTemplatesPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertShowTemplate) => {
-      return await apiRequest("POST", `/api/workspaces/${currentWorkspace?.id}/show-templates`, data);
+      return await apiRequest(
+        "POST",
+        `/api/workspaces/${currentWorkspace?.id}/show-templates`,
+        data,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"],
+      });
       toast({ title: "Template created successfully" });
       setIsCreateModalOpen(false);
       resetForm();
     },
     onError: () => {
       toast({ title: "Failed to create template", variant: "destructive" });
-    }
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertShowTemplate> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<InsertShowTemplate>;
+    }) => {
       return await apiRequest("PUT", `/api/show-templates/${id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"],
+      });
       toast({ title: "Template updated successfully" });
       setEditingTemplate(null);
       resetForm();
     },
     onError: () => {
       toast({ title: "Failed to update template", variant: "destructive" });
-    }
+    },
   });
 
   const deleteMutation = useMutation({
@@ -185,12 +205,14 @@ export default function ShowTemplatesPage() {
       return await apiRequest("DELETE", `/api/show-templates/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"],
+      });
       toast({ title: "Template deleted successfully" });
     },
     onError: () => {
       toast({ title: "Failed to delete template", variant: "destructive" });
-    }
+    },
   });
 
   const duplicateMutation = useMutation({
@@ -202,17 +224,23 @@ export default function ShowTemplatesPage() {
         duration: template.duration,
         recurringPattern: template.recurringPattern,
         notes: template.notes,
-        color: template.color
+        color: template.color,
       };
-      return await apiRequest("POST", `/api/workspaces/${currentWorkspace?.id}/show-templates`, duplicateData);
+      return await apiRequest(
+        "POST",
+        `/api/workspaces/${currentWorkspace?.id}/show-templates`,
+        duplicateData,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/workspaces", currentWorkspace?.id, "show-templates"],
+      });
       toast({ title: "Template duplicated successfully" });
     },
     onError: () => {
       toast({ title: "Failed to duplicate template", variant: "destructive" });
-    }
+    },
   });
 
   const resetForm = () => {
@@ -223,19 +251,20 @@ export default function ShowTemplatesPage() {
       duration: 60,
       recurringPattern: "none",
       notes: "",
-      color: ""
+      color: "",
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Convert "none" back to empty string for storage
     const submitData = {
       ...formData,
-      recurringPattern: formData.recurringPattern === "none" ? "" : formData.recurringPattern
+      recurringPattern:
+        formData.recurringPattern === "none" ? "" : formData.recurringPattern,
     };
-    
+
     if (editingTemplate) {
       updateMutation.mutate({ id: editingTemplate.id, data: submitData });
     } else {
@@ -252,24 +281,32 @@ export default function ShowTemplatesPage() {
       duration: template.duration,
       recurringPattern: template.recurringPattern || "none",
       notes: template.notes || "",
-      color: template.color || ""
+      color: template.color || "",
     });
     setIsCreateModalOpen(true);
   };
 
   const getTemplateStats = (templateId: string) => {
-    const events = scheduledEvents.filter((e: any) => e.templateId === templateId);
-    const upcomingEvents = events.filter((e: any) => new Date(e.startTime) > new Date());
+    const events = scheduledEvents.filter(
+      (e: any) => e.templateId === templateId,
+    );
+    const upcomingEvents = events.filter(
+      (e: any) => new Date(e.startTime) > new Date(),
+    );
     return { events: events.length, upcoming: upcomingEvents.length };
   };
 
   const getProductionName = (productionId: string) => {
-    const production = productions.find((p: Production) => p.id === productionId);
+    const production = productions.find(
+      (p: Production) => p.id === productionId,
+    );
     return production?.name || "Unknown Production";
   };
 
   const getProductionColor = (productionId: string) => {
-    const production = productions.find((p: Production) => p.id === productionId);
+    const production = productions.find(
+      (p: Production) => p.id === productionId,
+    );
     return production?.color || "#3b82f6";
   };
 
@@ -283,7 +320,7 @@ export default function ShowTemplatesPage() {
 
   const formatRecurringPattern = (pattern: string) => {
     if (!pattern) return "No Recurring Pattern";
-    const found = recurringPatterns.find(p => p.value === pattern);
+    const found = recurringPatterns.find((p) => p.value === pattern);
     return found?.label || "Custom Pattern";
   };
 
@@ -296,34 +333,43 @@ export default function ShowTemplatesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Show Templates</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            Show Templates
+          </h1>
           <p className="text-slate-600 dark:text-slate-300 mt-1">
             Create reusable blueprints for recurring shows
           </p>
         </div>
-        
+
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setEditingTemplate(null); }}>
+            <Button
+              onClick={() => {
+                resetForm();
+                setEditingTemplate(null);
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               New Template
             </Button>
           </DialogTrigger>
-          
+
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
                 {editingTemplate ? "Edit Template" : "Create New Template"}
               </DialogTitle>
             </DialogHeader>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Production</Label>
                   <Select
                     value={formData.productionId}
-                    onValueChange={(value) => setFormData({ ...formData, productionId: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, productionId: value })
+                    }
                     required
                   >
                     <SelectTrigger>
@@ -344,45 +390,56 @@ export default function ShowTemplatesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label>Template Name</Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     placeholder="e.g., Weekday Morning News"
                     required
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label>Description</Label>
                 <Textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   placeholder="Describe this template..."
                   rows={3}
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Duration (minutes)</Label>
                   <Input
                     type="number"
                     value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        duration: parseInt(e.target.value) || 0,
+                      })
+                    }
                     min="1"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label>Recurring Pattern</Label>
                   <Select
                     value={formData.recurringPattern}
-                    onValueChange={(value) => setFormData({ ...formData, recurringPattern: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, recurringPattern: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select pattern" />
@@ -397,34 +454,40 @@ export default function ShowTemplatesPage() {
                   </Select>
                 </div>
               </div>
-              
+
               <div>
                 <Label>Template Color (Optional)</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={formData.color || "#3b82f6"}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, color: e.target.value })
+                    }
                     className="w-12 h-8 rounded border"
                   />
                   <Input
                     value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, color: e.target.value })
+                    }
                     placeholder="Leave empty to use production color"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label>Notes</Label>
                 <Textarea
                   value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
                   placeholder="Additional notes..."
                   rows={2}
                 />
               </div>
-              
+
               <div className="flex justify-end gap-2">
                 <Button
                   type="button"
@@ -435,7 +498,9 @@ export default function ShowTemplatesPage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
                 >
                   {editingTemplate ? "Update" : "Create"}
                 </Button>
@@ -459,7 +524,13 @@ export default function ShowTemplatesPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => window.history.pushState({}, '', `/workspaces/${currentWorkspace?.slug}/templates`)}
+                onClick={() =>
+                  window.history.pushState(
+                    {},
+                    "",
+                    `/workspaces/${currentWorkspace?.slug}/templates`,
+                  )
+                }
               >
                 Clear Filter
               </Button>
@@ -472,7 +543,9 @@ export default function ShowTemplatesPage() {
       {isLoading ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-slate-600 dark:text-slate-300 mt-2">Loading templates...</p>
+          <p className="text-slate-600 dark:text-slate-300 mt-2">
+            Loading templates...
+          </p>
         </div>
       ) : templates.length === 0 ? (
         <Card>
@@ -493,99 +566,114 @@ export default function ShowTemplatesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates
-            .filter((template: ShowTemplate) => 
-              !productionFilter || template.productionId === productionFilter
+            .filter(
+              (template: ShowTemplate) =>
+                !productionFilter || template.productionId === productionFilter,
             )
             .map((template: ShowTemplate) => {
-            const stats = getTemplateStats(template.id);
-            const displayColor = template.color || getProductionColor(template.productionId);
-            
-            return (
-              <Card key={template.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: displayColor }}
-                      />
-                      <div>
-                        <CardTitle className="text-lg">{template.name}</CardTitle>
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
-                          {getProductionName(template.productionId)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => startEdit(template)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => duplicateMutation.mutate(template)}>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => deleteMutation.mutate(template.id)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  
-                  {template.description && (
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
-                      {template.description}
-                    </p>
-                  )}
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4 text-slate-500" />
-                      <span>{formatDuration(template.duration)}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-slate-500" />
-                      <span>{formatRecurringPattern(template.recurringPattern)}</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 pt-2">
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                          {stats.events}
+              const stats = getTemplateStats(template.id);
+              const displayColor =
+                template.color || getProductionColor(template.productionId);
+
+              return (
+                <Card
+                  key={template.id}
+                  className="hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: displayColor }}
+                        />
+                        <div>
+                          <CardTitle className="text-lg">
+                            {template.name}
+                          </CardTitle>
+                          <p className="text-sm text-slate-600 dark:text-slate-300">
+                            {getProductionName(template.productionId)}
+                          </p>
                         </div>
-                        <div className="text-xs text-slate-600 dark:text-slate-300">Events</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                          {stats.upcoming}
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => startEdit(template)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => duplicateMutation.mutate(template)}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => deleteMutation.mutate(template.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {template.description && (
+                      <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
+                        {template.description}
+                      </p>
+                    )}
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-slate-500" />
+                        <span>{formatDuration(template.duration)}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <span>
+                          {formatRecurringPattern(template.recurringPattern)}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-2">
+                        <div className="text-center">
+                          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                            {stats.events}
+                          </div>
+                          <div className="text-xs text-slate-600 dark:text-slate-300">
+                            Events
+                          </div>
                         </div>
-                        <div className="text-xs text-slate-600 dark:text-slate-300">Upcoming</div>
+                        <div className="text-center">
+                          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                            {stats.upcoming}
+                          </div>
+                          <div className="text-xs text-slate-600 dark:text-slate-300">
+                            Upcoming
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <TemplateRequirementsButton template={template} />
+                        <TemplateScheduleButton template={template} />
                       </div>
                     </div>
-                    
-                    <div className="flex gap-2 pt-2">
-                      <TemplateRequirementsButton template={template} />
-                      <TemplateScheduleButton template={template} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardContent>
+                </Card>
+              );
+            })}
         </div>
       )}
     </div>

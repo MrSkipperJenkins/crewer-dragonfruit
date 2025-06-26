@@ -4,14 +4,14 @@ import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Calendar as CalendarIcon,
   Users,
   Clock,
   Plus,
-  Edit
+  Edit,
 } from "lucide-react";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -29,14 +29,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import resourceTimeGridPlugin from '@fullcalendar/resource-timegrid';
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import resourceTimeGridPlugin from "@fullcalendar/resource-timegrid";
 import { cn } from "@/lib/utils";
 
-type ViewType = 'daily' | 'weekly';
+type ViewType = "daily" | "weekly";
 type ShiftEvent = {
   id: string;
   title: string;
@@ -47,7 +47,7 @@ type ShiftEvent = {
   extendedProps?: {
     crewMember: string;
     show?: string;
-    type: 'shift' | 'show' | 'timeoff';
+    type: "shift" | "show" | "timeoff";
     notes?: string;
     duration?: string;
     assignmentCount?: number;
@@ -56,7 +56,7 @@ type ShiftEvent = {
 
 export default function CrewSchedulePage() {
   const { currentWorkspace } = useCurrentWorkspace();
-  const [currentView, setCurrentView] = useState<ViewType>('daily');
+  const [currentView, setCurrentView] = useState<ViewType>("daily");
   const [selectedEvent, setSelectedEvent] = useState<ShiftEvent | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCrewMembers, setSelectedCrewMembers] = useState<string[]>([]);
@@ -67,7 +67,7 @@ export default function CrewSchedulePage() {
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/crew-members`],
     enabled: !!currentWorkspace?.id,
   });
-  
+
   // Fetch shows for real data
   const { data: shows = [], isLoading: isLoadingShows } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/shows`],
@@ -89,27 +89,33 @@ export default function CrewSchedulePage() {
   // Fetch all crew assignments for the workspace
   const fetchAllCrewAssignments = async () => {
     if (!currentWorkspace?.id) return [];
-    
+
     const allAssignments: any[] = [];
-    for (const show of (shows as any[])) {
+    for (const show of shows as any[]) {
       try {
         const response = await fetch(`/api/shows/${show.id}/crew-assignments`);
         if (response.ok) {
           const assignments = await response.json();
-          allAssignments.push(...assignments.map((a: any) => ({ ...a, showId: show.id })));
+          allAssignments.push(
+            ...assignments.map((a: any) => ({ ...a, showId: show.id })),
+          );
         }
       } catch (error) {
-        console.error(`Failed to fetch assignments for show ${show.id}:`, error);
+        console.error(
+          `Failed to fetch assignments for show ${show.id}:`,
+          error,
+        );
       }
     }
     return allAssignments;
   };
 
-  const { data: crewAssignments = [], isLoading: isLoadingAssignments } = useQuery({
-    queryKey: [`/api/crew-assignments-all`, currentWorkspace?.id, shows],
-    queryFn: fetchAllCrewAssignments,
-    enabled: !!currentWorkspace?.id && (shows as any[]).length > 0,
-  });
+  const { data: crewAssignments = [], isLoading: isLoadingAssignments } =
+    useQuery({
+      queryKey: [`/api/crew-assignments-all`, currentWorkspace?.id, shows],
+      queryFn: fetchAllCrewAssignments,
+      enabled: !!currentWorkspace?.id && (shows as any[]).length > 0,
+    });
 
   // Effect to handle view changes
   useEffect(() => {
@@ -119,7 +125,7 @@ export default function CrewSchedulePage() {
         calendarApi.changeView(getCalendarView());
       }
     };
-    
+
     // Use requestAnimationFrame to avoid flushSync warning
     requestAnimationFrame(updateView);
   }, [currentView]);
@@ -132,7 +138,7 @@ export default function CrewSchedulePage() {
         calendarApi.changeView(getCalendarView());
       }
     };
-    
+
     // Use requestAnimationFrame to avoid flushSync warning
     requestAnimationFrame(updateView);
   }, [selectedCrewMembers]);
@@ -142,70 +148,101 @@ export default function CrewSchedulePage() {
     const events: ShiftEvent[] = [];
 
     // Filter crew schedules based on selected crew members
-    const filteredSchedules = selectedCrewMembers.length > 0
-      ? (crewSchedules as any[]).filter((schedule: any) => selectedCrewMembers.includes(schedule.crewMemberId))
-      : (crewSchedules as any[]);
+    const filteredSchedules =
+      selectedCrewMembers.length > 0
+        ? (crewSchedules as any[]).filter((schedule: any) =>
+            selectedCrewMembers.includes(schedule.crewMemberId),
+          )
+        : (crewSchedules as any[]);
 
     // Add regular crew schedules as recurring availability blocks
     filteredSchedules.forEach((schedule: any) => {
-      const crewMember = (crewMembers as any[]).find((cm: any) => cm.id === schedule.crewMemberId);
-      
+      const crewMember = (crewMembers as any[]).find(
+        (cm: any) => cm.id === schedule.crewMemberId,
+      );
+
       if (crewMember) {
         // Generate events for the current week based on dayOfWeek
         const today = new Date();
-        const currentWeekStart = new Date(today.setDate(today.getDate() - today.getDay()));
-        
+        const currentWeekStart = new Date(
+          today.setDate(today.getDate() - today.getDay()),
+        );
+
         for (let i = 0; i < 7; i++) {
           const date = new Date(currentWeekStart);
           date.setDate(currentWeekStart.getDate() + i);
-          
-          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+          const dayNames = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ];
           const dayName = dayNames[date.getDay()];
-          
+
           if (dayName === schedule.dayOfWeek) {
             const startTime = new Date(schedule.startTime);
             const endTime = new Date(schedule.endTime);
-            
+
             // Combine date with time - use UTC hours to avoid timezone conversion
             const eventStart = new Date(date);
-            eventStart.setHours(startTime.getUTCHours(), startTime.getUTCMinutes(), 0, 0);
-            
+            eventStart.setHours(
+              startTime.getUTCHours(),
+              startTime.getUTCMinutes(),
+              0,
+              0,
+            );
+
             const eventEnd = new Date(date);
-            eventEnd.setHours(endTime.getUTCHours(), endTime.getUTCMinutes(), 0, 0);
-            
+            eventEnd.setHours(
+              endTime.getUTCHours(),
+              endTime.getUTCMinutes(),
+              0,
+              0,
+            );
+
             // Calculate duration in hours and minutes
             const durationMs = eventEnd.getTime() - eventStart.getTime();
             const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
-            const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-            
+            const durationMinutes = Math.floor(
+              (durationMs % (1000 * 60 * 60)) / (1000 * 60),
+            );
+
             // Count overlapping show assignments for this crew member during this time period
-            const overlappingAssignments = (crewAssignments as any[]).filter((assignment: any) => {
-              if (assignment.crewMemberId !== crewMember.id) return false;
-              
-              const show = (shows as any[]).find((s: any) => s.id === assignment.showId);
-              if (!show) return false;
-              
-              const showStart = new Date(show.startTime);
-              const showEnd = new Date(show.endTime);
-              
-              // Check if show overlaps with this availability block
-              return (showStart < eventEnd && showEnd > eventStart);
-            });
-            
+            const overlappingAssignments = (crewAssignments as any[]).filter(
+              (assignment: any) => {
+                if (assignment.crewMemberId !== crewMember.id) return false;
+
+                const show = (shows as any[]).find(
+                  (s: any) => s.id === assignment.showId,
+                );
+                if (!show) return false;
+
+                const showStart = new Date(show.startTime);
+                const showEnd = new Date(show.endTime);
+
+                // Check if show overlaps with this availability block
+                return showStart < eventEnd && showEnd > eventStart;
+              },
+            );
+
             events.push({
-              id: `schedule-${schedule.id}-${date.toISOString().split('T')[0]}`,
+              id: `schedule-${schedule.id}-${date.toISOString().split("T")[0]}`,
               title: `Available`,
               start: eventStart.toISOString(),
               end: eventEnd.toISOString(),
-              backgroundColor: '#10b981',
+              backgroundColor: "#10b981",
               resourceId: crewMember.id,
               extendedProps: {
                 crewMember: crewMember.name,
-                type: 'shift' as const,
+                type: "shift" as const,
                 duration: `${durationHours}h ${durationMinutes}m`,
                 assignmentCount: overlappingAssignments.length,
-                notes: `Regular availability on ${schedule.dayOfWeek}`
-              }
+                notes: `Regular availability on ${schedule.dayOfWeek}`,
+              },
             } as ShiftEvent);
           }
         }
@@ -218,25 +255,28 @@ export default function CrewSchedulePage() {
   // Generate resources for the calendar (crew members as columns)
   const generateResources = () => {
     // Only show columns for selected crew members
-    const filteredMembers = selectedCrewMembers.length > 0
-      ? (crewMembers as any[]).filter((member: any) => selectedCrewMembers.includes(member.id))
-      : [];
+    const filteredMembers =
+      selectedCrewMembers.length > 0
+        ? (crewMembers as any[]).filter((member: any) =>
+            selectedCrewMembers.includes(member.id),
+          )
+        : [];
 
     return filteredMembers.map((member: any) => ({
       id: member.id,
       title: member.name,
       extendedProps: {
-        position: member.title
-      }
+        position: member.title,
+      },
     }));
   };
 
   // Toggle crew member selection
   const toggleCrewMember = (memberId: string) => {
-    setSelectedCrewMembers(prev => 
-      prev.includes(memberId) 
-        ? prev.filter(id => id !== memberId)
-        : [...prev, memberId]
+    setSelectedCrewMembers((prev) =>
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId],
     );
   };
 
@@ -255,19 +295,19 @@ export default function CrewSchedulePage() {
       start: eventInfo.event.startStr,
       end: eventInfo.event.endStr,
       backgroundColor: eventInfo.event.backgroundColor,
-      extendedProps: eventInfo.event.extendedProps
+      extendedProps: eventInfo.event.extendedProps,
     });
     setIsEditModalOpen(true);
   };
 
   const handleDateClick = (dateInfo: any) => {
     // Handle clicking on empty time slots
-    console.log('Date clicked:', dateInfo);
+    console.log("Date clicked:", dateInfo);
   };
 
   const handleEventDrop = (eventInfo: any) => {
     // Handle drag and drop (can be implemented later)
-    console.log('Event dropped:', eventInfo);
+    console.log("Event dropped:", eventInfo);
   };
 
   // View configuration
@@ -275,14 +315,22 @@ export default function CrewSchedulePage() {
     const resources = generateResources();
     if (resources.length >= 1) {
       // Use resource view when any crew members are selected
-      return currentView === 'daily' ? 'resourceTimeGridDay' : 'resourceTimeGridWeek';
+      return currentView === "daily"
+        ? "resourceTimeGridDay"
+        : "resourceTimeGridWeek";
     } else {
       // Use regular time grid when no crew members selected
-      return currentView === 'daily' ? 'timeGridDay' : 'timeGridWeek';
+      return currentView === "daily" ? "timeGridDay" : "timeGridWeek";
     }
   };
 
-  if (isLoadingCrew || isLoadingShows || isLoadingAssignments || isLoadingSchedules || isLoadingTimeOff) {
+  if (
+    isLoadingCrew ||
+    isLoadingShows ||
+    isLoadingAssignments ||
+    isLoadingSchedules ||
+    isLoadingTimeOff
+  ) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -299,22 +347,24 @@ export default function CrewSchedulePage() {
             <Users className="h-6 w-6 mr-2" />
             Crew Schedule
           </h1>
-          <p className="text-gray-500">Manage crew member schedules and assignments</p>
+          <p className="text-gray-500">
+            Manage crew member schedules and assignments
+          </p>
         </div>
-        
+
         {/* View Toggle */}
         <div className="flex items-center space-x-2">
           <Button
-            variant={currentView === 'daily' ? 'default' : 'outline'}
-            onClick={() => setCurrentView('daily')}
+            variant={currentView === "daily" ? "default" : "outline"}
+            onClick={() => setCurrentView("daily")}
             size="sm"
           >
             <CalendarIcon className="h-4 w-4 mr-2" />
             Daily
           </Button>
           <Button
-            variant={currentView === 'weekly' ? 'default' : 'outline'}
-            onClick={() => setCurrentView('weekly')}
+            variant={currentView === "weekly" ? "default" : "outline"}
+            onClick={() => setCurrentView("weekly")}
             size="sm"
           >
             <Clock className="h-4 w-4 mr-2" />
@@ -331,36 +381,42 @@ export default function CrewSchedulePage() {
               <Users className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Crew</p>
-                <p className="text-2xl font-bold">{(crewMembers as any[]).length}</p>
+                <p className="text-2xl font-bold">
+                  {(crewMembers as any[]).length}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
               <CalendarIcon className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Shows</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Active Shows
+                </p>
                 <p className="text-2xl font-bold">{(shows as any[]).length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
               <Clock className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Assignments</p>
-                <p className="text-2xl font-bold">{(crewAssignments as any[]).length}</p>
+                <p className="text-2xl font-bold">
+                  {(crewAssignments as any[]).length}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
@@ -398,48 +454,64 @@ export default function CrewSchedulePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {selectedCrewMembers.length === 0 && (crewMembers as any[]).length > 0 && (
-                <div className="p-4 bg-blue-50 border-b border-blue-100">
-                  <p className="text-xs text-blue-700 font-medium mb-1">Click crew members to toggle their schedule columns</p>
-                  <p className="text-xs text-blue-600">Shows data from crew_schedules table only</p>
-                </div>
-              )}
+              {selectedCrewMembers.length === 0 &&
+                (crewMembers as any[]).length > 0 && (
+                  <div className="p-4 bg-blue-50 border-b border-blue-100">
+                    <p className="text-xs text-blue-700 font-medium mb-1">
+                      Click crew members to toggle their schedule columns
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      Shows data from crew_schedules table only
+                    </p>
+                  </div>
+                )}
               <div className="max-h-[600px] overflow-y-auto">
                 {(crewMembers as any[]).map((member: any) => {
                   const memberSchedules = (crewSchedules as any[]).filter(
-                    (s: any) => s.crewMemberId === member.id
+                    (s: any) => s.crewMemberId === member.id,
                   );
                   const memberTimeOff = (crewTimeOff as any[]).filter(
-                    (t: any) => t.crewMemberId === member.id
+                    (t: any) => t.crewMemberId === member.id,
                   );
                   const memberAssignments = (crewAssignments as any[]).filter(
-                    (a: any) => a.crewMemberId === member.id
+                    (a: any) => a.crewMemberId === member.id,
                   );
 
                   const isSelected = selectedCrewMembers.includes(member.id);
-                  
+
                   return (
-                    <div 
-                      key={member.id} 
+                    <div
+                      key={member.id}
                       className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
-                        isSelected ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                        isSelected
+                          ? "bg-blue-50 border-blue-200"
+                          : "hover:bg-gray-50"
                       }`}
                       onClick={() => toggleCrewMember(member.id)}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          isSelected ? 'bg-blue-200' : 'bg-blue-100'
-                        }`}>
-                          <span className={`text-sm font-medium ${
-                            isSelected ? 'text-blue-800' : 'text-blue-700'
-                          }`}>
-                            {member.name.split(' ').map((n: string) => n[0]).join('')}
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            isSelected ? "bg-blue-200" : "bg-blue-100"
+                          }`}
+                        >
+                          <span
+                            className={`text-sm font-medium ${
+                              isSelected ? "text-blue-800" : "text-blue-700"
+                            }`}
+                          >
+                            {member.name
+                              .split(" ")
+                              .map((n: string) => n[0])
+                              .join("")}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${
-                            isSelected ? 'text-blue-900' : 'text-gray-900'
-                          }`}>
+                          <p
+                            className={`text-sm font-medium truncate ${
+                              isSelected ? "text-blue-900" : "text-gray-900"
+                            }`}
+                          >
                             {member.name}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
@@ -448,13 +520,21 @@ export default function CrewSchedulePage() {
                         </div>
                         {isSelected && (
                           <div className="text-blue-600">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            <svg
+                              className="w-4 h-4"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="mt-3 space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-gray-500">Schedules:</span>
@@ -491,10 +571,16 @@ export default function CrewSchedulePage() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <span>{currentView === 'daily' ? 'Daily View' : 'Weekly View'}</span>
+                  <span>
+                    {currentView === "daily" ? "Daily View" : "Weekly View"}
+                  </span>
                   {selectedCrewMembers.length > 0 && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                      {selectedCrewMembers.length} member{selectedCrewMembers.length > 1 ? 's' : ''} selected
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-100 text-blue-800"
+                    >
+                      {selectedCrewMembers.length} member
+                      {selectedCrewMembers.length > 1 ? "s" : ""} selected
                     </Badge>
                   )}
                 </div>
@@ -509,7 +595,10 @@ export default function CrewSchedulePage() {
                       Clear Selection
                     </Button>
                   )}
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge
+                    variant="outline"
+                    className="bg-green-50 text-green-700 border-green-200"
+                  >
                     Schedules
                   </Badge>
                 </div>
@@ -521,21 +610,34 @@ export default function CrewSchedulePage() {
                   <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg">
                     <div className="text-center p-8">
                       <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Crew Members Selected</h3>
-                      <p className="text-gray-600 mb-4">Select crew members from the sidebar to view their schedules</p>
-                      <p className="text-sm text-gray-500">Click on crew member names to toggle their schedule columns</p>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No Crew Members Selected
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Select crew members from the sidebar to view their
+                        schedules
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Click on crew member names to toggle their schedule
+                        columns
+                      </p>
                     </div>
                   </div>
                 ) : (
                   <FullCalendar
-                    schedulerLicenseKey='CC-Attribution-NonCommercial-NoDerivatives'
+                    schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
                     ref={calendarRef}
-                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, resourceTimeGridPlugin]}
+                    plugins={[
+                      dayGridPlugin,
+                      timeGridPlugin,
+                      interactionPlugin,
+                      resourceTimeGridPlugin,
+                    ]}
                     initialView={getCalendarView()}
                     headerToolbar={{
-                      left: 'prev,next today',
-                      center: 'title',
-                      right: ''
+                      left: "prev,next today",
+                      center: "title",
+                      right: "",
                     }}
                     events={events}
                     resources={generateResources()}
@@ -555,12 +657,16 @@ export default function CrewSchedulePage() {
                     resourceAreaHeaderContent="Crew Members"
                     resourceAreaWidth="250px"
                     resourceLabelContent={(resourceInfo) => (
-                      <div 
+                      <div
                         className="p-2 text-center min-w-0 max-w-full cursor-help"
                         title={`${resourceInfo.resource.title} - ${resourceInfo.resource.extendedProps?.position}`}
                       >
-                        <div className="font-medium text-sm leading-tight break-words">{resourceInfo.resource.title}</div>
-                        <div className="text-xs text-gray-500 leading-tight break-words mt-1">{resourceInfo.resource.extendedProps?.position}</div>
+                        <div className="font-medium text-sm leading-tight break-words">
+                          {resourceInfo.resource.title}
+                        </div>
+                        <div className="text-xs text-gray-500 leading-tight break-words mt-1">
+                          {resourceInfo.resource.extendedProps?.position}
+                        </div>
                       </div>
                     )}
                     eventContent={(eventInfo) => (
@@ -572,18 +678,18 @@ export default function CrewSchedulePage() {
                           {eventInfo.event.extendedProps?.duration && (
                             <div>{eventInfo.event.extendedProps.duration}</div>
                           )}
-                          {eventInfo.event.extendedProps?.assignmentCount !== undefined && (
+                          {eventInfo.event.extendedProps?.assignmentCount !==
+                            undefined && (
                             <div>
-                              {eventInfo.event.extendedProps.assignmentCount === 0 
-                                ? 'No shows' 
-                                : `${eventInfo.event.extendedProps.assignmentCount} show${eventInfo.event.extendedProps.assignmentCount > 1 ? 's' : ''}`
-                              }
+                              {eventInfo.event.extendedProps.assignmentCount ===
+                              0
+                                ? "No shows"
+                                : `${eventInfo.event.extendedProps.assignmentCount} show${eventInfo.event.extendedProps.assignmentCount > 1 ? "s" : ""}`}
                             </div>
                           )}
                         </div>
                       </div>
                     )}
-
                   />
                 )}
               </div>
@@ -604,7 +710,7 @@ export default function CrewSchedulePage() {
               Modify shift details or assignment information.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedEvent && (
             <div className="space-y-4">
               <div>
@@ -612,13 +718,15 @@ export default function CrewSchedulePage() {
                 <Input
                   id="title"
                   value={selectedEvent.title}
-                  onChange={(e) => setSelectedEvent({
-                    ...selectedEvent,
-                    title: e.target.value
-                  })}
+                  onChange={(e) =>
+                    setSelectedEvent({
+                      ...selectedEvent,
+                      title: e.target.value,
+                    })
+                  }
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="start">Start Time</Label>
@@ -626,10 +734,12 @@ export default function CrewSchedulePage() {
                     id="start"
                     type="datetime-local"
                     value={selectedEvent.start?.slice(0, 16)}
-                    onChange={(e) => setSelectedEvent({
-                      ...selectedEvent,
-                      start: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setSelectedEvent({
+                        ...selectedEvent,
+                        start: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -638,17 +748,19 @@ export default function CrewSchedulePage() {
                     id="end"
                     type="datetime-local"
                     value={selectedEvent.end?.slice(0, 16)}
-                    onChange={(e) => setSelectedEvent({
-                      ...selectedEvent,
-                      end: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setSelectedEvent({
+                        ...selectedEvent,
+                        end: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="crew-member">Crew Member</Label>
-                <Select value={selectedEvent.extendedProps?.crewMember || ''}>
+                <Select value={selectedEvent.extendedProps?.crewMember || ""}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -661,36 +773,41 @@ export default function CrewSchedulePage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
                   id="notes"
                   placeholder="Additional notes..."
-                  value={selectedEvent.extendedProps?.notes || ''}
-                  onChange={(e) => setSelectedEvent({
-                    ...selectedEvent,
-                    extendedProps: {
-                      ...selectedEvent.extendedProps,
-                      crewMember: selectedEvent.extendedProps?.crewMember || '',
-                      type: selectedEvent.extendedProps?.type || 'shift',
-                      notes: e.target.value
-                    }
-                  })}
+                  value={selectedEvent.extendedProps?.notes || ""}
+                  onChange={(e) =>
+                    setSelectedEvent({
+                      ...selectedEvent,
+                      extendedProps: {
+                        ...selectedEvent.extendedProps,
+                        crewMember:
+                          selectedEvent.extendedProps?.crewMember || "",
+                        type: selectedEvent.extendedProps?.type || "shift",
+                        notes: e.target.value,
+                      },
+                    })
+                  }
                 />
               </div>
             </div>
           )}
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => {
-              // Handle save logic here
-              console.log('Saving event:', selectedEvent);
-              setIsEditModalOpen(false);
-            }}>
+            <Button
+              onClick={() => {
+                // Handle save logic here
+                console.log("Saving event:", selectedEvent);
+                setIsEditModalOpen(false);
+              }}
+            >
               Save Changes
             </Button>
           </DialogFooter>

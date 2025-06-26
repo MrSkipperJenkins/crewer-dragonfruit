@@ -8,7 +8,13 @@ import { ArrowLeft, Check, Copy, Plus, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { generateSlug, isValidSlug } from "@/lib/utils";
@@ -17,11 +23,17 @@ import { insertWorkspaceSchema, type Workspace } from "@shared/schema";
 // Extend the workspace schema for the wizard
 const workspaceInfoSchema = insertWorkspaceSchema.extend({
   name: z.string().min(3, "Workspace name must be at least 3 characters"),
-  slug: z.string().min(3, "URL slug must be at least 3 characters").refine(isValidSlug, "Invalid URL format")
+  slug: z
+    .string()
+    .min(3, "URL slug must be at least 3 characters")
+    .refine(isValidSlug, "Invalid URL format"),
 });
 
 const inviteTeammatesSchema = z.object({
-  emails: z.array(z.string().email("Invalid email address").or(z.literal(""))).min(0).max(10)
+  emails: z
+    .array(z.string().email("Invalid email address").or(z.literal("")))
+    .min(0)
+    .max(10),
 });
 
 type WorkspaceInfo = z.infer<typeof workspaceInfoSchema>;
@@ -33,7 +45,9 @@ interface WorkspaceWizardProps {
 
 export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null);
+  const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(
+    null,
+  );
   const [inviteLink, setInviteLink] = useState<string>("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -43,17 +57,17 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
     resolver: zodResolver(workspaceInfoSchema),
     defaultValues: {
       name: "",
-      slug: ""
+      slug: "",
     },
-    mode: "onChange"
+    mode: "onChange",
   });
 
   // Step 2: Invite Teammates Form
   const inviteForm = useForm<InviteTeammates>({
     resolver: zodResolver(inviteTeammatesSchema),
     defaultValues: {
-      emails: [""]
-    }
+      emails: [""],
+    },
   });
 
   // Watch form values for real-time updates
@@ -70,28 +84,41 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
 
   // Check slug availability
   const { data: slugCheck } = useQuery({
-    queryKey: ['/api/workspaces/slug-check', watchedSlug],
+    queryKey: ["/api/workspaces/slug-check", watchedSlug],
     enabled: watchedSlug.length >= 3 && isValidSlug(watchedSlug),
     queryFn: async () => {
-      const response = await fetch(`/api/workspaces/slug-check?slug=${watchedSlug}`);
+      const response = await fetch(
+        `/api/workspaces/slug-check?slug=${watchedSlug}`,
+      );
       return response.json();
-    }
+    },
   });
 
   // Create workspace mutation (now called in Step 2)
   const createWorkspaceMutation = useMutation({
-    mutationFn: async (data: { workspaceInfo: WorkspaceInfo; emails: string[] }) => {
-      const workspaceResponse = await apiRequest("POST", "/api/workspaces", data.workspaceInfo);
+    mutationFn: async (data: {
+      workspaceInfo: WorkspaceInfo;
+      emails: string[];
+    }) => {
+      const workspaceResponse = await apiRequest(
+        "POST",
+        "/api/workspaces",
+        data.workspaceInfo,
+      );
       const workspace = await workspaceResponse.json();
-      
+
       // Send invites if there are valid emails
-      const validEmails = data.emails.filter(email => email.trim());
+      const validEmails = data.emails.filter((email) => email.trim());
       if (validEmails.length > 0) {
         try {
-          const inviteResponse = await apiRequest("POST", `/api/workspaces/${workspace.slug}/invites`, {
-            emails: validEmails,
-            workspaceId: workspace.id
-          });
+          const inviteResponse = await apiRequest(
+            "POST",
+            `/api/workspaces/${workspace.slug}/invites`,
+            {
+              emails: validEmails,
+              workspaceId: workspace.id,
+            },
+          );
           const inviteData = await inviteResponse.json();
           if (inviteData?.inviteLink) {
             setInviteLink(inviteData.inviteLink);
@@ -101,22 +128,24 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
           console.log("Invites failed, but workspace created successfully");
         }
       }
-      
+
       return workspace;
     },
     onSuccess: async (workspace: Workspace) => {
       toast({
         title: "Success!",
-        description: "Your workspace is ready!"
+        description: "Your workspace is ready!",
       });
-      
+
       // Switch to the new workspace
       try {
-        await apiRequest("POST", "/api/workspaces/switch", { workspaceSlug: workspace.slug });
-        
+        await apiRequest("POST", "/api/workspaces/switch", {
+          workspaceSlug: workspace.slug,
+        });
+
         // Invalidate all queries to refresh the app with new workspace data
         queryClient.invalidateQueries();
-        
+
         // Redirect to the new workspace
         setLocation(`/workspaces/${workspace.slug}/dashboard`);
       } catch (error) {
@@ -128,9 +157,9 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
       toast({
         title: "Error",
         description: "Failed to create workspace. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const handleStep1Submit = (data: WorkspaceInfo) => {
@@ -142,7 +171,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
     if (!workspaceInfo) return;
     createWorkspaceMutation.mutate({
       workspaceInfo,
-      emails: data.emails
+      emails: data.emails,
     });
   };
 
@@ -156,7 +185,10 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
   const removeEmailField = (index: number) => {
     const currentEmails = inviteForm.getValues("emails");
     if (currentEmails.length > 1) {
-      inviteForm.setValue("emails", currentEmails.filter((_, i) => i !== index));
+      inviteForm.setValue(
+        "emails",
+        currentEmails.filter((_, i) => i !== index),
+      );
     }
   };
 
@@ -165,14 +197,15 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
       await navigator.clipboard.writeText(inviteLink);
       toast({
         title: "Copied!",
-        description: "Invite link copied to clipboard"
+        description: "Invite link copied to clipboard",
       });
     }
   };
 
-  const isStep1Valid = watchedName.length >= 3 && 
-    watchedSlug.length >= 3 && 
-    isValidSlug(watchedSlug) && 
+  const isStep1Valid =
+    watchedName.length >= 3 &&
+    watchedSlug.length >= 3 &&
+    isValidSlug(watchedSlug) &&
     slugCheck?.available !== false;
 
   return (
@@ -186,23 +219,21 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          
+
           <div className="flex justify-center mb-4">
             <div className="flex space-x-2">
               {[1, 2].map((step) => (
                 <div
                   key={step}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    step <= currentStep ? 'bg-blue-500' : 'bg-gray-300'
+                    step <= currentStep ? "bg-blue-500" : "bg-gray-300"
                   }`}
                 />
               ))}
             </div>
           </div>
-          
-          <p className="text-gray-600 text-sm">
-            Step {currentStep} of 2
-          </p>
+
+          <p className="text-gray-600 text-sm">Step {currentStep} of 2</p>
         </div>
 
         {/* Main Card */}
@@ -214,12 +245,16 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                   Create a new workspace
                 </h1>
                 <p className="text-gray-600 text-sm">
-                  Workspaces are shared environments where teams can work<br />
+                  Workspaces are shared environments where teams can work
+                  <br />
                   on projects, cycles and issues.
                 </p>
               </div>
 
-              <form onSubmit={workspaceForm.handleSubmit(handleStep1Submit)} className="space-y-6">
+              <form
+                onSubmit={workspaceForm.handleSubmit(handleStep1Submit)}
+                className="space-y-6"
+              >
                 <div>
                   <Label htmlFor="name" className="text-gray-700 text-sm">
                     Workspace Name
@@ -253,7 +288,9 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                   {watchedSlug.length >= 3 && (
                     <div className="mt-1">
                       {slugCheck?.available === false && (
-                        <p className="text-red-500 text-xs">This URL is already taken</p>
+                        <p className="text-red-500 text-xs">
+                          This URL is already taken
+                        </p>
                       )}
                       {slugCheck?.available === true && (
                         <p className="text-green-600 text-xs">✓ Available</p>
@@ -266,8 +303,6 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                     </p>
                   )}
                 </div>
-
-
 
                 <Button
                   type="submit"
@@ -291,12 +326,15 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                 </p>
               </div>
 
-              <form onSubmit={inviteForm.handleSubmit(handleStep2Submit)} className="space-y-6">
+              <form
+                onSubmit={inviteForm.handleSubmit(handleStep2Submit)}
+                className="space-y-6"
+              >
                 <div>
                   <Label className="text-gray-700 text-sm mb-3 block">
                     Invite people
                   </Label>
-                  
+
                   {inviteForm.watch("emails").map((email, index) => (
                     <div key={index} className="flex gap-2 mb-3">
                       <Input
@@ -322,7 +360,7 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                       )}
                     </div>
                   ))}
-                  
+
                   {inviteForm.watch("emails").length < 10 && (
                     <button
                       type="button"
@@ -355,13 +393,15 @@ export function WorkspaceWizard({ onCancel }: WorkspaceWizardProps) {
                     >
                       Back
                     </Button>
-                    
+
                     <Button
                       type="submit"
                       disabled={createWorkspaceMutation.isPending}
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      {createWorkspaceMutation.isPending ? "Creating..." : "Create workspace"}
+                      {createWorkspaceMutation.isPending
+                        ? "Creating..."
+                        : "Create workspace"}
                     </Button>
                   </div>
                 </div>

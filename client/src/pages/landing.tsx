@@ -4,12 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CheckCircle,
   Calendar,
@@ -22,7 +17,7 @@ import {
   ChevronRight,
   Star,
   ArrowRight,
-  Play
+  Play,
 } from "lucide-react";
 
 export default function Landing() {
@@ -43,7 +38,8 @@ export default function Landing() {
     onSuccess: () => {
       toast({
         title: "Success!",
-        description: "You're on the list! We'll notify you when Crewer launches.",
+        description:
+          "You're on the list! We'll notify you when Crewer launches.",
       });
       setEmail("");
     },
@@ -67,61 +63,70 @@ export default function Landing() {
     {
       icon: Calendar,
       title: "Smart Scheduling",
-      description: "AI-powered scheduling that automatically handles conflicts, availability, and resource allocation."
+      description:
+        "AI-powered scheduling that automatically handles conflicts, availability, and resource allocation.",
     },
     {
       icon: Users,
       title: "Crew Management",
-      description: "Manage your entire crew database with skills tracking, availability, and automated assignment suggestions."
+      description:
+        "Manage your entire crew database with skills tracking, availability, and automated assignment suggestions.",
     },
     {
       icon: Monitor,
       title: "Resource Tracking",
-      description: "Keep track of studios, equipment, and locations with real-time availability and conflict detection."
+      description:
+        "Keep track of studios, equipment, and locations with real-time availability and conflict detection.",
     },
     {
       icon: BarChart3,
       title: "Production Analytics",
-      description: "Get insights into crew utilization, show metrics, and production efficiency with detailed reports."
+      description:
+        "Get insights into crew utilization, show metrics, and production efficiency with detailed reports.",
     },
     {
       icon: Zap,
       title: "Real-time Collaboration",
-      description: "Keep your entire team in sync with instant notifications and collaborative scheduling tools."
+      description:
+        "Keep your entire team in sync with instant notifications and collaborative scheduling tools.",
     },
     {
       icon: Shield,
       title: "Enterprise Security",
-      description: "Bank-level security with role-based permissions and SOC 2 compliance for peace of mind."
-    }
+      description:
+        "Bank-level security with role-based permissions and SOC 2 compliance for peace of mind.",
+    },
   ];
 
   const testimonials = [
     {
       name: "Sarah Chen",
       role: "Production Manager, NewsFlow Media",
-      content: "Crewer transformed how we schedule our daily news broadcasts. What used to take hours now takes minutes.",
-      rating: 5
+      content:
+        "Crewer transformed how we schedule our daily news broadcasts. What used to take hours now takes minutes.",
+      rating: 5,
     },
     {
       name: "Michael Rodriguez",
       role: "Studio Operations Director, Prime Productions",
-      content: "The automated conflict detection alone has saved us countless production delays. Game-changer.",
-      rating: 5
+      content:
+        "The automated conflict detection alone has saved us countless production delays. Game-changer.",
+      rating: 5,
     },
     {
       name: "Emma Thompson",
       role: "Scheduling Coordinator, Live TV Network",
-      content: "Finally, a tool built specifically for TV production. The crew management features are incredible.",
-      rating: 5
-    }
+      content:
+        "Finally, a tool built specifically for TV production. The crew management features are incredible.",
+      rating: 5,
+    },
   ];
 
   const stats = [
     { number: "87%", label: "Reduction in scheduling conflicts" },
     { number: "3.2hrs", label: "Average time saved per day" },
     { number: "99.9%", label: "Uptime reliability" },
-    { number: "500+", label: "Productions managed daily" }
+    { number: "500+", label: "Productions managed daily" },
   ];
 
   return (
@@ -139,10 +144,27 @@ export default function Landing() {
               </span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</a>
-              <a href="#testimonials" className="text-gray-600 hover:text-gray-900 transition-colors">Testimonials</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
-              <Button variant="outline" size="sm">Sign In</Button>
+              <a
+                href="#features"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Features
+              </a>
+              <a
+                href="#testimonials"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Testimonials
+              </a>
+              <a
+                href="#pricing"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Pricing
+              </a>
+              <Button variant="outline" size="sm">
+                Sign In
+              </Button>
             </div>
           </div>
         </div>
@@ -152,7 +174,10 @@ export default function Landing() {
       <section className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24">
           <div className="text-center">
-            <Badge variant="outline" className="mb-6 bg-blue-50 text-blue-700 border-blue-200">
+            <Badge
+              variant="outline"
+              className="mb-6 bg-blue-50 text-blue-700 border-blue-200"
+            >
               🎬 Coming Soon - Early Access Available
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
@@ -162,10 +187,11 @@ export default function Landing() {
               </span>
             </h1>
             <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-              Crewer is the first scheduling platform built specifically for TV production teams. 
-              Manage crew, resources, and complex schedules with AI-powered automation that just works.
+              Crewer is the first scheduling platform built specifically for TV
+              production teams. Manage crew, resources, and complex schedules
+              with AI-powered automation that just works.
             </p>
-            
+
             {/* Email Signup */}
             <div className="max-w-md mx-auto mb-12">
               <form onSubmit={handleSignup} className="flex gap-3">
@@ -177,8 +203,8 @@ export default function Landing() {
                   className="flex-1 h-12 text-base"
                   required
                 />
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={signupMutation.isPending}
                   className="h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
@@ -195,7 +221,10 @@ export default function Landing() {
             <div className="relative max-w-4xl mx-auto">
               <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl overflow-hidden">
                 <div className="aspect-video bg-gray-800 flex items-center justify-center">
-                  <Button size="lg" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm">
+                  <Button
+                    size="lg"
+                    className="bg-white/20 hover:bg-white/30 backdrop-blur-sm"
+                  >
                     <Play className="h-6 w-6 mr-2" />
                     Watch Demo (2 min)
                   </Button>
@@ -230,13 +259,17 @@ export default function Landing() {
               Everything you need to run TV production
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From daily news to live shows, Crewer handles the complexity so you can focus on creating great content.
+              From daily news to live shows, Crewer handles the complexity so
+              you can focus on creating great content.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="h-full hover:shadow-lg transition-shadow duration-300">
+              <Card
+                key={index}
+                className="h-full hover:shadow-lg transition-shadow duration-300"
+              >
                 <CardHeader>
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mb-4">
                     <feature.icon className="h-6 w-6 text-white" />
@@ -270,13 +303,22 @@ export default function Landing() {
                 <CardContent className="pt-6">
                   <div className="flex mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                      <Star
+                        key={i}
+                        className="h-5 w-5 text-yellow-400 fill-current"
+                      />
                     ))}
                   </div>
-                  <p className="text-gray-700 mb-6 italic">"{testimonial.content}"</p>
+                  <p className="text-gray-700 mb-6 italic">
+                    "{testimonial.content}"
+                  </p>
                   <div>
-                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                    <div className="text-sm text-gray-600">{testimonial.role}</div>
+                    <div className="font-semibold text-gray-900">
+                      {testimonial.name}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {testimonial.role}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -306,7 +348,9 @@ export default function Landing() {
                   <span className="text-3xl font-bold">$49</span>
                   <span className="text-gray-600">/month</span>
                 </div>
-                <p className="text-gray-600">Perfect for small production teams</p>
+                <p className="text-gray-600">
+                  Perfect for small production teams
+                </p>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
@@ -327,10 +371,10 @@ export default function Landing() {
                     Email support
                   </li>
                 </ul>
-                <Button 
-                  className="w-full mt-6" 
+                <Button
+                  className="w-full mt-6"
                   variant="outline"
-                  onClick={() => window.location.href = '/onboarding'}
+                  onClick={() => (window.location.href = "/onboarding")}
                 >
                   Get Started
                 </Button>
@@ -348,7 +392,9 @@ export default function Landing() {
                   <span className="text-3xl font-bold">$149</span>
                   <span className="text-gray-600">/month</span>
                 </div>
-                <p className="text-gray-600">For growing production companies</p>
+                <p className="text-gray-600">
+                  For growing production companies
+                </p>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
@@ -373,9 +419,9 @@ export default function Landing() {
                     API access
                   </li>
                 </ul>
-                <Button 
+                <Button
                   className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
-                  onClick={() => window.location.href = '/onboarding'}
+                  onClick={() => (window.location.href = "/onboarding")}
                 >
                   Get Started
                 </Button>
@@ -430,7 +476,8 @@ export default function Landing() {
             Ready to revolutionize your production workflow?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of production professionals who are already transforming their scheduling process with Crewer.
+            Join thousands of production professionals who are already
+            transforming their scheduling process with Crewer.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
             <Input
@@ -440,7 +487,7 @@ export default function Landing() {
               onChange={(e) => setEmail(e.target.value)}
               className="bg-white/90 backdrop-blur-sm border-0 h-12"
             />
-            <Button 
+            <Button
               onClick={handleSignup}
               disabled={signupMutation.isPending}
               className="bg-white text-blue-600 hover:bg-gray-100 h-12 px-8"
@@ -469,28 +516,82 @@ export default function Landing() {
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+                <li>
+                  <a
+                    href="#features"
+                    className="hover:text-white transition-colors"
+                  >
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#pricing"
+                    className="hover:text-white transition-colors"
+                  >
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Integrations
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    API
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Status
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Security
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

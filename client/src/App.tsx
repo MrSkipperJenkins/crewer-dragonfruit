@@ -33,7 +33,7 @@ function Router() {
       <Route path="/landing" component={Landing} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/workspaces/new" component={NewWorkspacePage} />
-      
+
       {/* Workspace-aware routes */}
       <Route>
         <CurrentWorkspaceProvider>
@@ -54,26 +54,56 @@ function Router() {
               <Route path="/reports" component={Reports} />
               <Route path="/notifications" component={Notifications} />
               <Route path="/settings" component={Settings} />
-              
+
               {/* Workspace-specific routes */}
               <Route path="/workspaces/:slug" component={Dashboard} />
               <Route path="/workspaces/:slug/dashboard" component={Dashboard} />
-              <Route path="/workspaces/:slug/productions" component={Productions} />
+              <Route
+                path="/workspaces/:slug/productions"
+                component={Productions}
+              />
               <Route path="/workspaces/:slug/shows" component={Shows} />
-              <Route path="/workspaces/:slug/shows/calendar" component={ShowsCalendarView} />
-              <Route path="/workspaces/:slug/shows/list" component={ShowsListView} />
-              <Route path="/workspaces/:slug/shows/:id/edit" component={EditShow} />
-              <Route path="/workspaces/:slug/shows/builder" component={ShowBuilder} />
-              <Route path="/workspaces/:slug/shows/templates" component={ShowTemplates} />
-              <Route path="/workspaces/:slug/templates" component={ShowTemplatesNew} />
-              <Route path="/workspaces/:slug/crew-members" component={CrewMembers} />
-              <Route path="/workspaces/:slug/crew-schedule" component={CrewSchedule} />
+              <Route
+                path="/workspaces/:slug/shows/calendar"
+                component={ShowsCalendarView}
+              />
+              <Route
+                path="/workspaces/:slug/shows/list"
+                component={ShowsListView}
+              />
+              <Route
+                path="/workspaces/:slug/shows/:id/edit"
+                component={EditShow}
+              />
+              <Route
+                path="/workspaces/:slug/shows/builder"
+                component={ShowBuilder}
+              />
+              <Route
+                path="/workspaces/:slug/shows/templates"
+                component={ShowTemplates}
+              />
+              <Route
+                path="/workspaces/:slug/templates"
+                component={ShowTemplatesNew}
+              />
+              <Route
+                path="/workspaces/:slug/crew-members"
+                component={CrewMembers}
+              />
+              <Route
+                path="/workspaces/:slug/crew-schedule"
+                component={CrewSchedule}
+              />
               <Route path="/workspaces/:slug/jobs" component={Jobs} />
               <Route path="/workspaces/:slug/resources" component={Resources} />
               <Route path="/workspaces/:slug/reports" component={Reports} />
-              <Route path="/workspaces/:slug/notifications" component={Notifications} />
+              <Route
+                path="/workspaces/:slug/notifications"
+                component={Notifications}
+              />
               <Route path="/workspaces/:slug/settings" component={Settings} />
-              
+
               <Route component={NotFound} />
             </Switch>
           </WorkspaceLayout>

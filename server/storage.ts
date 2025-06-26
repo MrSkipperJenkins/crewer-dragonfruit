@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
-import type { 
-  Workspace, 
+import type {
+  Workspace,
   InsertWorkspace,
   User,
   InsertUser,
@@ -46,7 +46,7 @@ import type {
   EventCrewAssignment,
   InsertEventCrewAssignment,
   EventResourceAssignment,
-  InsertEventResourceAssignment
+  InsertEventResourceAssignment,
 } from "@shared/schema";
 import {
   workspaces,
@@ -72,7 +72,7 @@ import {
   templateRequiredJobs,
   templateResources,
   eventCrewAssignments,
-  eventResourceAssignments
+  eventResourceAssignments,
 } from "@shared/schema";
 import { migration } from "./migration";
 import { db } from "./db";
@@ -87,7 +87,10 @@ export interface IStorage {
   createWorkspace(workspace: InsertWorkspace): Promise<Workspace>;
   getMostRecentWorkspace(): Promise<Workspace | undefined>;
   updateWorkspaceLastAccessed(id: string): Promise<void>;
-  updateWorkspace(id: string, workspace: Partial<InsertWorkspace>): Promise<Workspace | undefined>;
+  updateWorkspace(
+    id: string,
+    workspace: Partial<InsertWorkspace>,
+  ): Promise<Workspace | undefined>;
   deleteWorkspace(id: string): Promise<boolean>;
 
   // User CRUD
@@ -102,7 +105,10 @@ export interface IStorage {
   getCrewMembers(workspaceId: string): Promise<CrewMember[]>;
   getCrewMember(id: string): Promise<CrewMember | undefined>;
   createCrewMember(crewMember: InsertCrewMember): Promise<CrewMember>;
-  updateCrewMember(id: string, crewMember: Partial<InsertCrewMember>): Promise<CrewMember | undefined>;
+  updateCrewMember(
+    id: string,
+    crewMember: Partial<InsertCrewMember>,
+  ): Promise<CrewMember | undefined>;
   deleteCrewMember(id: string): Promise<boolean>;
 
   // Job CRUD
@@ -115,26 +121,38 @@ export interface IStorage {
   // Crew Member Job CRUD
   getCrewMemberJobs(workspaceId: string): Promise<CrewMemberJob[]>;
   getCrewMemberJobsByCrewMember(crewMemberId: string): Promise<CrewMemberJob[]>;
-  createCrewMemberJob(crewMemberJob: InsertCrewMemberJob): Promise<CrewMemberJob>;
+  createCrewMemberJob(
+    crewMemberJob: InsertCrewMemberJob,
+  ): Promise<CrewMemberJob>;
   deleteCrewMemberJob(id: string): Promise<boolean>;
 
   // Resource CRUD
   getResources(workspaceId: string): Promise<Resource[]>;
   getResource(id: string): Promise<Resource | undefined>;
   createResource(resource: InsertResource): Promise<Resource>;
-  updateResource(id: string, resource: Partial<InsertResource>): Promise<Resource | undefined>;
+  updateResource(
+    id: string,
+    resource: Partial<InsertResource>,
+  ): Promise<Resource | undefined>;
   deleteResource(id: string): Promise<boolean>;
 
   // Show Category CRUD
   getShowCategories(workspaceId: string): Promise<ShowCategory[]>;
   getShowCategory(id: string): Promise<ShowCategory | undefined>;
   createShowCategory(showCategory: InsertShowCategory): Promise<ShowCategory>;
-  updateShowCategory(id: string, showCategory: Partial<InsertShowCategory>): Promise<ShowCategory | undefined>;
+  updateShowCategory(
+    id: string,
+    showCategory: Partial<InsertShowCategory>,
+  ): Promise<ShowCategory | undefined>;
   deleteShowCategory(id: string): Promise<boolean>;
 
   // Show CRUD
   getShows(workspaceId: string): Promise<Show[]>;
-  getShowsInRange(workspaceId: string, startDate: Date, endDate: Date): Promise<Show[]>;
+  getShowsInRange(
+    workspaceId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Show[]>;
   getShow(id: string): Promise<Show | undefined>;
   createShow(show: InsertShow): Promise<Show>;
   updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined>;
@@ -142,19 +160,32 @@ export interface IStorage {
 
   // Recurring Show Methods
   getRecurringShows(workspaceId: string): Promise<Show[]>;
-  getShowExceptions(workspaceId: string, startDate: Date, endDate: Date): Promise<Show[]>;
+  getShowExceptions(
+    workspaceId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Show[]>;
 
   // Show Category Assignment CRUD
-  getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]>;
-  getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]>;
-  createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment>;
+  getShowCategoryAssignments(
+    workspaceId: string,
+  ): Promise<ShowCategoryAssignment[]>;
+  getShowCategoryAssignmentsByShow(
+    showId: string,
+  ): Promise<ShowCategoryAssignment[]>;
+  createShowCategoryAssignment(
+    assignment: InsertShowCategoryAssignment,
+  ): Promise<ShowCategoryAssignment>;
   deleteShowCategoryAssignment(id: string): Promise<boolean>;
 
   // Required Job CRUD
   getRequiredJobs(workspaceId: string): Promise<RequiredJob[]>;
   getRequiredJobsByShow(showId: string): Promise<RequiredJob[]>;
   createRequiredJob(requiredJob: InsertRequiredJob): Promise<RequiredJob>;
-  updateRequiredJob(id: string, requiredJob: Partial<InsertRequiredJob>): Promise<RequiredJob | undefined>;
+  updateRequiredJob(
+    id: string,
+    requiredJob: Partial<InsertRequiredJob>,
+  ): Promise<RequiredJob | undefined>;
   deleteRequiredJob(id: string): Promise<boolean>;
 
   // Show Resource CRUD
@@ -166,24 +197,40 @@ export interface IStorage {
   // Crew Assignment CRUD
   getCrewAssignments(workspaceId: string): Promise<CrewAssignment[]>;
   getCrewAssignmentsByShow(showId: string): Promise<CrewAssignment[]>;
-  getCrewAssignmentsByCrewMember(crewMemberId: string): Promise<CrewAssignment[]>;
-  createCrewAssignment(crewAssignment: InsertCrewAssignment): Promise<CrewAssignment>;
-  updateCrewAssignment(id: string, crewAssignment: Partial<InsertCrewAssignment>): Promise<CrewAssignment | undefined>;
+  getCrewAssignmentsByCrewMember(
+    crewMemberId: string,
+  ): Promise<CrewAssignment[]>;
+  createCrewAssignment(
+    crewAssignment: InsertCrewAssignment,
+  ): Promise<CrewAssignment>;
+  updateCrewAssignment(
+    id: string,
+    crewAssignment: Partial<InsertCrewAssignment>,
+  ): Promise<CrewAssignment | undefined>;
   deleteCrewAssignment(id: string): Promise<boolean>;
-  replaceCrewAssignments(showId: string, assignments: InsertCrewAssignment[]): Promise<void>;
+  replaceCrewAssignments(
+    showId: string,
+    assignments: InsertCrewAssignment[],
+  ): Promise<void>;
 
   // Crew Schedule CRUD
   getCrewSchedules(workspaceId: string): Promise<CrewSchedule[]>;
   getCrewSchedulesByCrewMember(crewMemberId: string): Promise<CrewSchedule[]>;
   createCrewSchedule(crewSchedule: InsertCrewSchedule): Promise<CrewSchedule>;
-  updateCrewSchedule(id: string, crewSchedule: Partial<InsertCrewSchedule>): Promise<CrewSchedule | undefined>;
+  updateCrewSchedule(
+    id: string,
+    crewSchedule: Partial<InsertCrewSchedule>,
+  ): Promise<CrewSchedule | undefined>;
   deleteCrewSchedule(id: string): Promise<boolean>;
 
   // Crew Time Off CRUD
   getCrewTimeOffs(workspaceId: string): Promise<CrewTimeOff[]>;
   getCrewTimeOffsByCrewMember(crewMemberId: string): Promise<CrewTimeOff[]>;
   createCrewTimeOff(crewTimeOff: InsertCrewTimeOff): Promise<CrewTimeOff>;
-  updateCrewTimeOff(id: string, crewTimeOff: Partial<InsertCrewTimeOff>): Promise<CrewTimeOff | undefined>;
+  updateCrewTimeOff(
+    id: string,
+    crewTimeOff: Partial<InsertCrewTimeOff>,
+  ): Promise<CrewTimeOff | undefined>;
   deleteCrewTimeOff(id: string): Promise<boolean>;
 
   // Notification CRUD
@@ -201,7 +248,7 @@ export interface IStorage {
 // Add method to clear existing demo data
 export async function clearDemoData(): Promise<void> {
   console.log("🧹 Clearing existing demo data...");
-  
+
   // Delete in reverse order of dependencies
   await db.delete(notifications);
   await db.delete(crewTimeOff);
@@ -218,7 +265,7 @@ export async function clearDemoData(): Promise<void> {
   await db.delete(crewMembers);
   await db.delete(users);
   await db.delete(workspaces);
-  
+
   console.log("✅ Demo data cleared successfully!");
 }
 
@@ -234,169 +281,796 @@ export async function seedDemoData(): Promise<void> {
   };
 
   // Create workspaces
-  const [workspace1, workspace2] = await db.insert(workspaces).values([
-    {
-      name: "BBC Studios North",
-      slug: "bbc-studios-north",
-      lastAccessedAt: new Date(),
-    },
-    {
-      name: "ITV London", 
-      slug: "itv-london",
-    }
-  ]).returning();
+  const [workspace1, workspace2] = await db
+    .insert(workspaces)
+    .values([
+      {
+        name: "BBC Studios North",
+        slug: "bbc-studios-north",
+        lastAccessedAt: new Date(),
+      },
+      {
+        name: "ITV London",
+        slug: "itv-london",
+      },
+    ])
+    .returning();
 
   // Create users (10 per workspace) - first user has specific ID for dashboard notifications
-  const workspace1Users = await db.insert(users).values([
-    { id: "e7f21c28-2cad-47c3-858e-e2ba07ac8701", username: "admin", password: "hashed_password_123", name: "Sarah Mitchell", email: "sarah.mitchell@bbcstudios.com", role: "admin", workspaceId: workspace1.id },
-    { username: "producer1", password: "hashed_password_456", name: "James Carter", email: "james.carter@bbcstudios.com", role: "producer", workspaceId: workspace1.id },
-    { username: "director1", password: "hashed_password_789", name: "Emily Watson", email: "emily.watson@bbcstudios.com", role: "director", workspaceId: workspace1.id },
-    { username: "editor1", password: "hashed_password_012", name: "Michael Brown", email: "michael.brown@bbcstudios.com", role: "editor", workspaceId: workspace1.id },
-    { username: "coordinator1", password: "hashed_password_345", name: "Lisa Chen", email: "lisa.chen@bbcstudios.com", role: "coordinator", workspaceId: workspace1.id },
-    { username: "manager1", password: "hashed_password_678", name: "Robert Davis", email: "robert.davis@bbcstudios.com", role: "manager", workspaceId: workspace1.id },
-    { username: "assistant1", password: "hashed_password_901", name: "Anna Wilson", email: "anna.wilson@bbcstudios.com", role: "assistant", workspaceId: workspace1.id },
-    { username: "supervisor1", password: "hashed_password_234", name: "Chris Taylor", email: "chris.taylor@bbcstudios.com", role: "supervisor", workspaceId: workspace1.id },
-    { username: "scheduler1", password: "hashed_password_567", name: "Maria Garcia", email: "maria.garcia@bbcstudios.com", role: "scheduler", workspaceId: workspace1.id },
-    { username: "tech1", password: "hashed_password_890", name: "David Lee", email: "david.lee@bbcstudios.com", role: "technician", workspaceId: workspace1.id },
-  ]).returning();
+  const workspace1Users = await db
+    .insert(users)
+    .values([
+      {
+        id: "e7f21c28-2cad-47c3-858e-e2ba07ac8701",
+        username: "admin",
+        password: "hashed_password_123",
+        name: "Sarah Mitchell",
+        email: "sarah.mitchell@bbcstudios.com",
+        role: "admin",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "producer1",
+        password: "hashed_password_456",
+        name: "James Carter",
+        email: "james.carter@bbcstudios.com",
+        role: "producer",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "director1",
+        password: "hashed_password_789",
+        name: "Emily Watson",
+        email: "emily.watson@bbcstudios.com",
+        role: "director",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "editor1",
+        password: "hashed_password_012",
+        name: "Michael Brown",
+        email: "michael.brown@bbcstudios.com",
+        role: "editor",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "coordinator1",
+        password: "hashed_password_345",
+        name: "Lisa Chen",
+        email: "lisa.chen@bbcstudios.com",
+        role: "coordinator",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "manager1",
+        password: "hashed_password_678",
+        name: "Robert Davis",
+        email: "robert.davis@bbcstudios.com",
+        role: "manager",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "assistant1",
+        password: "hashed_password_901",
+        name: "Anna Wilson",
+        email: "anna.wilson@bbcstudios.com",
+        role: "assistant",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "supervisor1",
+        password: "hashed_password_234",
+        name: "Chris Taylor",
+        email: "chris.taylor@bbcstudios.com",
+        role: "supervisor",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "scheduler1",
+        password: "hashed_password_567",
+        name: "Maria Garcia",
+        email: "maria.garcia@bbcstudios.com",
+        role: "scheduler",
+        workspaceId: workspace1.id,
+      },
+      {
+        username: "tech1",
+        password: "hashed_password_890",
+        name: "David Lee",
+        email: "david.lee@bbcstudios.com",
+        role: "technician",
+        workspaceId: workspace1.id,
+      },
+    ])
+    .returning();
 
-  const workspace2Users = await db.insert(users).values([
-    { username: "producer", password: "hashed_password_456", name: "David Thompson", email: "david.thompson@itv.com", role: "producer", workspaceId: workspace2.id },
-    { username: "admin2", password: "hashed_password_111", name: "Sophie Clarke", email: "sophie.clarke@itv.com", role: "admin", workspaceId: workspace2.id },
-    { username: "director2", password: "hashed_password_222", name: "Oliver Smith", email: "oliver.smith@itv.com", role: "director", workspaceId: workspace2.id },
-    { username: "editor2", password: "hashed_password_333", name: "Emma Jones", email: "emma.jones@itv.com", role: "editor", workspaceId: workspace2.id },
-    { username: "coordinator2", password: "hashed_password_444", name: "Tom Anderson", email: "tom.anderson@itv.com", role: "coordinator", workspaceId: workspace2.id },
-    { username: "manager2", password: "hashed_password_555", name: "Helen White", email: "helen.white@itv.com", role: "manager", workspaceId: workspace2.id },
-    { username: "assistant2", password: "hashed_password_666", name: "Jack Turner", email: "jack.turner@itv.com", role: "assistant", workspaceId: workspace2.id },
-    { username: "supervisor2", password: "hashed_password_777", name: "Lucy Martin", email: "lucy.martin@itv.com", role: "supervisor", workspaceId: workspace2.id },
-    { username: "scheduler2", password: "hashed_password_888", name: "Peter Green", email: "peter.green@itv.com", role: "scheduler", workspaceId: workspace2.id },
-    { username: "tech2", password: "hashed_password_999", name: "Rachel King", email: "rachel.king@itv.com", role: "technician", workspaceId: workspace2.id },
-  ]).returning();
+  const workspace2Users = await db
+    .insert(users)
+    .values([
+      {
+        username: "producer",
+        password: "hashed_password_456",
+        name: "David Thompson",
+        email: "david.thompson@itv.com",
+        role: "producer",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "admin2",
+        password: "hashed_password_111",
+        name: "Sophie Clarke",
+        email: "sophie.clarke@itv.com",
+        role: "admin",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "director2",
+        password: "hashed_password_222",
+        name: "Oliver Smith",
+        email: "oliver.smith@itv.com",
+        role: "director",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "editor2",
+        password: "hashed_password_333",
+        name: "Emma Jones",
+        email: "emma.jones@itv.com",
+        role: "editor",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "coordinator2",
+        password: "hashed_password_444",
+        name: "Tom Anderson",
+        email: "tom.anderson@itv.com",
+        role: "coordinator",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "manager2",
+        password: "hashed_password_555",
+        name: "Helen White",
+        email: "helen.white@itv.com",
+        role: "manager",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "assistant2",
+        password: "hashed_password_666",
+        name: "Jack Turner",
+        email: "jack.turner@itv.com",
+        role: "assistant",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "supervisor2",
+        password: "hashed_password_777",
+        name: "Lucy Martin",
+        email: "lucy.martin@itv.com",
+        role: "supervisor",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "scheduler2",
+        password: "hashed_password_888",
+        name: "Peter Green",
+        email: "peter.green@itv.com",
+        role: "scheduler",
+        workspaceId: workspace2.id,
+      },
+      {
+        username: "tech2",
+        password: "hashed_password_999",
+        name: "Rachel King",
+        email: "rachel.king@itv.com",
+        role: "technician",
+        workspaceId: workspace2.id,
+      },
+    ])
+    .returning();
 
   const [user1] = workspace1Users;
 
   // Create crew members (20 per workspace)
-  const workspace1CrewMembers = await db.insert(crewMembers).values([
-    { name: "Alex Rodriguez", email: "alex.rodriguez@bbcstudios.com", phone: "+44 7700 900123", title: "Camera Operator", workspaceId: workspace1.id },
-    { name: "Emma Johnson", email: "emma.johnson@bbcstudios.com", phone: "+44 7700 900456", title: "Sound Engineer", workspaceId: workspace1.id },
-    { name: "James Wilson", email: "james.wilson@bbcstudios.com", phone: "+44 7700 900789", title: "Lighting Technician", workspaceId: workspace1.id },
-    { name: "Sophie Turner", email: "sophie.turner@bbcstudios.com", phone: "+44 7700 900012", title: "Director", workspaceId: workspace1.id },
-    { name: "Michael Chen", email: "michael.chen@bbcstudios.com", phone: "+44 7700 900345", title: "Production Assistant", workspaceId: workspace1.id },
-    { name: "Sarah Williams", email: "sarah.williams@bbcstudios.com", phone: "+44 7700 900678", title: "Camera Operator", workspaceId: workspace1.id },
-    { name: "Daniel Moore", email: "daniel.moore@bbcstudios.com", phone: "+44 7700 900901", title: "Video Editor", workspaceId: workspace1.id },
-    { name: "Jessica Brown", email: "jessica.brown@bbcstudios.com", phone: "+44 7700 901234", title: "Makeup Artist", workspaceId: workspace1.id },
-    { name: "Ryan Clark", email: "ryan.clark@bbcstudios.com", phone: "+44 7700 901567", title: "Gaffer", workspaceId: workspace1.id },
-    { name: "Amanda Lewis", email: "amanda.lewis@bbcstudios.com", phone: "+44 7700 901890", title: "Script Supervisor", workspaceId: workspace1.id },
-    { name: "Kevin Hall", email: "kevin.hall@bbcstudios.com", phone: "+44 7700 902123", title: "Boom Operator", workspaceId: workspace1.id },
-    { name: "Rachel Green", email: "rachel.green@bbcstudios.com", phone: "+44 7700 902456", title: "Wardrobe Stylist", workspaceId: workspace1.id },
-    { name: "Steven Adams", email: "steven.adams@bbcstudios.com", phone: "+44 7700 902789", title: "Set Decorator", workspaceId: workspace1.id },
-    { name: "Laura Baker", email: "laura.baker@bbcstudios.com", phone: "+44 7700 903012", title: "Floor Manager", workspaceId: workspace1.id },
-    { name: "Mark Thompson", email: "mark.thompson@bbcstudios.com", phone: "+44 7700 903345", title: "Camera Operator", workspaceId: workspace1.id },
-    { name: "Nicole Parker", email: "nicole.parker@bbcstudios.com", phone: "+44 7700 903678", title: "Graphics Operator", workspaceId: workspace1.id },
-    { name: "Andrew Hill", email: "andrew.hill@bbcstudios.com", phone: "+44 7700 903901", title: "Technical Director", workspaceId: workspace1.id },
-    { name: "Michelle Young", email: "michelle.young@bbcstudios.com", phone: "+44 7700 904234", title: "Production Coordinator", workspaceId: workspace1.id },
-    { name: "Brandon Scott", email: "brandon.scott@bbcstudios.com", phone: "+44 7700 904567", title: "Steadicam Operator", workspaceId: workspace1.id },
-    { name: "Stephanie Wright", email: "stephanie.wright@bbcstudios.com", phone: "+44 7700 904890", title: "Location Manager", workspaceId: workspace1.id },
-  ]).returning();
+  const workspace1CrewMembers = await db
+    .insert(crewMembers)
+    .values([
+      {
+        name: "Alex Rodriguez",
+        email: "alex.rodriguez@bbcstudios.com",
+        phone: "+44 7700 900123",
+        title: "Camera Operator",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Emma Johnson",
+        email: "emma.johnson@bbcstudios.com",
+        phone: "+44 7700 900456",
+        title: "Sound Engineer",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "James Wilson",
+        email: "james.wilson@bbcstudios.com",
+        phone: "+44 7700 900789",
+        title: "Lighting Technician",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Sophie Turner",
+        email: "sophie.turner@bbcstudios.com",
+        phone: "+44 7700 900012",
+        title: "Director",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Michael Chen",
+        email: "michael.chen@bbcstudios.com",
+        phone: "+44 7700 900345",
+        title: "Production Assistant",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Sarah Williams",
+        email: "sarah.williams@bbcstudios.com",
+        phone: "+44 7700 900678",
+        title: "Camera Operator",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Daniel Moore",
+        email: "daniel.moore@bbcstudios.com",
+        phone: "+44 7700 900901",
+        title: "Video Editor",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Jessica Brown",
+        email: "jessica.brown@bbcstudios.com",
+        phone: "+44 7700 901234",
+        title: "Makeup Artist",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Ryan Clark",
+        email: "ryan.clark@bbcstudios.com",
+        phone: "+44 7700 901567",
+        title: "Gaffer",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Amanda Lewis",
+        email: "amanda.lewis@bbcstudios.com",
+        phone: "+44 7700 901890",
+        title: "Script Supervisor",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Kevin Hall",
+        email: "kevin.hall@bbcstudios.com",
+        phone: "+44 7700 902123",
+        title: "Boom Operator",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Rachel Green",
+        email: "rachel.green@bbcstudios.com",
+        phone: "+44 7700 902456",
+        title: "Wardrobe Stylist",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Steven Adams",
+        email: "steven.adams@bbcstudios.com",
+        phone: "+44 7700 902789",
+        title: "Set Decorator",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Laura Baker",
+        email: "laura.baker@bbcstudios.com",
+        phone: "+44 7700 903012",
+        title: "Floor Manager",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Mark Thompson",
+        email: "mark.thompson@bbcstudios.com",
+        phone: "+44 7700 903345",
+        title: "Camera Operator",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Nicole Parker",
+        email: "nicole.parker@bbcstudios.com",
+        phone: "+44 7700 903678",
+        title: "Graphics Operator",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Andrew Hill",
+        email: "andrew.hill@bbcstudios.com",
+        phone: "+44 7700 903901",
+        title: "Technical Director",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Michelle Young",
+        email: "michelle.young@bbcstudios.com",
+        phone: "+44 7700 904234",
+        title: "Production Coordinator",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Brandon Scott",
+        email: "brandon.scott@bbcstudios.com",
+        phone: "+44 7700 904567",
+        title: "Steadicam Operator",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Stephanie Wright",
+        email: "stephanie.wright@bbcstudios.com",
+        phone: "+44 7700 904890",
+        title: "Location Manager",
+        workspaceId: workspace1.id,
+      },
+    ])
+    .returning();
 
-  const workspace2CrewMembers = await db.insert(crewMembers).values([
-    { name: "Oliver Mason", email: "oliver.mason@itv.com", phone: "+44 7700 905123", title: "Camera Operator", workspaceId: workspace2.id },
-    { name: "Charlotte Davis", email: "charlotte.davis@itv.com", phone: "+44 7700 905456", title: "Sound Engineer", workspaceId: workspace2.id },
-    { name: "Benjamin Evans", email: "benjamin.evans@itv.com", phone: "+44 7700 905789", title: "Lighting Technician", workspaceId: workspace2.id },
-    { name: "Amelia Roberts", email: "amelia.roberts@itv.com", phone: "+44 7700 906012", title: "Director", workspaceId: workspace2.id },
-    { name: "Jacob Turner", email: "jacob.turner@itv.com", phone: "+44 7700 906345", title: "Production Assistant", workspaceId: workspace2.id },
-    { name: "Isabella Cooper", email: "isabella.cooper@itv.com", phone: "+44 7700 906678", title: "Camera Operator", workspaceId: workspace2.id },
-    { name: "Ethan Ward", email: "ethan.ward@itv.com", phone: "+44 7700 906901", title: "Video Editor", workspaceId: workspace2.id },
-    { name: "Chloe Phillips", email: "chloe.phillips@itv.com", phone: "+44 7700 907234", title: "Makeup Artist", workspaceId: workspace2.id },
-    { name: "Nathan Cox", email: "nathan.cox@itv.com", phone: "+44 7700 907567", title: "Gaffer", workspaceId: workspace2.id },
-    { name: "Grace Ward", email: "grace.ward@itv.com", phone: "+44 7700 907890", title: "Script Supervisor", workspaceId: workspace2.id },
-    { name: "Samuel Kelly", email: "samuel.kelly@itv.com", phone: "+44 7700 908123", title: "Boom Operator", workspaceId: workspace2.id },
-    { name: "Zoe Bennett", email: "zoe.bennett@itv.com", phone: "+44 7700 908456", title: "Wardrobe Stylist", workspaceId: workspace2.id },
-    { name: "Luke Murphy", email: "luke.murphy@itv.com", phone: "+44 7700 908789", title: "Set Decorator", workspaceId: workspace2.id },
-    { name: "Lily Foster", email: "lily.foster@itv.com", phone: "+44 7700 909012", title: "Floor Manager", workspaceId: workspace2.id },
-    { name: "Connor Bailey", email: "connor.bailey@itv.com", phone: "+44 7700 909345", title: "Camera Operator", workspaceId: workspace2.id },
-    { name: "Mia Reed", email: "mia.reed@itv.com", phone: "+44 7700 909678", title: "Graphics Operator", workspaceId: workspace2.id },
-    { name: "Tyler Hughes", email: "tyler.hughes@itv.com", phone: "+44 7700 909901", title: "Technical Director", workspaceId: workspace2.id },
-    { name: "Sophia Morris", email: "sophia.morris@itv.com", phone: "+44 7700 910234", title: "Production Coordinator", workspaceId: workspace2.id },
-    { name: "Mason Wood", email: "mason.wood@itv.com", phone: "+44 7700 910567", title: "Steadicam Operator", workspaceId: workspace2.id },
-    { name: "Ava Price", email: "ava.price@itv.com", phone: "+44 7700 910890", title: "Location Manager", workspaceId: workspace2.id },
-  ]).returning();
+  const workspace2CrewMembers = await db
+    .insert(crewMembers)
+    .values([
+      {
+        name: "Oliver Mason",
+        email: "oliver.mason@itv.com",
+        phone: "+44 7700 905123",
+        title: "Camera Operator",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Charlotte Davis",
+        email: "charlotte.davis@itv.com",
+        phone: "+44 7700 905456",
+        title: "Sound Engineer",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Benjamin Evans",
+        email: "benjamin.evans@itv.com",
+        phone: "+44 7700 905789",
+        title: "Lighting Technician",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Amelia Roberts",
+        email: "amelia.roberts@itv.com",
+        phone: "+44 7700 906012",
+        title: "Director",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Jacob Turner",
+        email: "jacob.turner@itv.com",
+        phone: "+44 7700 906345",
+        title: "Production Assistant",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Isabella Cooper",
+        email: "isabella.cooper@itv.com",
+        phone: "+44 7700 906678",
+        title: "Camera Operator",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Ethan Ward",
+        email: "ethan.ward@itv.com",
+        phone: "+44 7700 906901",
+        title: "Video Editor",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Chloe Phillips",
+        email: "chloe.phillips@itv.com",
+        phone: "+44 7700 907234",
+        title: "Makeup Artist",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Nathan Cox",
+        email: "nathan.cox@itv.com",
+        phone: "+44 7700 907567",
+        title: "Gaffer",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Grace Ward",
+        email: "grace.ward@itv.com",
+        phone: "+44 7700 907890",
+        title: "Script Supervisor",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Samuel Kelly",
+        email: "samuel.kelly@itv.com",
+        phone: "+44 7700 908123",
+        title: "Boom Operator",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Zoe Bennett",
+        email: "zoe.bennett@itv.com",
+        phone: "+44 7700 908456",
+        title: "Wardrobe Stylist",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Luke Murphy",
+        email: "luke.murphy@itv.com",
+        phone: "+44 7700 908789",
+        title: "Set Decorator",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Lily Foster",
+        email: "lily.foster@itv.com",
+        phone: "+44 7700 909012",
+        title: "Floor Manager",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Connor Bailey",
+        email: "connor.bailey@itv.com",
+        phone: "+44 7700 909345",
+        title: "Camera Operator",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Mia Reed",
+        email: "mia.reed@itv.com",
+        phone: "+44 7700 909678",
+        title: "Graphics Operator",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Tyler Hughes",
+        email: "tyler.hughes@itv.com",
+        phone: "+44 7700 909901",
+        title: "Technical Director",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Sophia Morris",
+        email: "sophia.morris@itv.com",
+        phone: "+44 7700 910234",
+        title: "Production Coordinator",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Mason Wood",
+        email: "mason.wood@itv.com",
+        phone: "+44 7700 910567",
+        title: "Steadicam Operator",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Ava Price",
+        email: "ava.price@itv.com",
+        phone: "+44 7700 910890",
+        title: "Location Manager",
+        workspaceId: workspace2.id,
+      },
+    ])
+    .returning();
 
-  const [crewMember1, crewMember2, crewMember3, crewMember4, crewMember5] = workspace1CrewMembers;
+  const [crewMember1, crewMember2, crewMember3, crewMember4, crewMember5] =
+    workspace1CrewMembers;
 
   // Create jobs (10 per workspace)
-  const workspace1Jobs = await db.insert(jobs).values([
-    { title: "Camera Operator", description: "Operate professional broadcast cameras for live and recorded productions", workspaceId: workspace1.id },
-    { title: "Sound Engineer", description: "Manage audio equipment and ensure high-quality sound recording", workspaceId: workspace1.id },
-    { title: "Lighting Technician", description: "Set up and operate lighting equipment for optimal visual quality", workspaceId: workspace1.id },
-    { title: "Director", description: "Lead creative direction and coordinate production activities", workspaceId: workspace1.id },
-    { title: "Production Assistant", description: "Support production team with various tasks and coordination", workspaceId: workspace1.id },
-    { title: "Video Editor", description: "Edit and post-process video content for broadcast quality", workspaceId: workspace1.id },
-    { title: "Makeup Artist", description: "Apply makeup and styling for on-screen talent", workspaceId: workspace1.id },
-    { title: "Floor Manager", description: "Coordinate activities on set and manage crew during filming", workspaceId: workspace1.id },
-    { title: "Graphics Operator", description: "Create and manage on-screen graphics and visual elements", workspaceId: workspace1.id },
-    { title: "Technical Director", description: "Oversee technical aspects of production and equipment", workspaceId: workspace1.id },
-  ]).returning();
+  const workspace1Jobs = await db
+    .insert(jobs)
+    .values([
+      {
+        title: "Camera Operator",
+        description:
+          "Operate professional broadcast cameras for live and recorded productions",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Sound Engineer",
+        description:
+          "Manage audio equipment and ensure high-quality sound recording",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Lighting Technician",
+        description:
+          "Set up and operate lighting equipment for optimal visual quality",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Director",
+        description:
+          "Lead creative direction and coordinate production activities",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Production Assistant",
+        description:
+          "Support production team with various tasks and coordination",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Video Editor",
+        description:
+          "Edit and post-process video content for broadcast quality",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Makeup Artist",
+        description: "Apply makeup and styling for on-screen talent",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Floor Manager",
+        description:
+          "Coordinate activities on set and manage crew during filming",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Graphics Operator",
+        description: "Create and manage on-screen graphics and visual elements",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Technical Director",
+        description: "Oversee technical aspects of production and equipment",
+        workspaceId: workspace1.id,
+      },
+    ])
+    .returning();
 
-  const workspace2Jobs = await db.insert(jobs).values([
-    { title: "Camera Operator", description: "Operate professional broadcast cameras for live and recorded productions", workspaceId: workspace2.id },
-    { title: "Sound Engineer", description: "Manage audio equipment and ensure high-quality sound recording", workspaceId: workspace2.id },
-    { title: "Lighting Technician", description: "Set up and operate lighting equipment for optimal visual quality", workspaceId: workspace2.id },
-    { title: "Director", description: "Lead creative direction and coordinate production activities", workspaceId: workspace2.id },
-    { title: "Production Assistant", description: "Support production team with various tasks and coordination", workspaceId: workspace2.id },
-    { title: "Video Editor", description: "Edit and post-process video content for broadcast quality", workspaceId: workspace2.id },
-    { title: "Makeup Artist", description: "Apply makeup and styling for on-screen talent", workspaceId: workspace2.id },
-    { title: "Floor Manager", description: "Coordinate activities on set and manage crew during filming", workspaceId: workspace2.id },
-    { title: "Graphics Operator", description: "Create and manage on-screen graphics and visual elements", workspaceId: workspace2.id },
-    { title: "Technical Director", description: "Oversee technical aspects of production and equipment", workspaceId: workspace2.id },
-  ]).returning();
+  const workspace2Jobs = await db
+    .insert(jobs)
+    .values([
+      {
+        title: "Camera Operator",
+        description:
+          "Operate professional broadcast cameras for live and recorded productions",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Sound Engineer",
+        description:
+          "Manage audio equipment and ensure high-quality sound recording",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Lighting Technician",
+        description:
+          "Set up and operate lighting equipment for optimal visual quality",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Director",
+        description:
+          "Lead creative direction and coordinate production activities",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Production Assistant",
+        description:
+          "Support production team with various tasks and coordination",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Video Editor",
+        description:
+          "Edit and post-process video content for broadcast quality",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Makeup Artist",
+        description: "Apply makeup and styling for on-screen talent",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Floor Manager",
+        description:
+          "Coordinate activities on set and manage crew during filming",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Graphics Operator",
+        description: "Create and manage on-screen graphics and visual elements",
+        workspaceId: workspace2.id,
+      },
+      {
+        title: "Technical Director",
+        description: "Oversee technical aspects of production and equipment",
+        workspaceId: workspace2.id,
+      },
+    ])
+    .returning();
 
   const [job1, job2, job3, job4, job5] = workspace1Jobs;
 
   // Create crew member job assignments
   await db.insert(crewMemberJobs).values([
-    { crewMemberId: crewMember1.id, jobId: job1.id, workspaceId: workspace1.id },
-    { crewMemberId: crewMember2.id, jobId: job2.id, workspaceId: workspace1.id },
-    { crewMemberId: crewMember3.id, jobId: job3.id, workspaceId: workspace1.id },
-    { crewMemberId: crewMember4.id, jobId: job4.id, workspaceId: workspace1.id },
-    { crewMemberId: crewMember5.id, jobId: job5.id, workspaceId: workspace1.id },
+    {
+      crewMemberId: crewMember1.id,
+      jobId: job1.id,
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember2.id,
+      jobId: job2.id,
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember3.id,
+      jobId: job3.id,
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember4.id,
+      jobId: job4.id,
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember5.id,
+      jobId: job5.id,
+      workspaceId: workspace1.id,
+    },
   ]);
 
   // Create resources (10 per workspace)
-  const workspace1Resources = await db.insert(resources).values([
-    { name: "Studio A", type: "studio", description: "Main production studio with green screen capability", workspaceId: workspace1.id },
-    { name: "Control Room 1", type: "control_room", description: "Primary control room with 4K broadcasting equipment", workspaceId: workspace1.id },
-    { name: "Camera Kit #1", type: "equipment", description: "Professional broadcast camera with tripod and accessories", workspaceId: workspace1.id },
-    { name: "Sound Mixing Board", type: "equipment", description: "16-channel digital mixing console", workspaceId: workspace1.id },
-    { name: "Studio B", type: "studio", description: "Secondary studio for smaller productions", workspaceId: workspace1.id },
-    { name: "Control Room 2", type: "control_room", description: "Backup control room with HD equipment", workspaceId: workspace1.id },
-    { name: "Camera Kit #2", type: "equipment", description: "Secondary camera setup with wireless capabilities", workspaceId: workspace1.id },
-    { name: "Lighting Rig Alpha", type: "equipment", description: "Professional LED lighting setup for studio productions", workspaceId: workspace1.id },
-    { name: "Edit Suite 1", type: "control_room", description: "Post-production editing suite with color grading", workspaceId: workspace1.id },
-    { name: "Mobile Unit", type: "equipment", description: "Portable broadcast equipment for location shoots", workspaceId: workspace1.id },
-  ]).returning();
+  const workspace1Resources = await db
+    .insert(resources)
+    .values([
+      {
+        name: "Studio A",
+        type: "studio",
+        description: "Main production studio with green screen capability",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Control Room 1",
+        type: "control_room",
+        description: "Primary control room with 4K broadcasting equipment",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Camera Kit #1",
+        type: "equipment",
+        description:
+          "Professional broadcast camera with tripod and accessories",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Sound Mixing Board",
+        type: "equipment",
+        description: "16-channel digital mixing console",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Studio B",
+        type: "studio",
+        description: "Secondary studio for smaller productions",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Control Room 2",
+        type: "control_room",
+        description: "Backup control room with HD equipment",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Camera Kit #2",
+        type: "equipment",
+        description: "Secondary camera setup with wireless capabilities",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Lighting Rig Alpha",
+        type: "equipment",
+        description: "Professional LED lighting setup for studio productions",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Edit Suite 1",
+        type: "control_room",
+        description: "Post-production editing suite with color grading",
+        workspaceId: workspace1.id,
+      },
+      {
+        name: "Mobile Unit",
+        type: "equipment",
+        description: "Portable broadcast equipment for location shoots",
+        workspaceId: workspace1.id,
+      },
+    ])
+    .returning();
 
-  const workspace2Resources = await db.insert(resources).values([
-    { name: "Studio Alpha", type: "studio", description: "Premier production studio with advanced facilities", workspaceId: workspace2.id },
-    { name: "Master Control", type: "control_room", description: "Main control room with latest broadcast technology", workspaceId: workspace2.id },
-    { name: "Camera System A", type: "equipment", description: "High-end camera system for premium content", workspaceId: workspace2.id },
-    { name: "Audio Console Pro", type: "equipment", description: "Professional 32-channel audio mixing console", workspaceId: workspace2.id },
-    { name: "Studio Beta", type: "studio", description: "Flexible studio space for various production types", workspaceId: workspace2.id },
-    { name: "Control Room Beta", type: "control_room", description: "Secondary control room for simultaneous productions", workspaceId: workspace2.id },
-    { name: "Camera System B", type: "equipment", description: "Versatile camera setup for documentary work", workspaceId: workspace2.id },
-    { name: "Lighting System Pro", type: "equipment", description: "Advanced lighting system with smart controls", workspaceId: workspace2.id },
-    { name: "Post-Production Suite", type: "control_room", description: "Complete post-production facility with latest software", workspaceId: workspace2.id },
-    { name: "OB Van", type: "equipment", description: "Outside broadcast vehicle for remote productions", workspaceId: workspace2.id },
-  ]).returning();
+  const workspace2Resources = await db
+    .insert(resources)
+    .values([
+      {
+        name: "Studio Alpha",
+        type: "studio",
+        description: "Premier production studio with advanced facilities",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Master Control",
+        type: "control_room",
+        description: "Main control room with latest broadcast technology",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Camera System A",
+        type: "equipment",
+        description: "High-end camera system for premium content",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Audio Console Pro",
+        type: "equipment",
+        description: "Professional 32-channel audio mixing console",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Studio Beta",
+        type: "studio",
+        description: "Flexible studio space for various production types",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Control Room Beta",
+        type: "control_room",
+        description: "Secondary control room for simultaneous productions",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Camera System B",
+        type: "equipment",
+        description: "Versatile camera setup for documentary work",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Lighting System Pro",
+        type: "equipment",
+        description: "Advanced lighting system with smart controls",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "Post-Production Suite",
+        type: "control_room",
+        description: "Complete post-production facility with latest software",
+        workspaceId: workspace2.id,
+      },
+      {
+        name: "OB Van",
+        type: "equipment",
+        description: "Outside broadcast vehicle for remote productions",
+        workspaceId: workspace2.id,
+      },
+    ])
+    .returning();
 
   const [resource1, resource2, resource3, resource4] = workspace1Resources;
 
   // Create show categories
-  const [category1, category2, category3] = await db.insert(showCategories).values([
-    { name: "News", color: "#ff6b6b", workspaceId: workspace1.id },
-    { name: "Drama", color: "#4ecdc4", workspaceId: workspace1.id },
-    { name: "Documentary", color: "#45b7d1", workspaceId: workspace1.id },
-  ]).returning();
+  const [category1, category2, category3] = await db
+    .insert(showCategories)
+    .values([
+      { name: "News", color: "#ff6b6b", workspaceId: workspace1.id },
+      { name: "Drama", color: "#4ecdc4", workspaceId: workspace1.id },
+      { name: "Documentary", color: "#45b7d1", workspaceId: workspace1.id },
+    ])
+    .returning();
 
   // Create shows
   const today = new Date();
@@ -405,52 +1079,56 @@ export async function seedDemoData(): Promise<void> {
   const nextWeek = new Date(today);
   nextWeek.setDate(today.getDate() + 7);
 
-  const [show1, show2, show3, show4] = await db.insert(shows).values([
-    {
-      title: "Evening News",
-      description: "Daily evening news broadcast covering local and national stories",
-      startTime: setTime(today, 18, 0),
-      endTime: setTime(today, 19, 0),
-      recurringPattern: "daily",
-      notes: "Live broadcast - critical crew requirements",
-      status: "scheduled",
-      color: "#ff6b6b",
-      workspaceId: workspace1.id,
-    },
-    {
-      title: "Morning Drama Recording",
-      description: "Recording session for upcoming drama series",
-      startTime: setTime(tomorrow, 9, 0),
-      endTime: setTime(tomorrow, 17, 0),
-      recurringPattern: null,
-      notes: "Full day production - all departments required",
-      status: "draft",
-      color: "#4ecdc4",
-      workspaceId: workspace1.id,
-    },
-    {
-      title: "Weekend Documentary",
-      description: "Nature documentary filming session",
-      startTime: setTime(nextWeek, 10, 0),
-      endTime: setTime(nextWeek, 16, 0),
-      recurringPattern: null,
-      notes: "Outdoor location shoot",
-      status: "scheduled",
-      color: "#45b7d1",
-      workspaceId: workspace1.id,
-    },
-    {
-      title: "Late Night Talk Show",
-      description: "Weekly late night entertainment show",
-      startTime: setTime(today, 22, 0),
-      endTime: setTime(today, 23, 30),
-      recurringPattern: "weekly",
-      notes: "Live audience - security required",
-      status: "scheduled",
-      color: "#f39c12",
-      workspaceId: workspace1.id,
-    }
-  ]).returning();
+  const [show1, show2, show3, show4] = await db
+    .insert(shows)
+    .values([
+      {
+        title: "Evening News",
+        description:
+          "Daily evening news broadcast covering local and national stories",
+        startTime: setTime(today, 18, 0),
+        endTime: setTime(today, 19, 0),
+        recurringPattern: "daily",
+        notes: "Live broadcast - critical crew requirements",
+        status: "scheduled",
+        color: "#ff6b6b",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Morning Drama Recording",
+        description: "Recording session for upcoming drama series",
+        startTime: setTime(tomorrow, 9, 0),
+        endTime: setTime(tomorrow, 17, 0),
+        recurringPattern: null,
+        notes: "Full day production - all departments required",
+        status: "draft",
+        color: "#4ecdc4",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Weekend Documentary",
+        description: "Nature documentary filming session",
+        startTime: setTime(nextWeek, 10, 0),
+        endTime: setTime(nextWeek, 16, 0),
+        recurringPattern: null,
+        notes: "Outdoor location shoot",
+        status: "scheduled",
+        color: "#45b7d1",
+        workspaceId: workspace1.id,
+      },
+      {
+        title: "Late Night Talk Show",
+        description: "Weekly late night entertainment show",
+        startTime: setTime(today, 22, 0),
+        endTime: setTime(today, 23, 30),
+        recurringPattern: "weekly",
+        notes: "Live audience - security required",
+        status: "scheduled",
+        color: "#f39c12",
+        workspaceId: workspace1.id,
+      },
+    ])
+    .returning();
 
   // Create show category assignments
   await db.insert(showCategoryAssignments).values([
@@ -462,10 +1140,20 @@ export async function seedDemoData(): Promise<void> {
 
   // Create required jobs for shows
   await db.insert(requiredJobs).values([
-    { showId: show1.id, jobId: job1.id, notes: "Need experienced operators for live broadcast", workspaceId: workspace1.id },
+    {
+      showId: show1.id,
+      jobId: job1.id,
+      notes: "Need experienced operators for live broadcast",
+      workspaceId: workspace1.id,
+    },
     { showId: show1.id, jobId: job2.id, workspaceId: workspace1.id },
     { showId: show1.id, jobId: job4.id, workspaceId: workspace1.id },
-    { showId: show2.id, jobId: job1.id, notes: "Multi-camera setup required", workspaceId: workspace1.id },
+    {
+      showId: show2.id,
+      jobId: job1.id,
+      notes: "Multi-camera setup required",
+      workspaceId: workspace1.id,
+    },
     { showId: show2.id, jobId: job2.id, workspaceId: workspace1.id },
     { showId: show2.id, jobId: job3.id, workspaceId: workspace1.id },
     { showId: show2.id, jobId: job4.id, workspaceId: workspace1.id },
@@ -489,53 +1177,161 @@ export async function seedDemoData(): Promise<void> {
   ]);
 
   // Get some required jobs to link assignments to
-  const show1RequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show1.id)).limit(3);
-  const show2RequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show2.id)).limit(2);
-  const show3RequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show3.id)).limit(1);
-  const show4RequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show4.id)).limit(2);
+  const show1RequiredJobs = await db
+    .select()
+    .from(requiredJobs)
+    .where(eq(requiredJobs.showId, show1.id))
+    .limit(3);
+  const show2RequiredJobs = await db
+    .select()
+    .from(requiredJobs)
+    .where(eq(requiredJobs.showId, show2.id))
+    .limit(2);
+  const show3RequiredJobs = await db
+    .select()
+    .from(requiredJobs)
+    .where(eq(requiredJobs.showId, show3.id))
+    .limit(1);
+  const show4RequiredJobs = await db
+    .select()
+    .from(requiredJobs)
+    .where(eq(requiredJobs.showId, show4.id))
+    .limit(2);
 
   // Create crew assignments linked to specific required jobs
   const assignmentsToCreate = [];
   if (show1RequiredJobs.length > 0) {
     assignmentsToCreate.push(
-      { showId: show1.id, crewMemberId: crewMember1.id, jobId: job1.id, requiredJobId: show1RequiredJobs[0].id, status: "confirmed", workspaceId: workspace1.id },
-      { showId: show1.id, crewMemberId: crewMember2.id, jobId: job2.id, requiredJobId: show1RequiredJobs[1]?.id, status: "confirmed", workspaceId: workspace1.id },
-      { showId: show1.id, crewMemberId: crewMember4.id, jobId: job4.id, requiredJobId: show1RequiredJobs[2]?.id, status: "confirmed", workspaceId: workspace1.id }
+      {
+        showId: show1.id,
+        crewMemberId: crewMember1.id,
+        jobId: job1.id,
+        requiredJobId: show1RequiredJobs[0].id,
+        status: "confirmed",
+        workspaceId: workspace1.id,
+      },
+      {
+        showId: show1.id,
+        crewMemberId: crewMember2.id,
+        jobId: job2.id,
+        requiredJobId: show1RequiredJobs[1]?.id,
+        status: "confirmed",
+        workspaceId: workspace1.id,
+      },
+      {
+        showId: show1.id,
+        crewMemberId: crewMember4.id,
+        jobId: job4.id,
+        requiredJobId: show1RequiredJobs[2]?.id,
+        status: "confirmed",
+        workspaceId: workspace1.id,
+      },
     );
   }
   if (show2RequiredJobs.length > 0) {
     assignmentsToCreate.push(
-      { showId: show2.id, crewMemberId: crewMember1.id, jobId: job1.id, requiredJobId: show2RequiredJobs[0].id, status: "pending", workspaceId: workspace1.id },
-      { showId: show2.id, crewMemberId: crewMember3.id, jobId: job3.id, requiredJobId: show2RequiredJobs[1]?.id, status: "confirmed", workspaceId: workspace1.id }
+      {
+        showId: show2.id,
+        crewMemberId: crewMember1.id,
+        jobId: job1.id,
+        requiredJobId: show2RequiredJobs[0].id,
+        status: "pending",
+        workspaceId: workspace1.id,
+      },
+      {
+        showId: show2.id,
+        crewMemberId: crewMember3.id,
+        jobId: job3.id,
+        requiredJobId: show2RequiredJobs[1]?.id,
+        status: "confirmed",
+        workspaceId: workspace1.id,
+      },
     );
   }
   if (show3RequiredJobs.length > 0) {
-    assignmentsToCreate.push(
-      { showId: show3.id, crewMemberId: crewMember2.id, jobId: job2.id, requiredJobId: show3RequiredJobs[0].id, status: "pending", workspaceId: workspace1.id }
-    );
+    assignmentsToCreate.push({
+      showId: show3.id,
+      crewMemberId: crewMember2.id,
+      jobId: job2.id,
+      requiredJobId: show3RequiredJobs[0].id,
+      status: "pending",
+      workspaceId: workspace1.id,
+    });
   }
   if (show4RequiredJobs.length > 0) {
     assignmentsToCreate.push(
-      { showId: show4.id, crewMemberId: crewMember1.id, jobId: job1.id, requiredJobId: show4RequiredJobs[0].id, status: "declined", workspaceId: workspace1.id },
-      { showId: show4.id, crewMemberId: crewMember3.id, jobId: job3.id, requiredJobId: show4RequiredJobs[1]?.id, status: "confirmed", workspaceId: workspace1.id }
+      {
+        showId: show4.id,
+        crewMemberId: crewMember1.id,
+        jobId: job1.id,
+        requiredJobId: show4RequiredJobs[0].id,
+        status: "declined",
+        workspaceId: workspace1.id,
+      },
+      {
+        showId: show4.id,
+        crewMemberId: crewMember3.id,
+        jobId: job3.id,
+        requiredJobId: show4RequiredJobs[1]?.id,
+        status: "confirmed",
+        workspaceId: workspace1.id,
+      },
     );
   }
 
   // Filter out any assignments with undefined requiredJobId
-  const validAssignments = assignmentsToCreate.filter(assignment => assignment.requiredJobId);
-  
+  const validAssignments = assignmentsToCreate.filter(
+    (assignment) => assignment.requiredJobId,
+  );
+
   if (validAssignments.length > 0) {
     await db.insert(crewAssignments).values(validAssignments);
   }
 
   // Create crew schedules
   await db.insert(crewSchedules).values([
-    { crewMemberId: crewMember1.id, dayOfWeek: "Monday", startTime: setTime(today, 8, 0), endTime: setTime(today, 18, 0), workspaceId: workspace1.id },
-    { crewMemberId: crewMember1.id, dayOfWeek: "Tuesday", startTime: setTime(today, 8, 0), endTime: setTime(today, 18, 0), workspaceId: workspace1.id },
-    { crewMemberId: crewMember1.id, dayOfWeek: "Wednesday", startTime: setTime(today, 8, 0), endTime: setTime(today, 18, 0), workspaceId: workspace1.id },
-    { crewMemberId: crewMember2.id, dayOfWeek: "Monday", startTime: setTime(today, 9, 0), endTime: setTime(today, 17, 0), workspaceId: workspace1.id },
-    { crewMemberId: crewMember2.id, dayOfWeek: "Wednesday", startTime: setTime(today, 9, 0), endTime: setTime(today, 17, 0), workspaceId: workspace1.id },
-    { crewMemberId: crewMember2.id, dayOfWeek: "Friday", startTime: setTime(today, 9, 0), endTime: setTime(today, 17, 0), workspaceId: workspace1.id },
+    {
+      crewMemberId: crewMember1.id,
+      dayOfWeek: "Monday",
+      startTime: setTime(today, 8, 0),
+      endTime: setTime(today, 18, 0),
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember1.id,
+      dayOfWeek: "Tuesday",
+      startTime: setTime(today, 8, 0),
+      endTime: setTime(today, 18, 0),
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember1.id,
+      dayOfWeek: "Wednesday",
+      startTime: setTime(today, 8, 0),
+      endTime: setTime(today, 18, 0),
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember2.id,
+      dayOfWeek: "Monday",
+      startTime: setTime(today, 9, 0),
+      endTime: setTime(today, 17, 0),
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember2.id,
+      dayOfWeek: "Wednesday",
+      startTime: setTime(today, 9, 0),
+      endTime: setTime(today, 17, 0),
+      workspaceId: workspace1.id,
+    },
+    {
+      crewMemberId: crewMember2.id,
+      dayOfWeek: "Friday",
+      startTime: setTime(today, 9, 0),
+      endTime: setTime(today, 17, 0),
+      workspaceId: workspace1.id,
+    },
   ]);
 
   // Create time off records
@@ -556,7 +1352,7 @@ export async function seedDemoData(): Promise<void> {
       endTime: setTime(nextWeek, 23, 59),
       reason: "Sick leave",
       workspaceId: workspace1.id,
-    }
+    },
   ]);
 
   // Create notifications - using the same user ID as dashboard
@@ -587,7 +1383,7 @@ export async function seedDemoData(): Promise<void> {
       relatedEntityType: "resource",
       relatedEntityId: resource1.id,
       workspaceId: workspace1.id,
-    }
+    },
   ]);
 
   console.log("✅ Demo data seeded successfully!");
@@ -600,25 +1396,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getWorkspace(id: string): Promise<Workspace | undefined> {
-    const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, id));
+    const [workspace] = await db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.id, id));
     return workspace || undefined;
   }
 
   async getWorkspaceBySlug(slug: string): Promise<Workspace | undefined> {
-    const [workspace] = await db.select().from(workspaces).where(eq(workspaces.slug, slug));
+    const [workspace] = await db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.slug, slug));
     return workspace || undefined;
   }
 
   async isWorkspaceSlugAvailable(slug: string): Promise<boolean> {
-    const [workspace] = await db.select().from(workspaces).where(eq(workspaces.slug, slug));
+    const [workspace] = await db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.slug, slug));
     return !workspace;
   }
 
   async createWorkspace(workspace: InsertWorkspace): Promise<Workspace> {
-    const [newWorkspace] = await db.insert(workspaces).values({
-      ...workspace,
-      lastAccessedAt: new Date()
-    }).returning();
+    const [newWorkspace] = await db
+      .insert(workspaces)
+      .values({
+        ...workspace,
+        lastAccessedAt: new Date(),
+      })
+      .returning();
     return newWorkspace;
   }
 
@@ -639,7 +1447,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(workspaces.id, id));
   }
 
-  async updateWorkspace(id: string, workspace: Partial<InsertWorkspace>): Promise<Workspace | undefined> {
+  async updateWorkspace(
+    id: string,
+    workspace: Partial<InsertWorkspace>,
+  ): Promise<Workspace | undefined> {
     const [updatedWorkspace] = await db
       .update(workspaces)
       .set(workspace)
@@ -655,7 +1466,10 @@ export class DatabaseStorage implements IStorage {
 
   // User CRUD
   async getUsers(workspaceId: string): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.workspaceId, workspaceId));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -664,7 +1478,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username));
     return user || undefined;
   }
 
@@ -673,7 +1490,10 @@ export class DatabaseStorage implements IStorage {
     return newUser;
   }
 
-  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(
+    id: string,
+    user: Partial<InsertUser>,
+  ): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
       .set(user)
@@ -708,10 +1528,10 @@ export class DatabaseStorage implements IStorage {
 
     // Group by crew member and aggregate jobs
     const crewMembersMap = new Map();
-    
+
     for (const row of crewMembersWithJobs) {
       const crewMemberId = row.id;
-      
+
       if (!crewMembersMap.has(crewMemberId)) {
         crewMembersMap.set(crewMemberId, {
           id: row.id,
@@ -721,32 +1541,41 @@ export class DatabaseStorage implements IStorage {
           title: row.title,
           workspaceId: row.workspaceId,
           createdAt: row.createdAt,
-          qualifiedJobs: []
+          qualifiedJobs: [],
         });
       }
-      
+
       if (row.jobId && row.jobTitle) {
         crewMembersMap.get(crewMemberId).qualifiedJobs.push({
           id: row.jobId,
-          title: row.jobTitle
+          title: row.jobTitle,
         });
       }
     }
-    
+
     return Array.from(crewMembersMap.values());
   }
 
   async getCrewMember(id: string): Promise<CrewMember | undefined> {
-    const [crewMember] = await db.select().from(crewMembers).where(eq(crewMembers.id, id));
+    const [crewMember] = await db
+      .select()
+      .from(crewMembers)
+      .where(eq(crewMembers.id, id));
     return crewMember || undefined;
   }
 
   async createCrewMember(crewMember: InsertCrewMember): Promise<CrewMember> {
-    const [newCrewMember] = await db.insert(crewMembers).values(crewMember).returning();
+    const [newCrewMember] = await db
+      .insert(crewMembers)
+      .values(crewMember)
+      .returning();
     return newCrewMember;
   }
 
-  async updateCrewMember(id: string, crewMember: Partial<InsertCrewMember>): Promise<CrewMember | undefined> {
+  async updateCrewMember(
+    id: string,
+    crewMember: Partial<InsertCrewMember>,
+  ): Promise<CrewMember | undefined> {
     const [updatedCrewMember] = await db
       .update(crewMembers)
       .set(crewMember)
@@ -762,7 +1591,10 @@ export class DatabaseStorage implements IStorage {
 
   // Job CRUD
   async getJobs(workspaceId: string): Promise<Job[]> {
-    return await db.select().from(jobs).where(eq(jobs.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.workspaceId, workspaceId));
   }
 
   async getJob(id: string): Promise<Job | undefined> {
@@ -775,7 +1607,10 @@ export class DatabaseStorage implements IStorage {
     return newJob;
   }
 
-  async updateJob(id: string, job: Partial<InsertJob>): Promise<Job | undefined> {
+  async updateJob(
+    id: string,
+    job: Partial<InsertJob>,
+  ): Promise<Job | undefined> {
     const [updatedJob] = await db
       .update(jobs)
       .set(job)
@@ -791,39 +1626,66 @@ export class DatabaseStorage implements IStorage {
 
   // Crew Member Job CRUD
   async getCrewMemberJobs(workspaceId: string): Promise<CrewMemberJob[]> {
-    return await db.select().from(crewMemberJobs).where(eq(crewMemberJobs.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(crewMemberJobs)
+      .where(eq(crewMemberJobs.workspaceId, workspaceId));
   }
 
-  async getCrewMemberJobsByCrewMember(crewMemberId: string): Promise<CrewMemberJob[]> {
-    return await db.select().from(crewMemberJobs).where(eq(crewMemberJobs.crewMemberId, crewMemberId));
+  async getCrewMemberJobsByCrewMember(
+    crewMemberId: string,
+  ): Promise<CrewMemberJob[]> {
+    return await db
+      .select()
+      .from(crewMemberJobs)
+      .where(eq(crewMemberJobs.crewMemberId, crewMemberId));
   }
 
-  async createCrewMemberJob(crewMemberJob: InsertCrewMemberJob): Promise<CrewMemberJob> {
-    const [newCrewMemberJob] = await db.insert(crewMemberJobs).values(crewMemberJob).returning();
+  async createCrewMemberJob(
+    crewMemberJob: InsertCrewMemberJob,
+  ): Promise<CrewMemberJob> {
+    const [newCrewMemberJob] = await db
+      .insert(crewMemberJobs)
+      .values(crewMemberJob)
+      .returning();
     return newCrewMemberJob;
   }
 
   async deleteCrewMemberJob(id: string): Promise<boolean> {
-    const result = await db.delete(crewMemberJobs).where(eq(crewMemberJobs.id, id));
+    const result = await db
+      .delete(crewMemberJobs)
+      .where(eq(crewMemberJobs.id, id));
     return (result.rowCount || 0) > 0;
   }
 
   // Resource CRUD
   async getResources(workspaceId: string): Promise<Resource[]> {
-    return await db.select().from(resources).where(eq(resources.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(resources)
+      .where(eq(resources.workspaceId, workspaceId));
   }
 
   async getResource(id: string): Promise<Resource | undefined> {
-    const [resource] = await db.select().from(resources).where(eq(resources.id, id));
+    const [resource] = await db
+      .select()
+      .from(resources)
+      .where(eq(resources.id, id));
     return resource || undefined;
   }
 
   async createResource(resource: InsertResource): Promise<Resource> {
-    const [newResource] = await db.insert(resources).values(resource).returning();
+    const [newResource] = await db
+      .insert(resources)
+      .values(resource)
+      .returning();
     return newResource;
   }
 
-  async updateResource(id: string, resource: Partial<InsertResource>): Promise<Resource | undefined> {
+  async updateResource(
+    id: string,
+    resource: Partial<InsertResource>,
+  ): Promise<Resource | undefined> {
     const [updatedResource] = await db
       .update(resources)
       .set(resource)
@@ -839,20 +1701,34 @@ export class DatabaseStorage implements IStorage {
 
   // Show Category CRUD
   async getShowCategories(workspaceId: string): Promise<ShowCategory[]> {
-    return await db.select().from(showCategories).where(eq(showCategories.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(showCategories)
+      .where(eq(showCategories.workspaceId, workspaceId));
   }
 
   async getShowCategory(id: string): Promise<ShowCategory | undefined> {
-    const [showCategory] = await db.select().from(showCategories).where(eq(showCategories.id, id));
+    const [showCategory] = await db
+      .select()
+      .from(showCategories)
+      .where(eq(showCategories.id, id));
     return showCategory || undefined;
   }
 
-  async createShowCategory(showCategory: InsertShowCategory): Promise<ShowCategory> {
-    const [newShowCategory] = await db.insert(showCategories).values(showCategory).returning();
+  async createShowCategory(
+    showCategory: InsertShowCategory,
+  ): Promise<ShowCategory> {
+    const [newShowCategory] = await db
+      .insert(showCategories)
+      .values(showCategory)
+      .returning();
     return newShowCategory;
   }
 
-  async updateShowCategory(id: string, showCategory: Partial<InsertShowCategory>): Promise<ShowCategory | undefined> {
+  async updateShowCategory(
+    id: string,
+    showCategory: Partial<InsertShowCategory>,
+  ): Promise<ShowCategory | undefined> {
     const [updatedShowCategory] = await db
       .update(showCategories)
       .set(showCategory)
@@ -862,7 +1738,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteShowCategory(id: string): Promise<boolean> {
-    const result = await db.delete(showCategories).where(eq(showCategories.id, id));
+    const result = await db
+      .delete(showCategories)
+      .where(eq(showCategories.id, id));
     return (result.rowCount || 0) > 0;
   }
 
@@ -870,16 +1748,29 @@ export class DatabaseStorage implements IStorage {
   // Productions (New 3-tier architecture)
   async getProductions(workspaceId: string): Promise<Production[]> {
     await migration.autoMigrateIfNeeded(workspaceId);
-    return await db.select().from(productions).where(eq(productions.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(productions)
+      .where(eq(productions.workspaceId, workspaceId));
   }
 
   async createProduction(production: InsertProduction): Promise<Production> {
-    const [newProduction] = await db.insert(productions).values(production).returning();
+    const [newProduction] = await db
+      .insert(productions)
+      .values(production)
+      .returning();
     return newProduction;
   }
 
-  async updateProduction(id: string, production: Partial<InsertProduction>): Promise<Production> {
-    const [updatedProduction] = await db.update(productions).set(production).where(eq(productions.id, id)).returning();
+  async updateProduction(
+    id: string,
+    production: Partial<InsertProduction>,
+  ): Promise<Production> {
+    const [updatedProduction] = await db
+      .update(productions)
+      .set(production)
+      .where(eq(productions.id, id))
+      .returning();
     return updatedProduction;
   }
 
@@ -890,20 +1781,40 @@ export class DatabaseStorage implements IStorage {
   // Show Templates
   async getShowTemplates(workspaceId: string): Promise<ShowTemplate[]> {
     await migration.autoMigrateIfNeeded(workspaceId);
-    return await db.select().from(showTemplates).where(eq(showTemplates.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(showTemplates)
+      .where(eq(showTemplates.workspaceId, workspaceId));
   }
 
-  async getShowTemplatesByProduction(productionId: string): Promise<ShowTemplate[]> {
-    return await db.select().from(showTemplates).where(eq(showTemplates.productionId, productionId));
+  async getShowTemplatesByProduction(
+    productionId: string,
+  ): Promise<ShowTemplate[]> {
+    return await db
+      .select()
+      .from(showTemplates)
+      .where(eq(showTemplates.productionId, productionId));
   }
 
-  async createShowTemplate(template: InsertShowTemplate): Promise<ShowTemplate> {
-    const [newTemplate] = await db.insert(showTemplates).values(template).returning();
+  async createShowTemplate(
+    template: InsertShowTemplate,
+  ): Promise<ShowTemplate> {
+    const [newTemplate] = await db
+      .insert(showTemplates)
+      .values(template)
+      .returning();
     return newTemplate;
   }
 
-  async updateShowTemplate(id: string, template: Partial<InsertShowTemplate>): Promise<ShowTemplate> {
-    const [updatedTemplate] = await db.update(showTemplates).set(template).where(eq(showTemplates.id, id)).returning();
+  async updateShowTemplate(
+    id: string,
+    template: Partial<InsertShowTemplate>,
+  ): Promise<ShowTemplate> {
+    const [updatedTemplate] = await db
+      .update(showTemplates)
+      .set(template)
+      .where(eq(showTemplates.id, id))
+      .returning();
     return updatedTemplate;
   }
 
@@ -914,20 +1825,40 @@ export class DatabaseStorage implements IStorage {
   // Scheduled Events
   async getScheduledEvents(workspaceId: string): Promise<ScheduledEvent[]> {
     await migration.autoMigrateIfNeeded(workspaceId);
-    return await db.select().from(scheduledEvents).where(eq(scheduledEvents.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(scheduledEvents)
+      .where(eq(scheduledEvents.workspaceId, workspaceId));
   }
 
-  async getScheduledEventsByTemplate(templateId: string): Promise<ScheduledEvent[]> {
-    return await db.select().from(scheduledEvents).where(eq(scheduledEvents.templateId, templateId));
+  async getScheduledEventsByTemplate(
+    templateId: string,
+  ): Promise<ScheduledEvent[]> {
+    return await db
+      .select()
+      .from(scheduledEvents)
+      .where(eq(scheduledEvents.templateId, templateId));
   }
 
-  async createScheduledEvent(event: InsertScheduledEvent): Promise<ScheduledEvent> {
-    const [newEvent] = await db.insert(scheduledEvents).values(event).returning();
+  async createScheduledEvent(
+    event: InsertScheduledEvent,
+  ): Promise<ScheduledEvent> {
+    const [newEvent] = await db
+      .insert(scheduledEvents)
+      .values(event)
+      .returning();
     return newEvent;
   }
 
-  async updateScheduledEvent(id: string, event: Partial<InsertScheduledEvent>): Promise<ScheduledEvent> {
-    const [updatedEvent] = await db.update(scheduledEvents).set(event).where(eq(scheduledEvents.id, id)).returning();
+  async updateScheduledEvent(
+    id: string,
+    event: Partial<InsertScheduledEvent>,
+  ): Promise<ScheduledEvent> {
+    const [updatedEvent] = await db
+      .update(scheduledEvents)
+      .set(event)
+      .where(eq(scheduledEvents.id, id))
+      .returning();
     return updatedEvent;
   }
 
@@ -936,26 +1867,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Template Required Jobs
-  async getTemplateRequiredJobs(templateId: string): Promise<TemplateRequiredJob[]> {
-    return await db.select().from(templateRequiredJobs).where(eq(templateRequiredJobs.templateId, templateId));
+  async getTemplateRequiredJobs(
+    templateId: string,
+  ): Promise<TemplateRequiredJob[]> {
+    return await db
+      .select()
+      .from(templateRequiredJobs)
+      .where(eq(templateRequiredJobs.templateId, templateId));
   }
 
-  async createTemplateRequiredJob(requiredJob: InsertTemplateRequiredJob): Promise<TemplateRequiredJob> {
-    const [newRequiredJob] = await db.insert(templateRequiredJobs).values(requiredJob).returning();
+  async createTemplateRequiredJob(
+    requiredJob: InsertTemplateRequiredJob,
+  ): Promise<TemplateRequiredJob> {
+    const [newRequiredJob] = await db
+      .insert(templateRequiredJobs)
+      .values(requiredJob)
+      .returning();
     return newRequiredJob;
   }
 
   async deleteTemplateRequiredJob(id: string): Promise<void> {
-    await db.delete(templateRequiredJobs).where(eq(templateRequiredJobs.id, id));
+    await db
+      .delete(templateRequiredJobs)
+      .where(eq(templateRequiredJobs.id, id));
   }
 
   // Template Resources
   async getTemplateResources(templateId: string): Promise<TemplateResource[]> {
-    return await db.select().from(templateResources).where(eq(templateResources.templateId, templateId));
+    return await db
+      .select()
+      .from(templateResources)
+      .where(eq(templateResources.templateId, templateId));
   }
 
-  async createTemplateResource(resource: InsertTemplateResource): Promise<TemplateResource> {
-    const [newResource] = await db.insert(templateResources).values(resource).returning();
+  async createTemplateResource(
+    resource: InsertTemplateResource,
+  ): Promise<TemplateResource> {
+    const [newResource] = await db
+      .insert(templateResources)
+      .values(resource)
+      .returning();
     return newResource;
   }
 
@@ -964,44 +1915,82 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Event Crew Assignments
-  async getEventCrewAssignments(eventId: string): Promise<EventCrewAssignment[]> {
-    return await db.select().from(eventCrewAssignments).where(eq(eventCrewAssignments.eventId, eventId));
+  async getEventCrewAssignments(
+    eventId: string,
+  ): Promise<EventCrewAssignment[]> {
+    return await db
+      .select()
+      .from(eventCrewAssignments)
+      .where(eq(eventCrewAssignments.eventId, eventId));
   }
 
-  async createEventCrewAssignment(assignment: InsertEventCrewAssignment): Promise<EventCrewAssignment> {
-    const [newAssignment] = await db.insert(eventCrewAssignments).values(assignment).returning();
+  async createEventCrewAssignment(
+    assignment: InsertEventCrewAssignment,
+  ): Promise<EventCrewAssignment> {
+    const [newAssignment] = await db
+      .insert(eventCrewAssignments)
+      .values(assignment)
+      .returning();
     return newAssignment;
   }
 
-  async updateEventCrewAssignment(id: string, assignment: Partial<InsertEventCrewAssignment>): Promise<EventCrewAssignment> {
-    const [updatedAssignment] = await db.update(eventCrewAssignments).set(assignment).where(eq(eventCrewAssignments.id, id)).returning();
+  async updateEventCrewAssignment(
+    id: string,
+    assignment: Partial<InsertEventCrewAssignment>,
+  ): Promise<EventCrewAssignment> {
+    const [updatedAssignment] = await db
+      .update(eventCrewAssignments)
+      .set(assignment)
+      .where(eq(eventCrewAssignments.id, id))
+      .returning();
     return updatedAssignment;
   }
 
   async deleteEventCrewAssignment(id: string): Promise<void> {
-    await db.delete(eventCrewAssignments).where(eq(eventCrewAssignments.id, id));
+    await db
+      .delete(eventCrewAssignments)
+      .where(eq(eventCrewAssignments.id, id));
   }
 
   // Event Resource Assignments
-  async getEventResourceAssignments(eventId: string): Promise<EventResourceAssignment[]> {
-    return await db.select().from(eventResourceAssignments).where(eq(eventResourceAssignments.eventId, eventId));
+  async getEventResourceAssignments(
+    eventId: string,
+  ): Promise<EventResourceAssignment[]> {
+    return await db
+      .select()
+      .from(eventResourceAssignments)
+      .where(eq(eventResourceAssignments.eventId, eventId));
   }
 
-  async createEventResourceAssignment(assignment: InsertEventResourceAssignment): Promise<EventResourceAssignment> {
-    const [newAssignment] = await db.insert(eventResourceAssignments).values(assignment).returning();
+  async createEventResourceAssignment(
+    assignment: InsertEventResourceAssignment,
+  ): Promise<EventResourceAssignment> {
+    const [newAssignment] = await db
+      .insert(eventResourceAssignments)
+      .values(assignment)
+      .returning();
     return newAssignment;
   }
 
   async deleteEventResourceAssignment(id: string): Promise<void> {
-    await db.delete(eventResourceAssignments).where(eq(eventResourceAssignments.id, id));
+    await db
+      .delete(eventResourceAssignments)
+      .where(eq(eventResourceAssignments.id, id));
   }
 
   // Legacy Shows (maintained for backward compatibility)
   async getShows(workspaceId: string): Promise<Show[]> {
-    return await db.select().from(shows).where(eq(shows.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(shows)
+      .where(eq(shows.workspaceId, workspaceId));
   }
 
-  async getShowsInRange(workspaceId: string, startDate: Date, endDate: Date): Promise<Show[]> {
+  async getShowsInRange(
+    workspaceId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Show[]> {
     return await db
       .select()
       .from(shows)
@@ -1009,8 +1998,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(shows.workspaceId, workspaceId),
           gte(shows.startTime, startDate),
-          lte(shows.endTime, endDate)
-        )
+          lte(shows.endTime, endDate),
+        ),
       );
   }
 
@@ -1024,16 +2013,19 @@ export class DatabaseStorage implements IStorage {
     return newShow;
   }
 
-  async updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined> {
+  async updateShow(
+    id: string,
+    show: Partial<InsertShow>,
+  ): Promise<Show | undefined> {
     console.log("Database update - ID:", id);
     console.log("Database update - Data:", show);
-    
+
     const [updatedShow] = await db
       .update(shows)
       .set(show)
       .where(eq(shows.id, id))
       .returning();
-    
+
     console.log("Database update - Result:", updatedShow);
     return updatedShow || undefined;
   }
@@ -1051,12 +2043,16 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(shows.workspaceId, workspaceId),
-          isNotNull(shows.recurringPattern)
-        )
+          isNotNull(shows.recurringPattern),
+        ),
       );
   }
 
-  async getShowExceptions(workspaceId: string, startDate: Date, endDate: Date): Promise<Show[]> {
+  async getShowExceptions(
+    workspaceId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Show[]> {
     return await db
       .select()
       .from(shows)
@@ -1066,26 +2062,44 @@ export class DatabaseStorage implements IStorage {
           isNotNull(shows.parentId),
           eq(shows.isException, true),
           gte(shows.startTime, startDate),
-          lte(shows.endTime, endDate)
-        )
+          lte(shows.endTime, endDate),
+        ),
       );
   }
 
   // Show Category Assignment CRUD
-  async getShowCategoryAssignments(workspaceId: string): Promise<ShowCategoryAssignment[]> {
-    return await db.select().from(showCategoryAssignments).where(eq(showCategoryAssignments.workspaceId, workspaceId));
+  async getShowCategoryAssignments(
+    workspaceId: string,
+  ): Promise<ShowCategoryAssignment[]> {
+    return await db
+      .select()
+      .from(showCategoryAssignments)
+      .where(eq(showCategoryAssignments.workspaceId, workspaceId));
   }
 
-  async getShowCategoryAssignmentsByShow(showId: string): Promise<ShowCategoryAssignment[]> {
-    return await db.select().from(showCategoryAssignments).where(eq(showCategoryAssignments.showId, showId));
+  async getShowCategoryAssignmentsByShow(
+    showId: string,
+  ): Promise<ShowCategoryAssignment[]> {
+    return await db
+      .select()
+      .from(showCategoryAssignments)
+      .where(eq(showCategoryAssignments.showId, showId));
   }
 
-  async createShowCategoryAssignment(assignment: InsertShowCategoryAssignment): Promise<ShowCategoryAssignment> {
-    const [newAssignment] = await db.insert(showCategoryAssignments).values(assignment).returning();
+  async createShowCategoryAssignment(
+    assignment: InsertShowCategoryAssignment,
+  ): Promise<ShowCategoryAssignment> {
+    const [newAssignment] = await db
+      .insert(showCategoryAssignments)
+      .values(assignment)
+      .returning();
     return newAssignment;
   }
 
-  async updateShowCategoryAssignment(id: string, assignment: Partial<InsertShowCategoryAssignment>): Promise<ShowCategoryAssignment | undefined> {
+  async updateShowCategoryAssignment(
+    id: string,
+    assignment: Partial<InsertShowCategoryAssignment>,
+  ): Promise<ShowCategoryAssignment | undefined> {
     const [updatedAssignment] = await db
       .update(showCategoryAssignments)
       .set(assignment)
@@ -1095,25 +2109,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteShowCategoryAssignment(id: string): Promise<boolean> {
-    const result = await db.delete(showCategoryAssignments).where(eq(showCategoryAssignments.id, id));
+    const result = await db
+      .delete(showCategoryAssignments)
+      .where(eq(showCategoryAssignments.id, id));
     return (result.rowCount || 0) > 0;
   }
 
   // Required Job CRUD
   async getRequiredJobs(workspaceId: string): Promise<RequiredJob[]> {
-    return await db.select().from(requiredJobs).where(eq(requiredJobs.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(requiredJobs)
+      .where(eq(requiredJobs.workspaceId, workspaceId));
   }
 
   async getRequiredJobsByShow(showId: string): Promise<RequiredJob[]> {
-    return await db.select().from(requiredJobs).where(eq(requiredJobs.showId, showId));
+    return await db
+      .select()
+      .from(requiredJobs)
+      .where(eq(requiredJobs.showId, showId));
   }
 
-  async createRequiredJob(requiredJob: InsertRequiredJob): Promise<RequiredJob> {
-    const [newRequiredJob] = await db.insert(requiredJobs).values(requiredJob).returning();
+  async createRequiredJob(
+    requiredJob: InsertRequiredJob,
+  ): Promise<RequiredJob> {
+    const [newRequiredJob] = await db
+      .insert(requiredJobs)
+      .values(requiredJob)
+      .returning();
     return newRequiredJob;
   }
 
-  async updateRequiredJob(id: string, requiredJob: Partial<InsertRequiredJob>): Promise<RequiredJob | undefined> {
+  async updateRequiredJob(
+    id: string,
+    requiredJob: Partial<InsertRequiredJob>,
+  ): Promise<RequiredJob | undefined> {
     const [updatedRequiredJob] = await db
       .update(requiredJobs)
       .set(requiredJob)
@@ -1124,8 +2154,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRequiredJob(id: string): Promise<boolean> {
     // First delete any crew assignments for this required job
-    await db.delete(crewAssignments).where(eq(crewAssignments.requiredJobId, id));
-    
+    await db
+      .delete(crewAssignments)
+      .where(eq(crewAssignments.requiredJobId, id));
+
     // Then delete the required job
     const result = await db.delete(requiredJobs).where(eq(requiredJobs.id, id));
     return (result.rowCount || 0) > 0;
@@ -1133,42 +2165,74 @@ export class DatabaseStorage implements IStorage {
 
   // Show Resource CRUD
   async getShowResources(workspaceId: string): Promise<ShowResource[]> {
-    return await db.select().from(showResources).where(eq(showResources.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(showResources)
+      .where(eq(showResources.workspaceId, workspaceId));
   }
 
   async getShowResourcesByShow(showId: string): Promise<ShowResource[]> {
-    return await db.select().from(showResources).where(eq(showResources.showId, showId));
+    return await db
+      .select()
+      .from(showResources)
+      .where(eq(showResources.showId, showId));
   }
 
-  async createShowResource(showResource: InsertShowResource): Promise<ShowResource> {
-    const [newShowResource] = await db.insert(showResources).values(showResource).returning();
+  async createShowResource(
+    showResource: InsertShowResource,
+  ): Promise<ShowResource> {
+    const [newShowResource] = await db
+      .insert(showResources)
+      .values(showResource)
+      .returning();
     return newShowResource;
   }
 
   async deleteShowResource(id: string): Promise<boolean> {
-    const result = await db.delete(showResources).where(eq(showResources.id, id));
+    const result = await db
+      .delete(showResources)
+      .where(eq(showResources.id, id));
     return (result.rowCount || 0) > 0;
   }
 
   // Crew Assignment CRUD
   async getCrewAssignments(workspaceId: string): Promise<CrewAssignment[]> {
-    return await db.select().from(crewAssignments).where(eq(crewAssignments.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(crewAssignments)
+      .where(eq(crewAssignments.workspaceId, workspaceId));
   }
 
   async getCrewAssignmentsByShow(showId: string): Promise<CrewAssignment[]> {
-    return await db.select().from(crewAssignments).where(eq(crewAssignments.showId, showId));
+    return await db
+      .select()
+      .from(crewAssignments)
+      .where(eq(crewAssignments.showId, showId));
   }
 
-  async getCrewAssignmentsByCrewMember(crewMemberId: string): Promise<CrewAssignment[]> {
-    return await db.select().from(crewAssignments).where(eq(crewAssignments.crewMemberId, crewMemberId));
+  async getCrewAssignmentsByCrewMember(
+    crewMemberId: string,
+  ): Promise<CrewAssignment[]> {
+    return await db
+      .select()
+      .from(crewAssignments)
+      .where(eq(crewAssignments.crewMemberId, crewMemberId));
   }
 
-  async createCrewAssignment(crewAssignment: InsertCrewAssignment): Promise<CrewAssignment> {
-    const [newCrewAssignment] = await db.insert(crewAssignments).values(crewAssignment).returning();
+  async createCrewAssignment(
+    crewAssignment: InsertCrewAssignment,
+  ): Promise<CrewAssignment> {
+    const [newCrewAssignment] = await db
+      .insert(crewAssignments)
+      .values(crewAssignment)
+      .returning();
     return newCrewAssignment;
   }
 
-  async updateCrewAssignment(id: string, crewAssignment: Partial<InsertCrewAssignment>): Promise<CrewAssignment | undefined> {
+  async updateCrewAssignment(
+    id: string,
+    crewAssignment: Partial<InsertCrewAssignment>,
+  ): Promise<CrewAssignment | undefined> {
     const [updatedCrewAssignment] = await db
       .update(crewAssignments)
       .set(crewAssignment)
@@ -1178,26 +2242,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCrewAssignment(id: string): Promise<boolean> {
-    const result = await db.delete(crewAssignments).where(eq(crewAssignments.id, id));
+    const result = await db
+      .delete(crewAssignments)
+      .where(eq(crewAssignments.id, id));
     return (result.rowCount || 0) > 0;
   }
 
-  async replaceCrewAssignments(showId: string, assignments: InsertCrewAssignment[]): Promise<void> {
+  async replaceCrewAssignments(
+    showId: string,
+    assignments: InsertCrewAssignment[],
+  ): Promise<void> {
     // Use a transaction to ensure atomicity
     await db.transaction(async (tx) => {
       // First, delete all existing assignments for this show
-      await tx.delete(crewAssignments).where(eq(crewAssignments.showId, showId));
-      
+      await tx
+        .delete(crewAssignments)
+        .where(eq(crewAssignments.showId, showId));
+
       // Then insert the new assignments
       if (assignments.length > 0) {
         // Filter to ensure only one assignment per required job
-        const uniqueAssignments = assignments.reduce((acc, assignment) => {
-          if (assignment.requiredJobId) {
-            acc[assignment.requiredJobId] = assignment;
-          }
-          return acc;
-        }, {} as Record<string, InsertCrewAssignment>);
-        
+        const uniqueAssignments = assignments.reduce(
+          (acc, assignment) => {
+            if (assignment.requiredJobId) {
+              acc[assignment.requiredJobId] = assignment;
+            }
+            return acc;
+          },
+          {} as Record<string, InsertCrewAssignment>,
+        );
+
         const finalAssignments = Object.values(uniqueAssignments);
         if (finalAssignments.length > 0) {
           await tx.insert(crewAssignments).values(finalAssignments);
@@ -1208,19 +2282,35 @@ export class DatabaseStorage implements IStorage {
 
   // Crew Schedule CRUD
   async getCrewSchedules(workspaceId: string): Promise<CrewSchedule[]> {
-    return await db.select().from(crewSchedules).where(eq(crewSchedules.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(crewSchedules)
+      .where(eq(crewSchedules.workspaceId, workspaceId));
   }
 
-  async getCrewSchedulesByCrewMember(crewMemberId: string): Promise<CrewSchedule[]> {
-    return await db.select().from(crewSchedules).where(eq(crewSchedules.crewMemberId, crewMemberId));
+  async getCrewSchedulesByCrewMember(
+    crewMemberId: string,
+  ): Promise<CrewSchedule[]> {
+    return await db
+      .select()
+      .from(crewSchedules)
+      .where(eq(crewSchedules.crewMemberId, crewMemberId));
   }
 
-  async createCrewSchedule(crewSchedule: InsertCrewSchedule): Promise<CrewSchedule> {
-    const [newCrewSchedule] = await db.insert(crewSchedules).values(crewSchedule).returning();
+  async createCrewSchedule(
+    crewSchedule: InsertCrewSchedule,
+  ): Promise<CrewSchedule> {
+    const [newCrewSchedule] = await db
+      .insert(crewSchedules)
+      .values(crewSchedule)
+      .returning();
     return newCrewSchedule;
   }
 
-  async updateCrewSchedule(id: string, crewSchedule: Partial<InsertCrewSchedule>): Promise<CrewSchedule | undefined> {
+  async updateCrewSchedule(
+    id: string,
+    crewSchedule: Partial<InsertCrewSchedule>,
+  ): Promise<CrewSchedule | undefined> {
     const [updatedCrewSchedule] = await db
       .update(crewSchedules)
       .set(crewSchedule)
@@ -1230,25 +2320,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCrewSchedule(id: string): Promise<boolean> {
-    const result = await db.delete(crewSchedules).where(eq(crewSchedules.id, id));
+    const result = await db
+      .delete(crewSchedules)
+      .where(eq(crewSchedules.id, id));
     return (result.rowCount || 0) > 0;
   }
 
   // Crew Time Off CRUD
   async getCrewTimeOffs(workspaceId: string): Promise<CrewTimeOff[]> {
-    return await db.select().from(crewTimeOff).where(eq(crewTimeOff.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(crewTimeOff)
+      .where(eq(crewTimeOff.workspaceId, workspaceId));
   }
 
-  async getCrewTimeOffsByCrewMember(crewMemberId: string): Promise<CrewTimeOff[]> {
-    return await db.select().from(crewTimeOff).where(eq(crewTimeOff.crewMemberId, crewMemberId));
+  async getCrewTimeOffsByCrewMember(
+    crewMemberId: string,
+  ): Promise<CrewTimeOff[]> {
+    return await db
+      .select()
+      .from(crewTimeOff)
+      .where(eq(crewTimeOff.crewMemberId, crewMemberId));
   }
 
-  async createCrewTimeOff(crewTimeOffData: InsertCrewTimeOff): Promise<CrewTimeOff> {
-    const [newCrewTimeOff] = await db.insert(crewTimeOff).values(crewTimeOffData).returning();
+  async createCrewTimeOff(
+    crewTimeOffData: InsertCrewTimeOff,
+  ): Promise<CrewTimeOff> {
+    const [newCrewTimeOff] = await db
+      .insert(crewTimeOff)
+      .values(crewTimeOffData)
+      .returning();
     return newCrewTimeOff;
   }
 
-  async updateCrewTimeOff(id: string, crewTimeOffData: Partial<InsertCrewTimeOff>): Promise<CrewTimeOff | undefined> {
+  async updateCrewTimeOff(
+    id: string,
+    crewTimeOffData: Partial<InsertCrewTimeOff>,
+  ): Promise<CrewTimeOff | undefined> {
     const [updatedCrewTimeOff] = await db
       .update(crewTimeOff)
       .set(crewTimeOffData)
@@ -1264,15 +2372,26 @@ export class DatabaseStorage implements IStorage {
 
   // Notification CRUD
   async getNotifications(workspaceId: string): Promise<Notification[]> {
-    return await db.select().from(notifications).where(eq(notifications.workspaceId, workspaceId));
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.workspaceId, workspaceId));
   }
 
   async getNotificationsByUser(userId: string): Promise<Notification[]> {
-    return await db.select().from(notifications).where(eq(notifications.userId, userId));
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId));
   }
 
-  async createNotification(notification: InsertNotification): Promise<Notification> {
-    const [newNotification] = await db.insert(notifications).values(notification).returning();
+  async createNotification(
+    notification: InsertNotification,
+  ): Promise<Notification> {
+    const [newNotification] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
     return newNotification;
   }
 
@@ -1286,22 +2405,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Early Access Signups
-  async createEarlyAccessSignup(data: InsertEarlyAccessSignup): Promise<EarlyAccessSignup> {
-    const [signup] = await db.insert(earlyAccessSignups).values(data).returning();
+  async createEarlyAccessSignup(
+    data: InsertEarlyAccessSignup,
+  ): Promise<EarlyAccessSignup> {
+    const [signup] = await db
+      .insert(earlyAccessSignups)
+      .values(data)
+      .returning();
     return signup;
   }
 
   async getEarlyAccessSignups(): Promise<EarlyAccessSignup[]> {
-    return await db.select().from(earlyAccessSignups).orderBy(desc(earlyAccessSignups.signedUpAt));
+    return await db
+      .select()
+      .from(earlyAccessSignups)
+      .orderBy(desc(earlyAccessSignups.signedUpAt));
   }
 
   async deleteNotification(id: string): Promise<boolean> {
-    const result = await db.delete(notifications).where(eq(notifications.id, id));
+    const result = await db
+      .delete(notifications)
+      .where(eq(notifications.id, id));
     return (result.rowCount || 0) > 0;
   }
 
   // Conflict Detection
-  async detectCrewConflicts(showId: string, crewMemberId: string): Promise<boolean> {
+  async detectCrewConflicts(
+    showId: string,
+    crewMemberId: string,
+  ): Promise<boolean> {
     const show = await this.getShow(showId);
     if (!show) return false;
 
@@ -1313,19 +2445,22 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(crewAssignments.crewMemberId, crewMemberId),
           gte(shows.endTime, show.startTime),
-          lte(shows.startTime, show.endTime)
-        )
+          lte(shows.startTime, show.endTime),
+        ),
       );
 
     // Filter out assignments for the current show
     const filteredConflicts = conflictingAssignments.filter(
-      conflict => conflict.shows.id !== showId
+      (conflict) => conflict.shows.id !== showId,
     );
 
     return filteredConflicts.length > 0;
   }
 
-  async detectResourceConflicts(showId: string, resourceId: string): Promise<boolean> {
+  async detectResourceConflicts(
+    showId: string,
+    resourceId: string,
+  ): Promise<boolean> {
     const show = await this.getShow(showId);
     if (!show) return false;
 
@@ -1337,8 +2472,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(showResources.resourceId, resourceId),
           gte(shows.endTime, show.startTime),
-          lte(shows.startTime, show.endTime)
-        )
+          lte(shows.startTime, show.endTime),
+        ),
       );
 
     return conflictingResources.length > 0;
@@ -1349,7 +2484,7 @@ export class DatabaseStorage implements IStorage {
 async function createEnhancedDemoData() {
   try {
     console.log("🔄 Creating enhanced demo data...");
-    
+
     // Clear existing data in proper order to respect foreign key constraints
     await db.delete(notifications);
     await db.delete(crewTimeOff);
@@ -1366,28 +2501,29 @@ async function createEnhancedDemoData() {
     await db.delete(showCategories);
     await db.delete(users);
     await db.delete(workspaces);
-    
+
     // Create base demo data
     await seedDemoData();
-    
+
     // Get workspace and user data
     const [workspace] = await db.select().from(workspaces).limit(1);
     const [user] = await db.select().from(users).limit(1);
-    
+
     if (!workspace || !user) {
       console.error("Failed to get workspace or user data");
       return;
     }
-    
+
     // Create realistic notifications for dashboard
     const notificationData = [
       {
         userId: user.id,
         workspaceId: workspace.id,
-        type: 'warning',
-        title: 'Crew Assignment Conflict',
-        message: 'John Smith is double-booked for Studio A tomorrow morning. Please reassign.',
-        relatedEntityType: 'crew_assignment',
+        type: "warning",
+        title: "Crew Assignment Conflict",
+        message:
+          "John Smith is double-booked for Studio A tomorrow morning. Please reassign.",
+        relatedEntityType: "crew_assignment",
         relatedEntityId: null,
         read: false,
         readAt: null,
@@ -1395,10 +2531,11 @@ async function createEnhancedDemoData() {
       {
         userId: user.id,
         workspaceId: workspace.id,
-        type: 'info',
-        title: 'New Show Scheduled',
-        message: 'Evening News Special has been added to the schedule for next week.',
-        relatedEntityType: 'show',
+        type: "info",
+        title: "New Show Scheduled",
+        message:
+          "Evening News Special has been added to the schedule for next week.",
+        relatedEntityType: "show",
         relatedEntityId: null,
         read: false,
         readAt: null,
@@ -1406,10 +2543,11 @@ async function createEnhancedDemoData() {
       {
         userId: user.id,
         workspaceId: workspace.id,
-        type: 'error',
-        title: 'Equipment Failure',
-        message: 'Camera 3 in Studio B is malfunctioning and needs immediate repair.',
-        relatedEntityType: 'resource',
+        type: "error",
+        title: "Equipment Failure",
+        message:
+          "Camera 3 in Studio B is malfunctioning and needs immediate repair.",
+        relatedEntityType: "resource",
         relatedEntityId: null,
         read: false,
         readAt: null,
@@ -1417,10 +2555,11 @@ async function createEnhancedDemoData() {
       {
         userId: user.id,
         workspaceId: workspace.id,
-        type: 'success',
-        title: 'Show Completed Successfully',
-        message: 'Morning Talk Show wrapped on time with all deliverables complete.',
-        relatedEntityType: 'show',
+        type: "success",
+        title: "Show Completed Successfully",
+        message:
+          "Morning Talk Show wrapped on time with all deliverables complete.",
+        relatedEntityType: "show",
         relatedEntityId: null,
         read: true,
         readAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
@@ -1428,10 +2567,11 @@ async function createEnhancedDemoData() {
       {
         userId: user.id,
         workspaceId: workspace.id,
-        type: 'warning',
-        title: 'Low Crew Availability',
-        message: 'Only 2 camera operators available for next Friday. Consider hiring freelancers.',
-        relatedEntityType: 'crew_member',
+        type: "warning",
+        title: "Low Crew Availability",
+        message:
+          "Only 2 camera operators available for next Friday. Consider hiring freelancers.",
+        relatedEntityType: "crew_member",
         relatedEntityId: null,
         read: false,
         readAt: null,
@@ -1439,10 +2579,10 @@ async function createEnhancedDemoData() {
       {
         userId: user.id,
         workspaceId: workspace.id,
-        type: 'info',
-        title: 'Resource Maintenance Scheduled',
-        message: 'Studio A will be offline for maintenance this weekend.',
-        relatedEntityType: 'resource',
+        type: "info",
+        title: "Resource Maintenance Scheduled",
+        message: "Studio A will be offline for maintenance this weekend.",
+        relatedEntityType: "resource",
         relatedEntityId: null,
         read: true,
         readAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
@@ -1450,10 +2590,10 @@ async function createEnhancedDemoData() {
       {
         userId: user.id,
         workspaceId: workspace.id,
-        type: 'warning',
-        title: 'Budget Alert',
-        message: 'Production costs for Drama Series are 15% over budget.',
-        relatedEntityType: 'show',
+        type: "warning",
+        title: "Budget Alert",
+        message: "Production costs for Drama Series are 15% over budget.",
+        relatedEntityType: "show",
         relatedEntityId: null,
         read: false,
         readAt: null,
@@ -1461,118 +2601,175 @@ async function createEnhancedDemoData() {
       {
         userId: user.id,
         workspaceId: workspace.id,
-        type: 'success',
-        title: 'Crew Training Completed',
-        message: 'All sound engineers have completed safety certification.',
-        relatedEntityType: 'crew_member',
+        type: "success",
+        title: "Crew Training Completed",
+        message: "All sound engineers have completed safety certification.",
+        relatedEntityType: "crew_member",
         relatedEntityId: null,
         read: true,
         readAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-      }
+      },
     ];
-    
+
     for (const notification of notificationData) {
       await db.insert(notifications).values(notification);
     }
-    
+
     // Update existing shows with varied statuses for realistic dashboard metrics
-    const existingShows = await db.select().from(shows).where(eq(shows.workspaceId, workspace.id));
-    
+    const existingShows = await db
+      .select()
+      .from(shows)
+      .where(eq(shows.workspaceId, workspace.id));
+
     // Set different statuses for shows to create realistic dashboard data
     if (existingShows.length > 0) {
       // Make some shows active/scheduled
-      await db.update(shows)
-        .set({ status: 'scheduled' })
+      await db
+        .update(shows)
+        .set({ status: "scheduled" })
         .where(eq(shows.id, existingShows[0].id));
-        
+
       if (existingShows.length > 1) {
-        await db.update(shows)
-          .set({ status: 'in_progress' })
+        await db
+          .update(shows)
+          .set({ status: "in_progress" })
           .where(eq(shows.id, existingShows[1].id));
       }
-      
+
       if (existingShows.length > 2) {
-        await db.update(shows)
-          .set({ status: 'completed' })
+        await db
+          .update(shows)
+          .set({ status: "completed" })
           .where(eq(shows.id, existingShows[2].id));
       }
     }
-    
+
     // Create additional upcoming shows for dashboard metrics
     const upcomingShowsData = [
       {
-        title: 'Evening News Special',
-        description: 'Breaking news coverage and analysis',
+        title: "Evening News Special",
+        description: "Breaking news coverage and analysis",
         startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-        endTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // Tomorrow + 2 hours
-        status: 'scheduled',
-        color: '#ef4444',
+        endTime: new Date(
+          Date.now() + 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+        ), // Tomorrow + 2 hours
+        status: "scheduled",
+        color: "#ef4444",
         workspaceId: workspace.id,
       },
       {
-        title: 'Weekend Sports Review',
-        description: 'Highlights and analysis from weekend games',
+        title: "Weekend Sports Review",
+        description: "Highlights and analysis from weekend games",
         startTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
-        endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000), // + 1.5 hours
-        status: 'scheduled',
-        color: '#10b981',
+        endTime: new Date(
+          Date.now() + 2 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000,
+        ), // + 1.5 hours
+        status: "scheduled",
+        color: "#10b981",
         workspaceId: workspace.id,
       },
       {
-        title: 'Live Concert Broadcast',
-        description: 'Live performance from the city hall',
+        title: "Live Concert Broadcast",
+        description: "Live performance from the city hall",
         startTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-        endTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // + 3 hours
-        status: 'scheduled',
-        color: '#8b5cf6',
+        endTime: new Date(
+          Date.now() + 3 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000,
+        ), // + 3 hours
+        status: "scheduled",
+        color: "#8b5cf6",
         workspaceId: workspace.id,
-      }
+      },
     ];
-    
+
     const newShows = [];
     for (const showData of upcomingShowsData) {
       const [newShow] = await db.insert(shows).values(showData).returning();
       newShows.push(newShow);
     }
-    
+
     // Get jobs from the workspace for creating required jobs
-    const allJobs = await db.select().from(jobs).where(eq(jobs.workspaceId, workspace.id));
+    const allJobs = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.workspaceId, workspace.id));
     const [cameraJob, soundJob, lightingJob, directorJob] = allJobs.slice(0, 4);
-    
+
     // Create required jobs for all existing and new shows
-    const allShows = await db.select().from(shows).where(eq(shows.workspaceId, workspace.id));
-    
+    const allShows = await db
+      .select()
+      .from(shows)
+      .where(eq(shows.workspaceId, workspace.id));
+
     // Add required jobs for all shows
     const requiredJobsData = [];
     for (const show of allShows) {
       requiredJobsData.push(
-        { showId: show.id, jobId: cameraJob.id, quantity: 2, workspaceId: workspace.id },
-        { showId: show.id, jobId: soundJob.id, quantity: 1, workspaceId: workspace.id },
-        { showId: show.id, jobId: lightingJob.id, quantity: 1, workspaceId: workspace.id },
-        { showId: show.id, jobId: directorJob.id, quantity: 1, workspaceId: workspace.id }
+        {
+          showId: show.id,
+          jobId: cameraJob.id,
+          quantity: 2,
+          workspaceId: workspace.id,
+        },
+        {
+          showId: show.id,
+          jobId: soundJob.id,
+          quantity: 1,
+          workspaceId: workspace.id,
+        },
+        {
+          showId: show.id,
+          jobId: lightingJob.id,
+          quantity: 1,
+          workspaceId: workspace.id,
+        },
+        {
+          showId: show.id,
+          jobId: directorJob.id,
+          quantity: 1,
+          workspaceId: workspace.id,
+        },
       );
     }
-    
+
     await db.insert(requiredJobs).values(requiredJobsData);
-    
+
     // Get crew members for assignments
-    const allCrewMembers = await db.select().from(crewMembers).where(eq(crewMembers.workspaceId, workspace.id));
-    
+    const allCrewMembers = await db
+      .select()
+      .from(crewMembers)
+      .where(eq(crewMembers.workspaceId, workspace.id));
+
     // Create some crew assignments linked to required jobs
     // First, get all existing assignments to avoid duplicates
-    const existingAssignments = await db.select().from(crewAssignments).where(eq(crewAssignments.workspaceId, workspace.id));
-    const assignedRequiredJobIds = new Set(existingAssignments.map(assignment => assignment.requiredJobId).filter(Boolean));
-    
+    const existingAssignments = await db
+      .select()
+      .from(crewAssignments)
+      .where(eq(crewAssignments.workspaceId, workspace.id));
+    const assignedRequiredJobIds = new Set(
+      existingAssignments
+        .map((assignment) => assignment.requiredJobId)
+        .filter(Boolean),
+    );
+
     const crewAssignmentsData: any[] = [];
-    
-    for (let showIndex = 0; showIndex < allShows.length && showIndex < allCrewMembers.length; showIndex++) {
+
+    for (
+      let showIndex = 0;
+      showIndex < allShows.length && showIndex < allCrewMembers.length;
+      showIndex++
+    ) {
       const show = allShows[showIndex];
       const crewMember = allCrewMembers[showIndex % allCrewMembers.length];
-      
+
       // Get required jobs for this show that are NOT already assigned
-      const showRequiredJobs = await db.select().from(requiredJobs).where(eq(requiredJobs.showId, show.id));
-      const unassignedRequiredJobs = showRequiredJobs.filter(rj => !assignedRequiredJobIds.has(rj.id));
-      
+      const showRequiredJobs = await db
+        .select()
+        .from(requiredJobs)
+        .where(eq(requiredJobs.showId, show.id));
+      const unassignedRequiredJobs = showRequiredJobs.filter(
+        (rj) => !assignedRequiredJobIds.has(rj.id),
+      );
+
       if (unassignedRequiredJobs.length > 0) {
         const requiredJob = unassignedRequiredJobs[0];
         crewAssignmentsData.push({
@@ -1580,26 +2777,27 @@ async function createEnhancedDemoData() {
           crewMemberId: crewMember.id,
           jobId: cameraJob.id,
           requiredJobId: requiredJob.id,
-          status: 'confirmed',
-          workspaceId: workspace.id
+          status: "confirmed",
+          workspaceId: workspace.id,
         });
-        
+
         // Mark this required job as assigned to avoid double-assignment in this loop
         assignedRequiredJobIds.add(requiredJob.id);
       }
     }
-    
+
     if (crewAssignmentsData.length > 0) {
       await db.insert(crewAssignments).values(crewAssignmentsData);
     }
-    
+
     console.log("✅ Enhanced demo data created successfully!");
     console.log("📊 Dashboard now includes:");
     console.log("   • 8 realistic notifications (4 unread)");
     console.log("   • Multiple show statuses for metrics");
     console.log("   • 3 additional upcoming shows");
-    console.log("   • Varied notification types (info, warning, error, success)");
-    
+    console.log(
+      "   • Varied notification types (info, warning, error, success)",
+    );
   } catch (error) {
     console.error("❌ Failed to create enhanced demo data:", error);
   }

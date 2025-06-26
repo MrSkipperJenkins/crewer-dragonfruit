@@ -8,12 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertJobSchema } from "@shared/schema";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -44,7 +39,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { PlusIcon, SearchIcon, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import {
+  PlusIcon,
+  SearchIcon,
+  Pencil,
+  Trash2,
+  ArrowUpDown,
+} from "lucide-react";
 
 // Extend the insert schema for form validation
 const formSchema = insertJobSchema.extend({
@@ -56,8 +57,8 @@ const formSchema = insertJobSchema.extend({
 
 type FormValues = z.infer<typeof formSchema>;
 
-type SortField = 'title' | 'description';
-type SortDirection = 'asc' | 'desc';
+type SortField = "title" | "description";
+type SortDirection = "asc" | "desc";
 
 export default function Jobs() {
   const { currentWorkspace } = useCurrentWorkspace();
@@ -67,15 +68,15 @@ export default function Jobs() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>('title');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  
+  const [sortField, setSortField] = useState<SortField>("title");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
   // Fetch jobs
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
     enabled: !!currentWorkspace?.id,
   });
-  
+
   // Initialize form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -97,7 +98,7 @@ export default function Jobs() {
       workspaceId: currentWorkspace?.id || "",
     },
   });
-  
+
   // Create job mutation
   const createJobMutation = useMutation({
     mutationFn: async (data: FormValues) => {
@@ -109,9 +110,13 @@ export default function Jobs() {
         description: "Job created successfully",
       });
       // Invalidate and refetch job queries
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
-      queryClient.refetchQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+      queryClient.refetchQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
+      });
       form.reset();
       setIsDialogOpen(false);
     },
@@ -135,7 +140,9 @@ export default function Jobs() {
         title: "Success",
         description: "Job updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
+      });
       editForm.reset();
       setIsEditDialogOpen(false);
       setEditingJob(null);
@@ -160,10 +167,14 @@ export default function Jobs() {
         description: "Job deleted successfully",
       });
       // Invalidate all job-related queries
-      queryClient.invalidateQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
       // Force refetch of jobs data
-      queryClient.refetchQueries({ queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`] });
+      queryClient.refetchQueries({
+        queryKey: [`/api/workspaces/${currentWorkspace?.id}/jobs`],
+      });
     },
     onError: () => {
       toast({
@@ -173,7 +184,7 @@ export default function Jobs() {
       });
     },
   });
-  
+
   // Handle edit job
   const handleEditJob = (job: any) => {
     setEditingJob(job);
@@ -188,7 +199,11 @@ export default function Jobs() {
 
   // Handle delete job
   const handleDeleteJob = (jobId: string) => {
-    if (window.confirm("Are you sure you want to delete this job? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this job? This action cannot be undone.",
+      )
+    ) {
       deleteJobMutation.mutate(jobId);
     }
   };
@@ -196,10 +211,10 @@ export default function Jobs() {
   // Handle sorting
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -213,33 +228,34 @@ export default function Jobs() {
       });
       return;
     }
-    
+
     data.workspaceId = currentWorkspace.id;
     createJobMutation.mutate(data);
   };
 
   const onEditSubmit = (data: FormValues) => {
     if (!editingJob || !currentWorkspace?.id) return;
-    
+
     data.workspaceId = currentWorkspace.id;
     updateJobMutation.mutate({ ...data, id: editingJob.id });
   };
-  
+
   // Filter and sort jobs
   const filteredAndSortedJobs = ((jobs as any[]) || [])
     .filter((job: any) => {
       if (!searchQuery) return true;
-      
+
       return (
         job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (job.description && job.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        (job.description &&
+          job.description.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     })
     .sort((a: any, b: any) => {
-      const aValue = a[sortField] || '';
-      const bValue = b[sortField] || '';
-      
-      if (sortDirection === 'asc') {
+      const aValue = a[sortField] || "";
+      const bValue = b[sortField] || "";
+
+      if (sortDirection === "asc") {
         return aValue.localeCompare(bValue);
       } else {
         return bValue.localeCompare(aValue);
@@ -275,13 +291,16 @@ export default function Jobs() {
                         <FormItem>
                           <FormLabel>Job Title</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Camera Operator" {...field} />
+                            <Input
+                              placeholder="e.g. Camera Operator"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="description"
@@ -289,9 +308,9 @@ export default function Jobs() {
                         <FormItem>
                           <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Describe the responsibilities of this job role" 
-                              className="resize-none" 
+                            <Textarea
+                              placeholder="Describe the responsibilities of this job role"
+                              className="resize-none"
                               {...field}
                               value={field.value || ""}
                             />
@@ -328,8 +347,8 @@ export default function Jobs() {
                     />
                   </div>
                   <DialogFooter>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={createJobMutation.isPending}
                     >
                       {createJobMutation.isPending ? "Saving..." : "Save Job"}
@@ -359,13 +378,16 @@ export default function Jobs() {
                         <FormItem>
                           <FormLabel>Job Title</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Camera Operator" {...field} />
+                            <Input
+                              placeholder="e.g. Camera Operator"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={editForm.control}
                       name="description"
@@ -373,9 +395,9 @@ export default function Jobs() {
                         <FormItem>
                           <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Describe the responsibilities of this job role" 
-                              className="resize-none" 
+                            <Textarea
+                              placeholder="Describe the responsibilities of this job role"
+                              className="resize-none"
                               {...field}
                               value={field.value || ""}
                             />
@@ -412,11 +434,13 @@ export default function Jobs() {
                     />
                   </div>
                   <DialogFooter>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={updateJobMutation.isPending}
                     >
-                      {updateJobMutation.isPending ? "Updating..." : "Update Job"}
+                      {updateJobMutation.isPending
+                        ? "Updating..."
+                        : "Update Job"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -441,27 +465,29 @@ export default function Jobs() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[250px]">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="h-auto p-0 font-semibold hover:bg-transparent"
-                      onClick={() => handleSort('title')}
+                      onClick={() => handleSort("title")}
                     >
                       Job Title
                       <ArrowUpDown className="ml-1 h-3 w-3" />
                     </Button>
                   </TableHead>
                   <TableHead>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="h-auto p-0 font-semibold hover:bg-transparent"
-                      onClick={() => handleSort('description')}
+                      onClick={() => handleSort("description")}
                     >
                       Description
                       <ArrowUpDown className="ml-1 h-3 w-3" />
                     </Button>
                   </TableHead>
                   <TableHead className="w-[80px]">Color</TableHead>
-                  <TableHead className="text-right w-[100px]">Actions</TableHead>
+                  <TableHead className="text-right w-[100px]">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -477,7 +503,10 @@ export default function Jobs() {
 
                 {!isLoading && filteredAndSortedJobs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    <TableCell
+                      colSpan={4}
+                      className="text-center py-8 text-gray-500"
+                    >
                       No jobs found
                     </TableCell>
                   </TableRow>
@@ -491,26 +520,29 @@ export default function Jobs() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <div 
+                        <div
                           className="w-4 h-4 rounded-full border"
                           style={{ backgroundColor: job.color || "#6366f1" }}
                         />
-                        <Badge variant="outline" style={{ borderColor: job.color || "#6366f1" }}>
+                        <Badge
+                          variant="outline"
+                          style={{ borderColor: job.color || "#6366f1" }}
+                        >
                           {job.color || "#6366f1"}
                         </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleEditJob(job)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleDeleteJob(job.id)}
                           disabled={deleteJobMutation.isPending}

@@ -18,6 +18,7 @@ The application follows a monolithic full-stack architecture with the following 
 ## Key Components
 
 ### Frontend Architecture
+
 - **React 18** with TypeScript for type safety
 - **Wouter** for client-side routing (lightweight React Router alternative)
 - **TanStack Query** for server state management and caching
@@ -26,6 +27,7 @@ The application follows a monolithic full-stack architecture with the following 
 - **FullCalendar** for calendar views and scheduling interfaces
 
 ### Backend Architecture
+
 - **Express.js** server with TypeScript
 - **Drizzle ORM** for database operations and migrations
 - **Neon Database** (PostgreSQL-compatible) for cloud hosting
@@ -37,21 +39,25 @@ The application follows a monolithic full-stack architecture with the following 
 The application now uses a revolutionary 3-tier scheduling architecture:
 
 #### Tier 1: Productions (High-level containers)
+
 - **Productions**: Show concepts like "Morning News Live" or "Weekly Sports Roundup"
 - Contains: name, description, workspace association
 - No time-specific information
 
 #### Tier 2: Show Templates (Recurring blueprints)
+
 - **Show Templates**: The "recipe" for how a production should be scheduled
 - Contains: recurring patterns, duration, job requirements, resource needs
 - Links to a Production but has no specific dates
 
 #### Tier 3: Scheduled Events (Concrete calendar instances)
+
 - **Scheduled Events**: Actual calendar items with specific dates and crew assignments
 - Contains: specific start/end times, actual crew assignments, resource bookings
 - Can be generated from templates OR created as one-off events
 
 ### Multi-Tenancy
+
 - Workspace-based tenant isolation
 - URL-based workspace routing (`/workspaces/{slug}`)
 - Data scoping through workspace IDs in all queries
@@ -67,16 +73,18 @@ The application now uses a revolutionary 3-tier scheduling architecture:
 ## External Dependencies
 
 ### Core Dependencies
+
 - **@neondatabase/serverless**: PostgreSQL cloud database
 - **drizzle-orm**: Type-safe ORM with automatic migrations
 - **@tanstack/react-query**: Server state management
 - **@hookform/resolvers**: Form validation integration
-- **@radix-ui/***: Accessible UI primitives
-- **@fullcalendar/***: Calendar components for scheduling
+- **@radix-ui/\***: Accessible UI primitives
+- **@fullcalendar/\***: Calendar components for scheduling
 - **wouter**: Lightweight routing
 - **tailwindcss**: Utility-first CSS framework
 
 ### Development Dependencies
+
 - **vite**: Fast build tool and dev server
 - **tsx**: TypeScript execution for development
 - **esbuild**: Fast bundling for production
@@ -85,22 +93,26 @@ The application now uses a revolutionary 3-tier scheduling architecture:
 ## Deployment Strategy
 
 ### Development
+
 - Runs on Replit with hot reloading
 - PostgreSQL module auto-provisioned
 - Port 5000 for development server
 - Vite dev server with Express API proxy
 
 ### Production Build
+
 ```bash
 npm run build  # Builds client and server
 npm run start  # Runs production server
 ```
 
 ### Environment Variables
+
 - `DATABASE_URL`: PostgreSQL connection string (auto-provided by Replit)
 - `NODE_ENV`: Environment flag (development/production)
 
 ### Replit Configuration
+
 - **Modules**: nodejs-20, web, postgresql-16
 - **Deployment**: Autoscale with build step
 - **Port Mapping**: 5000 (local) → 80 (external)
@@ -108,6 +120,7 @@ npm run start  # Runs production server
 ## Recent Changes
 
 ### June 24, 2025 - Major Architecture Overhaul
+
 1. **Landing Page & Onboarding**: Created comprehensive landing page with early access signup and 4-step onboarding flow
 2. **3-Tier Scheduling Architecture**: Implemented new Productions → Show Templates → Scheduled Events structure
    - **Database Schema**: Added productions, showTemplates, scheduledEvents tables with supporting tables
