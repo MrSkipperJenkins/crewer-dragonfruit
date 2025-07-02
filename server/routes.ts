@@ -4,22 +4,20 @@ import { storage } from "./storage";
 import { z } from "zod";
 import {
   insertWorkspaceSchema,
-  workspaceInviteSchema,
   insertUserSchema,
   insertCrewMemberSchema,
   insertJobSchema,
-  insertCrewMemberJobSchema,
   insertResourceSchema,
-  insertShowCategorySchema,
   insertShowSchema,
-  insertShowCategoryAssignmentSchema,
-  insertRequiredJobSchema,
-  insertShowResourceSchema,
-  insertCrewAssignmentSchema,
-  insertCrewScheduleSchema,
-  insertCrewTimeOffSchema,
   insertNotificationSchema,
-  insertEarlyAccessSignupSchema,
+  // New 3-tier schemas
+  insertProductionSchema,
+  insertShowTemplateSchema,
+  insertScheduledEventSchema,
+  insertTemplateRequiredJobSchema,
+  insertTemplateResourceSchema,
+  insertEventCrewAssignmentSchema,
+  insertEventResourceAssignmentSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -420,27 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Show Categories
-  app.get("/api/workspaces/:workspaceId/show-categories", async (req, res) => {
-    const categories = await storage.getShowCategories(req.params.workspaceId);
-    res.json(categories);
-  });
 
-  app.post("/api/show-categories", async (req, res) => {
-    try {
-      const validation = insertShowCategorySchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid show category data",
-          errors: validation.error.errors,
-        });
-      }
-      const category = await storage.createShowCategory(validation.data);
-      res.status(201).json(category);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create show category" });
-    }
-  });
 
   // Productions (New 3-tier architecture)
   app.get("/api/workspaces/:workspaceId/productions", async (req, res) => {
@@ -994,78 +972,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Required Jobs
-  app.get("/api/shows/:showId/required-jobs", async (req, res) => {
-    const requiredJobs = await storage.getRequiredJobsByShow(req.params.showId);
-    res.json(requiredJobs);
-  });
 
-  app.post("/api/required-jobs", async (req, res) => {
-    try {
-      const validation = insertRequiredJobSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid required job data",
-          errors: validation.error.errors,
-        });
-      }
-      const requiredJob = await storage.createRequiredJob(validation.data);
-      res.status(201).json(requiredJob);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create required job" });
-    }
-  });
 
-  app.delete("/api/required-jobs/:id", async (req, res) => {
-    try {
-      const success = await storage.deleteRequiredJob(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Required job not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to delete required job:", error);
-      res.status(500).json({ message: "Failed to delete required job" });
-    }
-  });
 
-  // Show Resources
-  app.get("/api/shows/:showId/resources", async (req, res) => {
-    const showResources = await storage.getShowResourcesByShow(
-      req.params.showId,
-    );
-    res.json(showResources);
-  });
-
-  app.post("/api/show-resources", async (req, res) => {
-    try {
-      const validation = insertShowResourceSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid show resource data",
-          errors: validation.error.errors,
-        });
-      }
-
-      // Check for resource conflicts
-      const { showId, resourceId } = validation.data;
-      const hasConflict = await storage.detectResourceConflicts(
-        showId,
-        resourceId,
-      );
-
-      if (hasConflict) {
-        return res
-          .status(409)
-          .json({ message: "Resource has scheduling conflict" });
-      }
-
-      const showResource = await storage.createShowResource(validation.data);
-      res.status(201).json(showResource);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to assign resource to show" });
-    }
-  });
 
   // Crew Assignments
   app.get("/api/shows/:showId/crew-assignments", async (req, res) => {
@@ -1250,68 +1159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Crew Time Off
-  app.get("/api/workspaces/:workspaceId/crew-time-off", async (req, res) => {
-    const timeOffs = await storage.getCrewTimeOffs(req.params.workspaceId);
-    res.json(timeOffs);
-  });
 
-  app.get("/api/crew-members/:crewMemberId/time-off", async (req, res) => {
-    const timeOffs = await storage.getCrewTimeOffsByCrewMember(
-      req.params.crewMemberId,
-    );
-    res.json(timeOffs);
-  });
-
-  app.post("/api/crew-time-off", async (req, res) => {
-    try {
-      const validation = insertCrewTimeOffSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid crew time off data",
-          errors: validation.error.errors,
-        });
-      }
-      const timeOff = await storage.createCrewTimeOff(validation.data);
-      res.status(201).json(timeOff);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create crew time off" });
-    }
-  });
-
-  app.put("/api/crew-time-off/:id", async (req, res) => {
-    try {
-      const validation = insertCrewTimeOffSchema.partial().safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid crew time off data",
-          errors: validation.error.errors,
-        });
-      }
-      const timeOff = await storage.updateCrewTimeOff(
-        req.params.id,
-        validation.data,
-      );
-      if (!timeOff) {
-        return res.status(404).json({ message: "Crew time off not found" });
-      }
-      res.json(timeOff);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update crew time off" });
-    }
-  });
-
-  app.delete("/api/crew-time-off/:id", async (req, res) => {
-    try {
-      const success = await storage.deleteCrewTimeOff(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Crew time off not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete crew time off" });
-    }
-  });
 
   // Notifications
   app.get("/api/users/:userId/notifications", async (req, res) => {

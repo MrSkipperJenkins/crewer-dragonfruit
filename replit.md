@@ -119,6 +119,32 @@ npm run start  # Runs production server
 
 ## Recent Changes
 
+### July 2, 2025 - Schema Refactoring and Cleanup
+
+1. **Complete Schema Cleanup**: Removed all legacy tables and migration code from schema.ts
+   - **Removed Legacy Tables**: shows, showCategoryAssignments, requiredJobs, showResources, crewAssignments, crewSchedules, crewTimeOff, notifications, earlyAccessSignups
+   - **Streamlined Structure**: Organized remaining tables by functional groups (core, production, resources, assignments)
+   - **Cleaned Relations**: Simplified relationship definitions for new 3-tier architecture
+   - **Reduced Complexity**: Removed outdated migration helpers and unused types
+   - **Current Status**: Schema now only contains the new 3-tier architecture tables
+
+2. **Routes Cleanup**: Partially cleaned server/routes.ts file
+   - **Updated Imports**: Removed references to deleted schema exports
+   - **Legacy Routes**: Many legacy route handlers still present and causing errors
+   - **Current Status**: Application runs but with many unused/broken routes that need removal
+
+3. **Storage Layer**: Issues identified in storage.ts
+   - **Missing Methods**: Many methods referenced in routes no longer exist in storage interface
+   - **TypeScript Errors**: Multiple type errors due to missing properties and methods
+   - **Current Status**: Core functionality works but legacy code causes compilation warnings
+
+4. **New Productions UI**: Previously implemented two-column administrative interface
+   - **Left Column**: Production list with card-based layout and click-to-select
+   - **Right Column**: Production details with templates table
+   - **Template Form**: Comprehensive modal with recurring patterns and requirements
+   - **Requirements Management**: Dynamic job and resource requirements with tabs
+   - **Real-time Statistics**: Template and event counts per production
+
 ### June 24, 2025 - Major Architecture Overhaul
 
 1. **Landing Page & Onboarding**: Created comprehensive landing page with early access signup and 4-step onboarding flow

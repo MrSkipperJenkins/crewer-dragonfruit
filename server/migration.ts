@@ -8,11 +8,12 @@ import {
   templateResources,
   eventCrewAssignments,
   eventResourceAssignments,
-  requiredJobs,
-  showResources,
-  crewAssignments,
+  type Show,
+  type Production,
+  type ShowTemplate,
+  type ScheduledEvent
 } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 /**
  * Migration utility to convert legacy shows data to new 3-tier architecture
@@ -41,7 +42,7 @@ export class ArchitectureMigration {
     // Group shows by title/concept to create productions
     const productionGroups = this.groupShowsByProduction(legacyShows);
 
-    for (const [productionName, showGroup] of productionGroups.entries()) {
+    for (const [productionName, showGroup] of Array.from(productionGroups.entries())) {
       await this.migrateProductionGroup(workspaceId, productionName, showGroup);
     }
 
@@ -53,17 +54,15 @@ export class ArchitectureMigration {
    */
   private groupShowsByProduction(shows: any[]): Map<string, any[]> {
     const groups = new Map<string, any[]>();
-
-    shows.forEach((show) => {
-      // Use the base title as production name (remove dates, episode numbers)
+    
+    for (const show of shows) {
       const productionName = this.extractProductionName(show.title);
-
       if (!groups.has(productionName)) {
         groups.set(productionName, []);
       }
       groups.get(productionName)!.push(show);
-    });
-
+    }
+    
     return groups;
   }
 
@@ -71,12 +70,11 @@ export class ArchitectureMigration {
    * Extract production name from show title
    */
   private extractProductionName(title: string): string {
-    // Remove common patterns like dates, episode numbers, etc.
-    return title
-      .replace(/\s*-\s*(Episode|Ep\.?)\s*\d+/i, "")
-      .replace(/\s*-\s*\d{1,2}\/\d{1,2}\/\d{4}/i, "")
-      .replace(/\s*\(\d{4}-\d{2}-\d{2}\)/i, "")
-      .trim();
+    // Simple extraction: remove dates, episode numbers, etc.
+    return title.replace(/\s+\d{4}-\d{2}-\d{2}.*/, '')
+               .replace(/\s+Episode\s+\d+.*/, '')
+               .replace(/\s+#\d+.*/, '')
+               .trim();
   }
 
   /**
@@ -85,32 +83,29 @@ export class ArchitectureMigration {
   private async migrateProductionGroup(
     workspaceId: string,
     productionName: string,
-    showGroup: any[],
+    shows: any[]
   ): Promise<void> {
-    console.log(
-      `📺 Creating production: "${productionName}" with ${showGroup.length} shows`,
-    );
+    console.log(`📺 Creating production: ${productionName}`);
 
     // Create the production
     const [production] = await db
       .insert(productions)
       .values({
-        name: productionName,
-        description: showGroup[0].description,
-        color: showGroup[0].color,
         workspaceId,
+        name: productionName,
+        description: `Migrated from ${shows.length} legacy shows`,
+        color: shows[0]?.color || "#3b82f6",
       })
       .returning();
 
-    // Analyze the shows to determine if we need templates
-    const hasRecurringPattern = showGroup.some((show) => show.recurringPattern);
+    // Analyze shows to determine structure
+    const recurringShows = shows.filter(show => show.recurringPattern);
+    const oneOffShows = shows.filter(show => !show.recurringPattern);
 
-    if (hasRecurringPattern && showGroup.length > 1) {
-      // Create template-based structure
-      await this.createTemplateBasedStructure(production, showGroup);
+    if (recurringShows.length > 0) {
+      await this.createTemplateBasedStructure(production, recurringShows, oneOffShows);
     } else {
-      // Create one-off events directly
-      await this.createDirectEvents(production, showGroup);
+      await this.createDirectEvents(production, oneOffShows);
     }
   }
 
@@ -119,27 +114,34 @@ export class ArchitectureMigration {
    */
   private async createTemplateBasedStructure(
     production: any,
-    showGroup: any[],
+    recurringShows: any[],
+    oneOffShows: any[]
   ): Promise<void> {
-    // Group by recurring pattern
+    // Group recurring shows by pattern
     const patternGroups = new Map<string, any[]>();
-
-    showGroup.forEach((show) => {
-      const pattern = show.recurringPattern || "one-off";
+    
+    for (const show of recurringShows) {
+      const pattern = show.recurringPattern || "none";
       if (!patternGroups.has(pattern)) {
         patternGroups.set(pattern, []);
       }
       patternGroups.get(pattern)!.push(show);
-    });
+    }
 
-    for (const [pattern, shows] of patternGroups.entries()) {
-      if (pattern === "one-off") {
-        // Create direct events for one-off shows
+    // Create templates for each pattern
+    for (const [pattern, shows] of Array.from(patternGroups.entries())) {
+      if (shows.length === 1) {
+        // Single show - create as direct event
         await this.createDirectEvents(production, shows);
       } else {
         // Create template and events
         await this.createTemplateWithEvents(production, pattern, shows);
       }
+    }
+
+    // Create direct events for one-offs
+    if (oneOffShows.length > 0) {
+      await this.createDirectEvents(production, oneOffShows);
     }
   }
 
@@ -173,14 +175,9 @@ export class ArchitectureMigration {
       })
       .returning();
 
-    // Migrate template requirements
-    await this.migrateTemplateRequirements(
-      template.id,
-      firstShow.id,
-      production.workspaceId,
-    );
+    console.log(`📋 Created template: ${template.name}`);
 
-    // Create scheduled events
+    // Create scheduled events for each show
     for (const show of shows) {
       await this.createScheduledEvent(production, template, show);
     }
@@ -191,7 +188,7 @@ export class ArchitectureMigration {
    */
   private async createDirectEvents(
     production: any,
-    shows: any[],
+    shows: any[]
   ): Promise<void> {
     for (const show of shows) {
       await this.createScheduledEvent(production, null, show);
@@ -209,134 +206,32 @@ export class ArchitectureMigration {
     const [event] = await db
       .insert(scheduledEvents)
       .values({
-        templateId: template?.id || null,
+        workspaceId: production.workspaceId,
         productionId: production.id,
+        templateId: template?.id || null,
         title: legacyShow.title,
         description: legacyShow.description,
         startTime: legacyShow.startTime,
         endTime: legacyShow.endTime,
-        isException: legacyShow.isException,
         notes: legacyShow.notes,
         status: legacyShow.status,
         color: legacyShow.color,
-        workspaceId: production.workspaceId,
       })
       .returning();
 
-    // Migrate crew assignments
-    await this.migrateEventCrewAssignments(
-      event.id,
-      legacyShow.id,
-      production.workspaceId,
-    );
-
-    // Migrate resource assignments
-    await this.migrateEventResourceAssignments(
-      event.id,
-      legacyShow.id,
-      production.workspaceId,
-    );
-  }
-
-  /**
-   * Migrate template requirements from legacy required jobs
-   */
-  private async migrateTemplateRequirements(
-    templateId: string,
-    legacyShowId: string,
-    workspaceId: string,
-  ): Promise<void> {
-    // Get required jobs from legacy show
-    const legacyRequiredJobs = await db
-      .select()
-      .from(requiredJobs)
-      .where(eq(requiredJobs.showId, legacyShowId));
-
-    // Create template required jobs
-    for (const requiredJob of legacyRequiredJobs) {
-      await db.insert(templateRequiredJobs).values({
-        templateId,
-        jobId: requiredJob.jobId,
-        quantity: 1,
-        notes: requiredJob.notes,
-        workspaceId,
-      });
-    }
-
-    // Get required resources from legacy show
-    const legacyShowResources = await db
-      .select()
-      .from(showResources)
-      .where(eq(showResources.showId, legacyShowId));
-
-    // Create template resources
-    for (const showResource of legacyShowResources) {
-      await db.insert(templateResources).values({
-        templateId,
-        resourceId: showResource.resourceId,
-        quantity: 1,
-        workspaceId,
-      });
-    }
-  }
-
-  /**
-   * Migrate crew assignments to event crew assignments
-   */
-  private async migrateEventCrewAssignments(
-    eventId: string,
-    legacyShowId: string,
-    workspaceId: string,
-  ): Promise<void> {
-    const legacyAssignments = await db
-      .select()
-      .from(crewAssignments)
-      .where(eq(crewAssignments.showId, legacyShowId));
-
-    for (const assignment of legacyAssignments) {
-      await db.insert(eventCrewAssignments).values({
-        eventId,
-        crewMemberId: assignment.crewMemberId,
-        jobId: assignment.jobId,
-        status: assignment.status,
-        workspaceId,
-      });
-    }
-  }
-
-  /**
-   * Migrate resource assignments to event resource assignments
-   */
-  private async migrateEventResourceAssignments(
-    eventId: string,
-    legacyShowId: string,
-    workspaceId: string,
-  ): Promise<void> {
-    const legacyResourceAssignments = await db
-      .select()
-      .from(showResources)
-      .where(eq(showResources.showId, legacyShowId));
-
-    for (const resourceAssignment of legacyResourceAssignments) {
-      await db.insert(eventResourceAssignments).values({
-        eventId,
-        resourceId: resourceAssignment.resourceId,
-        quantity: 1,
-        workspaceId,
-      });
-    }
+    console.log(`📅 Created event: ${event.title}`);
   }
 
   /**
    * Check if a workspace has been migrated
    */
   async isWorkspaceMigrated(workspaceId: string): Promise<boolean> {
-    const productionCount = await db
-      .select({ count: 1 })
+    const productionsCount = await db
+      .select({ count: sql<number>`count(*)` })
       .from(productions)
       .where(eq(productions.workspaceId, workspaceId));
 
-    return productionCount.length > 0;
+    return (productionsCount[0]?.count || 0) > 0;
   }
 
   /**
@@ -344,11 +239,7 @@ export class ArchitectureMigration {
    */
   async autoMigrateIfNeeded(workspaceId: string): Promise<void> {
     const isMigrated = await this.isWorkspaceMigrated(workspaceId);
-
     if (!isMigrated) {
-      console.log(
-        `🔄 Auto-migrating workspace ${workspaceId} to new architecture`,
-      );
       await this.migrateWorkspace(workspaceId);
     }
   }
