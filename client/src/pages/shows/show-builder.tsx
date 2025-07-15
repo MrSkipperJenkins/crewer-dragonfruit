@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { useCurrentWorkspace } from "@/hooks/use-current-workspace";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertShowSchema } from "@shared/schema";
+import { insertEventSchema } from "@shared/schema";
 
 import {
   Form,
@@ -44,7 +44,7 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { RRule } from "rrule";
 
 // Extended form schema with recurrence fields
-const formSchema = insertShowSchema.extend({
+const formSchema = insertEventSchema.extend({
   recurrenceType: z
     .enum(["none", "daily", "weekly", "monthly", "custom"])
     .default("none"),

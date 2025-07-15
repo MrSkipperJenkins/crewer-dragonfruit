@@ -8,12 +8,11 @@ import {
   insertCrewMemberSchema,
   insertJobSchema,
   insertResourceSchema,
-  insertShowSchema,
   insertNotificationSchema,
   // New 3-tier schemas
   insertProductionSchema,
   insertShowTemplateSchema,
-  insertScheduledEventSchema,
+  insertEventSchema,
   insertTemplateRequiredJobSchema,
   insertTemplateResourceSchema,
   insertEventCrewAssignmentSchema,
@@ -822,7 +821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endTime: req.body.endTime ? new Date(req.body.endTime) : undefined,
       };
 
-      const validation = insertShowSchema.safeParse(processedBody);
+      const validation = insertEventSchema.safeParse(processedBody);
       if (!validation.success) {
         return res.status(400).json({
           message: "Invalid show data",
@@ -855,7 +854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Processed update data:", processedBody);
 
-      const validation = insertShowSchema.partial().safeParse(processedBody);
+      const validation = insertEventSchema.partial().safeParse(processedBody);
       if (!validation.success) {
         console.log("Validation errors:", validation.error.errors);
         return res.status(400).json({

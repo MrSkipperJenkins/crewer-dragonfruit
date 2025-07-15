@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertShowSchema } from "@shared/schema";
+import { insertEventSchema } from "@shared/schema";
 import { format } from "date-fns";
 
 import {
@@ -49,7 +49,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Calendar, X, AlertTriangle, Plus } from "lucide-react";
 
 // Form schema for show templates
-const showTemplateSchema = insertShowSchema.extend({
+const showTemplateSchema = insertEventSchema.extend({
   startDate: z.string(),
   startTime: z.string(),
   duration: z.number().min(15).max(1440),

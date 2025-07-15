@@ -6,12 +6,11 @@ import {
   resources,
   productions,
   showTemplates,
-  scheduledEvents,
+  events,
   templateRequiredJobs,
   templateResources,
   eventCrewAssignments,
   eventResourceAssignments,
-  shows,
   notifications,
   type Workspace,
   type InsertWorkspace,
@@ -27,7 +26,7 @@ import {
   type InsertProduction,
   type ShowTemplate,
   type InsertShowTemplate,
-  type ScheduledEvent,
+  type Event,
   type InsertScheduledEvent,
   type TemplateRequiredJob,
   type InsertTemplateRequiredJob,
@@ -37,8 +36,6 @@ import {
   type InsertEventCrewAssignment,
   type EventResourceAssignment,
   type InsertEventResourceAssignment,
-  type Show,
-  type InsertShow,
   type Notification,
   type InsertNotification,
 } from "@shared/schema";
@@ -116,15 +113,15 @@ export interface IStorage {
   ): Promise<ShowTemplate | undefined>;
   deleteShowTemplate(id: string): Promise<boolean>;
 
-  // Scheduled Event CRUD
-  getScheduledEvents(workspaceId: string): Promise<ScheduledEvent[]>;
-  getScheduledEvent(id: string): Promise<ScheduledEvent | undefined>;
-  createScheduledEvent(event: InsertScheduledEvent): Promise<ScheduledEvent>;
-  updateScheduledEvent(
+  // Event CRUD
+  getEvents(workspaceId: string): Promise<Event[]>;
+  getEvent(id: string): Promise<Event | undefined>;
+  createEvent(event: InsertScheduledEvent): Promise<Event>;
+  updateEvent(
     id: string,
     event: Partial<InsertScheduledEvent>,
-  ): Promise<ScheduledEvent | undefined>;
-  deleteScheduledEvent(id: string): Promise<boolean>;
+  ): Promise<Event | undefined>;
+  deleteEvent(id: string): Promise<boolean>;
 
   // Template Requirements CRUD
   getTemplateRequiredJobs(templateId: string): Promise<TemplateRequiredJob[]>;
@@ -154,17 +151,7 @@ export interface IStorage {
   ): Promise<EventResourceAssignment>;
   deleteEventResourceAssignment(id: string): Promise<boolean>;
 
-  // Legacy Show CRUD (for backward compatibility)
-  getShows(workspaceId: string): Promise<Show[]>;
-  getShowsInRange(
-    workspaceId: string,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<Show[]>;
-  getShow(id: string): Promise<Show | undefined>;
-  createShow(show: InsertShow): Promise<Show>;
-  updateShow(id: string, show: Partial<InsertShow>): Promise<Show | undefined>;
-  deleteShow(id: string): Promise<boolean>;
+
 
   // Notification CRUD
   getNotifications(userId: string): Promise<Notification[]>;
@@ -489,46 +476,46 @@ export class Storage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // Scheduled Event operations
-  async getScheduledEvents(workspaceId: string): Promise<ScheduledEvent[]> {
+  // Event operations
+  async getEvents(workspaceId: string): Promise<Event[]> {
     return await db
       .select()
-      .from(scheduledEvents)
-      .where(eq(scheduledEvents.workspaceId, workspaceId))
-      .orderBy(scheduledEvents.startTime);
+      .from(events)
+      .where(eq(events.workspaceId, workspaceId))
+      .orderBy(events.startTime);
   }
 
-  async getScheduledEvent(id: string): Promise<ScheduledEvent | undefined> {
+  async getEvent(id: string): Promise<Event | undefined> {
     const result = await db
       .select()
-      .from(scheduledEvents)
-      .where(eq(scheduledEvents.id, id))
+      .from(events)
+      .where(eq(events.id, id))
       .limit(1);
     return result[0];
   }
 
-  async createScheduledEvent(event: InsertScheduledEvent): Promise<ScheduledEvent> {
+  async createEvent(event: InsertScheduledEvent): Promise<Event> {
     const [result] = await db
-      .insert(scheduledEvents)
+      .insert(events)
       .values(event)
       .returning();
     return result;
   }
 
-  async updateScheduledEvent(
+  async updateEvent(
     id: string,
     event: Partial<InsertScheduledEvent>,
-  ): Promise<ScheduledEvent | undefined> {
+  ): Promise<Event | undefined> {
     const [result] = await db
-      .update(scheduledEvents)
+      .update(events)
       .set(event)
-      .where(eq(scheduledEvents.id, id))
+      .where(eq(events.id, id))
       .returning();
     return result;
   }
 
-  async deleteScheduledEvent(id: string): Promise<boolean> {
-    const result = await db.delete(scheduledEvents).where(eq(scheduledEvents.id, id));
+  async deleteEvent(id: string): Promise<boolean> {
+    const result = await db.delete(events).where(eq(events.id, id));
     return result.rowCount > 0;
   }
 
@@ -634,63 +621,7 @@ export class Storage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // Legacy Show operations (for backward compatibility)
-  async getShows(workspaceId: string): Promise<Show[]> {
-    return await db
-      .select()
-      .from(shows)
-      .where(eq(shows.workspaceId, workspaceId))
-      .orderBy(shows.startTime);
-  }
 
-  async getShowsInRange(
-    workspaceId: string,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<Show[]> {
-    return await db
-      .select()
-      .from(shows)
-      .where(
-        and(
-          eq(shows.workspaceId, workspaceId),
-          gte(shows.startTime, startDate),
-          lte(shows.startTime, endDate),
-        ),
-      )
-      .orderBy(shows.startTime);
-  }
-
-  async getShow(id: string): Promise<Show | undefined> {
-    const result = await db
-      .select()
-      .from(shows)
-      .where(eq(shows.id, id))
-      .limit(1);
-    return result[0];
-  }
-
-  async createShow(show: InsertShow): Promise<Show> {
-    const [result] = await db.insert(shows).values(show).returning();
-    return result;
-  }
-
-  async updateShow(
-    id: string,
-    show: Partial<InsertShow>,
-  ): Promise<Show | undefined> {
-    const [result] = await db
-      .update(shows)
-      .set(show)
-      .where(eq(shows.id, id))
-      .returning();
-    return result;
-  }
-
-  async deleteShow(id: string): Promise<boolean> {
-    const result = await db.delete(shows).where(eq(shows.id, id));
-    return result.rowCount > 0;
-  }
 
   // Notification operations
   async getNotifications(userId: string): Promise<Notification[]> {

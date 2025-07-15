@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertShowSchema } from "@shared/schema";
+import { insertEventSchema } from "@shared/schema";
 import { format } from "date-fns";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,7 +54,7 @@ import {
 import { ColorPicker } from "@/components/ui/color-picker";
 
 // Form schema for single show editing
-const singleShowSchema = insertShowSchema.extend({
+const singleShowSchema = insertEventSchema.extend({
   startDate: z.string(),
   startTime: z.string(),
   endDate: z.string(),

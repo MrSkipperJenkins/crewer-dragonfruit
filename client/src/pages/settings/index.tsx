@@ -8,7 +8,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  insertShowCategorySchema,
   insertWorkspaceSchema,
 } from "@shared/schema";
 
@@ -51,15 +50,15 @@ import {
   Trash2,
 } from "lucide-react";
 
-// Category form schema
-const categoryFormSchema = insertShowCategorySchema.extend({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  color: z.string().regex(/^#([0-9A-F]{6})$/i, {
-    message: "Color must be a valid hex color code (e.g. #3B82F6)",
-  }),
-});
+// Category form schema - commented out for now since show categories are not in the current schema
+// const categoryFormSchema = z.object({
+//   name: z.string().min(2, {
+//     message: "Name must be at least 2 characters.",
+//   }),
+//   color: z.string().regex(/^#([0-9A-F]{6})$/i, {
+//     message: "Color must be a valid hex color code (e.g. #3B82F6)",
+//   }),
+// });
 
 // Workspace form schema
 const workspaceFormSchema = insertWorkspaceSchema.extend({
@@ -68,7 +67,7 @@ const workspaceFormSchema = insertWorkspaceSchema.extend({
   }),
 });
 
-type CategoryFormValues = z.infer<typeof categoryFormSchema>;
+// type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
 
 export default function Settings() {

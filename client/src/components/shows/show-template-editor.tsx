@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  insertShowSchema,
+  insertEventSchema,
   Show,
   Job,
   Resource,
@@ -61,7 +61,7 @@ import {
 import { ColorPicker } from "@/components/ui/color-picker";
 
 // Form schema for show templates
-const showTemplateSchema = insertShowSchema.extend({
+const showTemplateSchema = insertEventSchema.extend({
   startDate: z.string(),
   startTime: z.string(),
   duration: z.number().min(15).max(1440), // 15 minutes to 24 hours

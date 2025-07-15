@@ -8,9 +8,9 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  insertShowSchema,
-  insertRequiredJobSchema,
-  insertCrewAssignmentSchema,
+  insertEventSchema,
+  insertTemplateRequiredJobSchema,
+  insertEventCrewAssignmentSchema,
 } from "@shared/schema";
 import { format } from "date-fns";
 
@@ -59,7 +59,7 @@ import {
 import { ColorPicker } from "@/components/ui/color-picker";
 
 // Form schema for editing shows
-const editShowSchema = insertShowSchema.extend({
+const editShowSchema = insertEventSchema.extend({
   id: z.string().uuid(),
   startDate: z.string(),
   startTime: z.string(),
