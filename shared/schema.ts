@@ -55,12 +55,12 @@ export const showTemplates = pgTable("show_templates", {
   duration: integer("duration").notNull().default(60), // minutes
   recurringPattern: text("recurring_pattern").default(""), // RRULE string
   notes: text("notes"),
-  color: text("color"),
+  color: text("color").default("#3b82f6"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const scheduledEvents = pgTable("scheduled_events", {
+export const events = pgTable("events", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   productionId: uuid("production_id").references(() => productions.id, { onDelete: "cascade" }),
@@ -71,7 +71,7 @@ export const scheduledEvents = pgTable("scheduled_events", {
   endTime: timestamp("end_time").notNull(),
   status: text("status").notNull().default("scheduled"), // scheduled, in_progress, completed, cancelled
   notes: text("notes"),
-  color: text("color"),
+  color: text("color").default("#3b82f6"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -105,7 +105,8 @@ export const resources = pgTable("resources", {
 export const crewMembers = pgTable("crew_members", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
   email: text("email"),
   phone: text("phone"),
   primaryJobId: uuid("primary_job_id").references(() => jobs.id, { onDelete: "set null" }),
@@ -142,7 +143,7 @@ export const templateResources = pgTable("template_resources", {
 export const eventCrewAssignments = pgTable("event_crew_assignments", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  eventId: uuid("event_id").notNull().references(() => scheduledEvents.id, { onDelete: "cascade" }),
+  eventId: uuid("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
   crewMemberId: uuid("crew_member_id").notNull().references(() => crewMembers.id, { onDelete: "cascade" }),
   jobId: uuid("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
   confirmedAt: timestamp("confirmed_at"),
@@ -153,7 +154,7 @@ export const eventCrewAssignments = pgTable("event_crew_assignments", {
 export const eventResourceAssignments = pgTable("event_resource_assignments", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  eventId: uuid("event_id").notNull().references(() => scheduledEvents.id, { onDelete: "cascade" }),
+  eventId: uuid("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
   resourceId: uuid("resource_id").notNull().references(() => resources.id, { onDelete: "cascade" }),
   quantity: integer("quantity").notNull().default(1),
   confirmedAt: timestamp("confirmed_at"),
@@ -161,32 +162,14 @@ export const eventResourceAssignments = pgTable("event_resource_assignments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Legacy show table (maintained for backward compatibility during migration)
-export const shows = pgTable("shows", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time").notNull(),
-  status: text("status").notNull().default("scheduled"),
-  color: text("color").default("#3b82f6"),
-  notes: text("notes"),
-  recurringPattern: text("recurring_pattern"),
-  productionId: uuid("production_id").references(() => productions.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 // Relations
 export const workspaceRelations = relations(workspaces, ({ many }) => ({
   productions: many(productions),
   showTemplates: many(showTemplates),
-  scheduledEvents: many(scheduledEvents),
+  events: many(events),
   jobs: many(jobs),
   resources: many(resources),
   crewMembers: many(crewMembers),
-  shows: many(shows),
   notifications: many(notifications),
 }));
 
@@ -196,8 +179,7 @@ export const productionRelations = relations(productions, ({ one, many }) => ({
     references: [workspaces.id],
   }),
   showTemplates: many(showTemplates),
-  scheduledEvents: many(scheduledEvents),
-  shows: many(shows),
+  events: many(events),
 }));
 
 export const showTemplateRelations = relations(showTemplates, ({ one, many }) => ({
@@ -209,22 +191,22 @@ export const showTemplateRelations = relations(showTemplates, ({ one, many }) =>
     fields: [showTemplates.productionId],
     references: [productions.id],
   }),
-  scheduledEvents: many(scheduledEvents),
+  events: many(events),
   requiredJobs: many(templateRequiredJobs),
   resources: many(templateResources),
 }));
 
-export const scheduledEventRelations = relations(scheduledEvents, ({ one, many }) => ({
+export const eventRelations = relations(events, ({ one, many }) => ({
   workspace: one(workspaces, {
-    fields: [scheduledEvents.workspaceId],
+    fields: [events.workspaceId],
     references: [workspaces.id],
   }),
   production: one(productions, {
-    fields: [scheduledEvents.productionId],
+    fields: [events.productionId],
     references: [productions.id],
   }),
   template: one(showTemplates, {
-    fields: [scheduledEvents.templateId],
+    fields: [events.templateId],
     references: [showTemplates.id],
   }),
   crewAssignments: many(eventCrewAssignments),
@@ -297,9 +279,9 @@ export const eventCrewAssignmentRelations = relations(eventCrewAssignments, ({ o
     fields: [eventCrewAssignments.workspaceId],
     references: [workspaces.id],
   }),
-  event: one(scheduledEvents, {
+  event: one(events, {
     fields: [eventCrewAssignments.eventId],
-    references: [scheduledEvents.id],
+    references: [events.id],
   }),
   crewMember: one(crewMembers, {
     fields: [eventCrewAssignments.crewMemberId],
@@ -316,9 +298,9 @@ export const eventResourceAssignmentRelations = relations(eventResourceAssignmen
     fields: [eventResourceAssignments.workspaceId],
     references: [workspaces.id],
   }),
-  event: one(scheduledEvents, {
+  event: one(events, {
     fields: [eventResourceAssignments.eventId],
-    references: [scheduledEvents.id],
+    references: [events.id],
   }),
   resource: one(resources, {
     fields: [eventResourceAssignments.resourceId],
@@ -338,17 +320,6 @@ export const notificationRelations = relations(notifications, ({ one }) => ({
   workspace: one(workspaces, {
     fields: [notifications.workspaceId],
     references: [workspaces.id],
-  }),
-}));
-
-export const showRelations = relations(shows, ({ one }) => ({
-  workspace: one(workspaces, {
-    fields: [shows.workspaceId],
-    references: [workspaces.id],
-  }),
-  production: one(productions, {
-    fields: [shows.productionId],
-    references: [productions.id],
   }),
 }));
 
@@ -382,7 +353,7 @@ export const insertShowTemplateSchema = createInsertSchema(showTemplates).omit({
   updatedAt: true,
 });
 
-export const insertScheduledEventSchema = createInsertSchema(scheduledEvents).omit({
+export const insertEventSchema = createInsertSchema(events).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -426,12 +397,6 @@ export const insertEventResourceAssignmentSchema = createInsertSchema(eventResou
   createdAt: true,
 });
 
-export const insertShowSchema = createInsertSchema(shows).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 // TypeScript types
 export type Workspace = typeof workspaces.$inferSelect;
 export type InsertWorkspace = z.infer<typeof insertWorkspaceSchema>;
@@ -448,8 +413,8 @@ export type InsertProduction = z.infer<typeof insertProductionSchema>;
 export type ShowTemplate = typeof showTemplates.$inferSelect;
 export type InsertShowTemplate = z.infer<typeof insertShowTemplateSchema>;
 
-export type ScheduledEvent = typeof scheduledEvents.$inferSelect;
-export type InsertScheduledEvent = z.infer<typeof insertScheduledEventSchema>;
+export type Event = typeof events.$inferSelect;
+export type InsertScheduledEvent = z.infer<typeof insertEventSchema>;
 
 export type Job = typeof jobs.$inferSelect;
 export type InsertJob = z.infer<typeof insertJobSchema>;
@@ -471,6 +436,3 @@ export type InsertEventCrewAssignment = z.infer<typeof insertEventCrewAssignment
 
 export type EventResourceAssignment = typeof eventResourceAssignments.$inferSelect;
 export type InsertEventResourceAssignment = z.infer<typeof insertEventResourceAssignmentSchema>;
-
-export type Show = typeof shows.$inferSelect;
-export type InsertShow = z.infer<typeof insertShowSchema>;
