@@ -119,6 +119,30 @@ npm run start  # Runs production server
 
 ## Recent Changes
 
+### July 15, 2025 - Critical Bug Fixes and Application Stabilization
+
+1. **Database Schema Fixes**: Resolved critical database structure issues preventing application startup
+   - **Fixed crew_members table**: Added missing columns (first_name, last_name, primary_job_id, skills, hourly_rate, availability, notes, updated_at)
+   - **Fixed resources table**: Added missing columns (quantity, cost_per_hour, availability, updated_at)
+   - **Fixed notifications schema**: Corrected column name mismatch (isRead vs read)
+   - **Current Status**: All database tables now match the schema definitions
+
+2. **Backend Route Cleanup**: Removed legacy routes that referenced non-existent storage methods
+   - **Removed Legacy Routes**: Show categories, crew assignments, crew schedules, and early access signups
+   - **Updated Legacy Shows API**: Mapped legacy shows endpoints to new events architecture
+   - **Fixed Storage Methods**: Added missing getShowTemplatesByProduction method
+   - **Current Status**: All API endpoints are functional and stable
+
+3. **Schema Import Fixes**: Resolved TypeScript import errors in storage layer
+   - **Fixed Import Names**: Updated from scheduledEvents to events throughout storage layer
+   - **Updated Frontend Components**: Fixed references to use insertEventSchema instead of insertShowSchema
+   - **Current Status**: No TypeScript compilation errors
+
+4. **Application Stability**: Successfully debugging and stabilizing the entire application
+   - **Fixed Startup Errors**: Resolved all critical errors preventing application launch
+   - **Verified API Endpoints**: Confirmed all core functionality is working
+   - **Current Status**: Application runs without errors and all endpoints respond correctly
+
 ### July 2, 2025 - Schema Refactoring and Cleanup
 
 1. **Complete Schema Cleanup**: Removed all legacy tables and migration code from schema.ts

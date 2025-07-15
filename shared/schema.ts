@@ -31,7 +31,7 @@ export const notifications = pgTable("notifications", {
   title: text("title").notNull(),
   message: text("message").notNull(),
   type: text("type").notNull().default("info"), // info, warning, error, success
-  isRead: boolean("is_read").notNull().default(false),
+  read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
