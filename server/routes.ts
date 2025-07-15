@@ -730,84 +730,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  // Legacy Shows (maintained for backward compatibility)
+  // Legacy Shows API - Updated to use Events
   app.get("/api/workspaces/:workspaceId/shows", async (req, res) => {
-    const { start, end } = req.query;
-
-    if (start && end) {
-      const startDate = new Date(start as string);
-      const endDate = new Date(end as string);
-
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return res.status(400).json({ message: "Invalid date range" });
-      }
-
-      const shows = await storage.getShowsInRange(
-        req.params.workspaceId,
-        startDate,
-        endDate,
-      );
-      return res.json(shows);
-    }
-
-    const shows = await storage.getShows(req.params.workspaceId);
-    res.json(shows);
+    // Map legacy shows API to events API
+    const events = await storage.getEvents(req.params.workspaceId);
+    res.json(events);
   });
 
   // Expand recurring shows into individual occurrences
   app.get("/api/shows/expand-recurring", async (req, res) => {
     try {
-      const { start, end, workspaceId } = req.query;
+      const { workspaceId } = req.query;
 
-      if (!start || !end || !workspaceId) {
+      if (!workspaceId) {
         return res.status(400).json({
-          message: "start, end, and workspaceId parameters are required",
+          message: "workspaceId parameter is required",
         });
       }
 
-      const startDate = new Date(start as string);
-      const endDate = new Date(end as string);
-
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return res.status(400).json({ message: "Invalid date range" });
-      }
-
-      // For now, return regular shows in range until RRule is properly implemented
-      const regularShows = await storage.getShowsInRange(
-        workspaceId as string,
-        startDate,
-        endDate,
-      );
-
-      // Transform to match expected format
-      const transformedShows = regularShows.map((show) => ({
-        id: show.id,
-        parentId: show.parentId || "",
-        title: show.title,
-        description: show.description,
-        startTime: show.startTime.toISOString(),
-        endTime: show.endTime.toISOString(),
-        status: show.status,
-        color: show.color,
-        workspaceId: show.workspaceId,
-        recurringPattern: show.recurringPattern || "",
+      // Return events in the expected format
+      const events = await storage.getEvents(workspaceId as string);
+      
+      const transformedEvents = events.map((event) => ({
+        id: event.id,
+        parentId: event.templateId || "",
+        title: event.title,
+        description: event.description,
+        startTime: event.startTime.toISOString(),
+        endTime: event.endTime.toISOString(),
+        status: event.status,
+        color: event.color,
+        workspaceId: event.workspaceId,
+        recurringPattern: "",
         isRecurrence: false,
-        notes: show.notes,
+        notes: event.notes,
       }));
 
-      res.json(transformedShows);
+      res.json(transformedEvents);
     } catch (error) {
-      console.error("Error expanding recurring shows:", error);
-      res.status(500).json({ message: "Failed to expand recurring shows" });
+      console.error("Error expanding recurring events:", error);
+      res.status(500).json({ message: "Failed to expand recurring events" });
     }
   });
 
   app.get("/api/shows/:id", async (req, res) => {
-    const show = await storage.getShow(req.params.id);
-    if (!show) {
-      return res.status(404).json({ message: "Show not found" });
+    const event = await storage.getEvent(req.params.id);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
     }
-    res.json(show);
+    res.json(event);
   });
 
   app.post("/api/shows", async (req, res) => {
@@ -824,21 +795,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validation = insertEventSchema.safeParse(processedBody);
       if (!validation.success) {
         return res.status(400).json({
-          message: "Invalid show data",
+          message: "Invalid event data",
           errors: validation.error.errors,
         });
       }
 
-      const show = await storage.createShow(validation.data);
-      res.status(201).json(show);
+      const event = await storage.createEvent(validation.data);
+      res.status(201).json(event);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create show" });
+      res.status(500).json({ message: "Failed to create event" });
     }
   });
 
   app.put("/api/shows/:id", async (req, res) => {
     try {
-      console.log("Show update request body:", req.body);
+      console.log("Event update request body:", req.body);
 
       // Handle date conversion for calendar drag-and-drop
       const processedBody = { ...req.body };
@@ -858,313 +829,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!validation.success) {
         console.log("Validation errors:", validation.error.errors);
         return res.status(400).json({
-          message: "Invalid show data",
+          message: "Invalid event data",
           errors: validation.error.errors,
         });
       }
 
       console.log(
-        "About to call storage.updateShow with:",
+        "About to call storage.updateEvent with:",
         req.params.id,
         validation.data,
       );
-      const show = await storage.updateShow(req.params.id, validation.data);
-      console.log("Storage.updateShow returned:", show);
-      if (!show) {
-        return res.status(404).json({ message: "Show not found" });
+      const event = await storage.updateEvent(req.params.id, validation.data);
+      console.log("Storage.updateEvent returned:", event);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
       }
-      res.json(show);
+      res.json(event);
     } catch (error) {
-      console.error("Show update error:", error);
-      res.status(500).json({ message: "Failed to update show" });
+      console.error("Event update error:", error);
+      res.status(500).json({ message: "Failed to update event" });
     }
   });
 
   app.delete("/api/shows/:id", async (req, res) => {
     try {
-      const success = await storage.deleteShow(req.params.id);
+      const success = await storage.deleteEvent(req.params.id);
       if (!success) {
-        return res.status(404).json({ message: "Show not found" });
+        return res.status(404).json({ message: "Event not found" });
       }
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete show" });
+      res.status(500).json({ message: "Failed to delete event" });
     }
   });
 
-  // Show Categories Assignments
-  app.get(
-    "/api/workspaces/:workspaceId/show-category-assignments",
-    async (req, res) => {
-      const assignments = await storage.getShowCategoryAssignments(
-        req.params.workspaceId,
-      );
-      res.json(assignments);
-    },
-  );
-
-  app.get("/api/shows/:showId/categories", async (req, res) => {
-    const assignments = await storage.getShowCategoryAssignmentsByShow(
-      req.params.showId,
-    );
-    res.json(assignments);
-  });
-
-  app.post("/api/show-category-assignments", async (req, res) => {
-    try {
-      const validation = insertShowCategoryAssignmentSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid assignment data",
-          errors: validation.error.errors,
-        });
-      }
-      const assignment = await storage.createShowCategoryAssignment(
-        validation.data,
-      );
-      res.status(201).json(assignment);
-    } catch (error) {
-      console.error("Failed to create category assignment:", error);
-      res.status(500).json({ message: "Failed to create category assignment" });
-    }
-  });
-
-  app.patch("/api/show-category-assignments/:id", async (req, res) => {
-    try {
-      const validation = insertShowCategoryAssignmentSchema
-        .partial()
-        .safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid assignment data",
-          errors: validation.error.errors,
-        });
-      }
-      const assignment = await storage.updateShowCategoryAssignment(
-        req.params.id,
-        validation.data,
-      );
-      if (!assignment) {
-        return res
-          .status(404)
-          .json({ message: "Category assignment not found" });
-      }
-      res.json(assignment);
-    } catch (error) {
-      console.error("Failed to update category assignment:", error);
-      res.status(500).json({ message: "Failed to update category assignment" });
-    }
-  });
-
-  app.delete("/api/show-category-assignments/:id", async (req, res) => {
-    try {
-      const success = await storage.deleteShowCategoryAssignment(req.params.id);
-      if (!success) {
-        return res
-          .status(404)
-          .json({ message: "Category assignment not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Failed to delete category assignment:", error);
-      res.status(500).json({ message: "Failed to delete category assignment" });
-    }
-  });
+  // Show Categories Assignments - Legacy routes removed
+  // These routes have been removed as show categories are no longer part of the 3-tier architecture
 
 
 
 
 
-  // Crew Assignments
-  app.get("/api/shows/:showId/crew-assignments", async (req, res) => {
-    const assignments = await storage.getCrewAssignmentsByShow(
-      req.params.showId,
-    );
-    res.json(assignments);
-  });
+  // Crew Assignments - Legacy routes removed
+  // These routes have been removed as crew assignments are now handled through event assignments in the 3-tier architecture
 
-  app.get("/api/crew-members/:crewMemberId/assignments", async (req, res) => {
-    const assignments = await storage.getCrewAssignmentsByCrewMember(
-      req.params.crewMemberId,
-    );
-    res.json(assignments);
-  });
-
-  app.post("/api/crew-assignments", async (req, res) => {
-    try {
-      console.log("Creating crew assignment with data:", req.body);
-
-      const validation = insertCrewAssignmentSchema.safeParse(req.body);
-      if (!validation.success) {
-        console.log("Validation failed:", validation.error.errors);
-        return res.status(400).json({
-          message: "Invalid crew assignment data",
-          errors: validation.error.errors,
-        });
-      }
-
-      // Check for crew conflicts
-      const { showId, crewMemberId } = validation.data;
-      const hasConflict = await storage.detectCrewConflicts(
-        showId,
-        crewMemberId,
-      );
-
-      if (hasConflict) {
-        console.log("Crew conflict detected for:", { showId, crewMemberId });
-        return res
-          .status(409)
-          .json({ message: "Crew member has scheduling conflict" });
-      }
-
-      console.log(
-        "About to create assignment with validated data:",
-        validation.data,
-      );
-      const assignment = await storage.createCrewAssignment(validation.data);
-      console.log("Assignment created successfully:", assignment);
-      res.status(201).json(assignment);
-    } catch (error) {
-      console.error("Error creating crew assignment:", error);
-      res.status(500).json({
-        message: "Failed to create crew assignment",
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  });
-
-  app.put("/api/crew-assignments/:id", async (req, res) => {
-    try {
-      const validation = insertCrewAssignmentSchema
-        .partial()
-        .safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid crew assignment data",
-          errors: validation.error.errors,
-        });
-      }
-      const assignment = await storage.updateCrewAssignment(
-        req.params.id,
-        validation.data,
-      );
-      if (!assignment) {
-        return res.status(404).json({ message: "Crew assignment not found" });
-      }
-      res.json(assignment);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update crew assignment" });
-    }
-  });
-
-  // Batch update crew assignments for a show
-  app.put("/api/shows/:showId/crew-assignments", async (req, res) => {
-    try {
-      const { showId } = req.params;
-      const { assignments } = req.body;
-
-      if (!Array.isArray(assignments)) {
-        return res
-          .status(400)
-          .json({ message: "Assignments must be an array" });
-      }
-
-      // Validate each assignment
-      for (const assignment of assignments) {
-        const validation = insertCrewAssignmentSchema
-          .omit({ showId: true })
-          .safeParse(assignment);
-        if (!validation.success) {
-          return res.status(400).json({
-            message: "Invalid assignment data",
-            errors: validation.error.errors,
-          });
-        }
-      }
-
-      // Replace all assignments for this show
-      await storage.replaceCrewAssignments(
-        showId,
-        assignments.map((a) => ({ ...a, showId })),
-      );
-
-      res.json({ message: "Crew assignments updated successfully" });
-    } catch (error) {
-      console.error("Error updating crew assignments:", error);
-      res.status(500).json({ message: "Failed to update crew assignments" });
-    }
-  });
-
-  // Crew Schedules
-  app.get("/api/workspaces/:workspaceId/crew-schedules", async (req, res) => {
-    const schedules = await storage.getCrewSchedules(req.params.workspaceId);
-    res.json(schedules);
-  });
-
-  app.get("/api/crew-members/:crewMemberId/schedules", async (req, res) => {
-    const schedules = await storage.getCrewSchedulesByCrewMember(
-      req.params.crewMemberId,
-    );
-    res.json(schedules);
-  });
-
-  app.post("/api/crew-schedules", async (req, res) => {
-    try {
-      const validation = insertCrewScheduleSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid crew schedule data",
-          errors: validation.error.errors,
-        });
-      }
-      const schedule = await storage.createCrewSchedule(validation.data);
-      res.status(201).json(schedule);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create crew schedule" });
-    }
-  });
-
-  app.put("/api/crew-schedules/:id", async (req, res) => {
-    try {
-      const validation = insertCrewScheduleSchema.partial().safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid crew schedule data",
-          errors: validation.error.errors,
-        });
-      }
-      const schedule = await storage.updateCrewSchedule(
-        req.params.id,
-        validation.data,
-      );
-      if (!schedule) {
-        return res.status(404).json({ message: "Crew schedule not found" });
-      }
-      res.json(schedule);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update crew schedule" });
-    }
-  });
-
-  app.delete("/api/crew-schedules/:id", async (req, res) => {
-    try {
-      const success = await storage.deleteCrewSchedule(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Crew schedule not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete crew schedule" });
-    }
-  });
+  // Batch update crew assignments and crew schedules - Legacy routes removed
+  // These routes have been removed as they are now handled through event assignments in the 3-tier architecture
 
 
 
   // Notifications
   app.get("/api/users/:userId/notifications", async (req, res) => {
-    const notifications = await storage.getNotificationsByUser(
-      req.params.userId,
-    );
+    const notifications = await storage.getNotifications(req.params.userId);
     res.json(notifications);
   });
 
@@ -1185,42 +901,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put("/api/notifications/:id/read", async (req, res) => {
-    const notification = await storage.markNotificationAsRead(req.params.id);
-    if (!notification) {
-      return res.status(404).json({ message: "Notification not found" });
-    }
-    res.json(notification);
+    await storage.markNotificationAsRead(req.params.id);
+    res.json({ success: true });
   });
 
-  // Early Access Signups
-  app.post("/api/early-access", async (req, res) => {
-    try {
-      const validation = insertEarlyAccessSignupSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid email address",
-          errors: validation.error.errors,
-        });
-      }
-
-      const signup = await storage.createEarlyAccessSignup(validation.data);
-      res
-        .status(201)
-        .json({ message: "Successfully signed up for early access", signup });
-    } catch (error: any) {
-      if (error.code === "23505" || error.message?.includes("unique")) {
-        return res
-          .status(409)
-          .json({ message: "Email already registered for early access" });
-      }
-      res.status(500).json({ message: "Failed to sign up for early access" });
-    }
-  });
-
-  app.get("/api/early-access", async (req, res) => {
-    const signups = await storage.getEarlyAccessSignups();
-    res.json(signups);
-  });
+  // Early Access Signups - Removed (not part of current architecture)
 
   // For testing connection
   app.get("/api/status", (req, res) => {

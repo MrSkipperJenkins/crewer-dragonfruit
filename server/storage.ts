@@ -442,6 +442,14 @@ export class Storage implements IStorage {
       .orderBy(desc(showTemplates.createdAt));
   }
 
+  async getShowTemplatesByProduction(productionId: string): Promise<ShowTemplate[]> {
+    return await db
+      .select()
+      .from(showTemplates)
+      .where(eq(showTemplates.productionId, productionId))
+      .orderBy(desc(showTemplates.createdAt));
+  }
+
   async getShowTemplate(id: string): Promise<ShowTemplate | undefined> {
     const result = await db
       .select()
@@ -643,7 +651,7 @@ export class Storage implements IStorage {
   async markNotificationAsRead(id: string): Promise<void> {
     await db
       .update(notifications)
-      .set({ isRead: true })
+      .set({ read: true })
       .where(eq(notifications.id, id));
   }
 
