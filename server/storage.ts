@@ -228,7 +228,7 @@ export class Storage implements IStorage {
 
   async deleteWorkspace(id: string): Promise<boolean> {
     const result = await db.delete(workspaces).where(eq(workspaces.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // User operations
@@ -273,7 +273,7 @@ export class Storage implements IStorage {
 
   async deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Crew Member operations
@@ -315,7 +315,7 @@ export class Storage implements IStorage {
 
   async deleteCrewMember(id: string): Promise<boolean> {
     const result = await db.delete(crewMembers).where(eq(crewMembers.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Job operations
@@ -348,7 +348,7 @@ export class Storage implements IStorage {
 
   async deleteJob(id: string): Promise<boolean> {
     const result = await db.delete(jobs).where(eq(jobs.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Resource operations
@@ -387,7 +387,7 @@ export class Storage implements IStorage {
 
   async deleteResource(id: string): Promise<boolean> {
     const result = await db.delete(resources).where(eq(resources.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Production operations
@@ -430,7 +430,7 @@ export class Storage implements IStorage {
 
   async deleteProduction(id: string): Promise<boolean> {
     const result = await db.delete(productions).where(eq(productions.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Show Template operations
@@ -481,7 +481,7 @@ export class Storage implements IStorage {
 
   async deleteShowTemplate(id: string): Promise<boolean> {
     const result = await db.delete(showTemplates).where(eq(showTemplates.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Event operations
@@ -524,7 +524,7 @@ export class Storage implements IStorage {
 
   async deleteEvent(id: string): Promise<boolean> {
     const result = await db.delete(events).where(eq(events.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Template Required Jobs
@@ -549,7 +549,7 @@ export class Storage implements IStorage {
     const result = await db
       .delete(templateRequiredJobs)
       .where(eq(templateRequiredJobs.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Template Resources
@@ -574,7 +574,7 @@ export class Storage implements IStorage {
     const result = await db
       .delete(templateResources)
       .where(eq(templateResources.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Event Crew Assignments
@@ -599,7 +599,7 @@ export class Storage implements IStorage {
     const result = await db
       .delete(eventCrewAssignments)
       .where(eq(eventCrewAssignments.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Event Resource Assignments
@@ -626,7 +626,7 @@ export class Storage implements IStorage {
     const result = await db
       .delete(eventResourceAssignments)
       .where(eq(eventResourceAssignments.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
 
@@ -657,7 +657,7 @@ export class Storage implements IStorage {
 
   async deleteNotification(id: string): Promise<boolean> {
     const result = await db.delete(notifications).where(eq(notifications.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 }
 
@@ -672,11 +672,11 @@ export async function clearDemoData(): Promise<void> {
   await db.delete(eventCrewAssignments);
   await db.delete(templateResources);
   await db.delete(templateRequiredJobs);
-  await db.delete(scheduledEvents);
+  await db.delete(events);
   await db.delete(showTemplates);
   await db.delete(productions);
   await db.delete(notifications);
-  await db.delete(shows);
+  // await db.delete(shows); // removed - no shows table exists
   await db.delete(resources);
   await db.delete(jobs);
   await db.delete(crewMembers);
@@ -763,14 +763,16 @@ export async function seedDemoData(): Promise<void> {
     .values([
       {
         workspaceId: workspace1.id,
-        name: "John Smith",
+        firstName: "John",
+        lastName: "Smith",
         email: "john@bbc.com",
         phone: "+44 123 456 7890",
         primaryJobId: job1.id,
       },
       {
         workspaceId: workspace1.id,
-        name: "Sarah Johnson",
+        firstName: "Sarah",
+        lastName: "Johnson",
         email: "sarah@bbc.com",
         phone: "+44 987 654 3210",
         primaryJobId: job2.id,
@@ -840,7 +842,7 @@ export async function seedDemoData(): Promise<void> {
   tomorrow.setDate(today.getDate() + 1);
 
   const [event1] = await db
-    .insert(scheduledEvents)
+    .insert(events)
     .values([
       {
         workspaceId: workspace1.id,
