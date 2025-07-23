@@ -98,39 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Workspace invitations
-  app.post("/api/workspaces/:slug/invites", async (req, res) => {
-    try {
-      const validation = workspaceInviteSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid invite data",
-          errors: validation.error.errors,
-        });
-      }
-
-      const workspace = await storage.getWorkspaceBySlug(req.params.slug);
-      if (!workspace) {
-        return res.status(404).json({ message: "Workspace not found" });
-      }
-
-      // For now, just return success - in a real app you'd send actual emails
-      const invites = validation.data.emails.map((email) => ({
-        id: crypto.randomUUID(),
-        email,
-        workspaceId: workspace.id,
-        token: crypto.randomUUID(),
-        invitedAt: new Date().toISOString(),
-      }));
-
-      res.status(201).json({
-        invites,
-        inviteLink: `${req.get("origin")}/join/${workspace.slug}`,
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to send invites" });
-    }
-  });
+  // Workspace invitations - removed for now (missing schema)
 
   app.put("/api/workspaces/:id", async (req, res) => {
     try {
@@ -317,41 +285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Crew Member Jobs
-  app.get("/api/crew-members/:crewMemberId/jobs", async (req, res) => {
-    const crewMemberJobs = await storage.getCrewMemberJobsByCrewMember(
-      req.params.crewMemberId,
-    );
-    res.json(crewMemberJobs);
-  });
-
-  app.post("/api/crew-member-jobs", async (req, res) => {
-    try {
-      const validation = insertCrewMemberJobSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          message: "Invalid crew member job data",
-          errors: validation.error.errors,
-        });
-      }
-      const crewMemberJob = await storage.createCrewMemberJob(validation.data);
-      res.status(201).json(crewMemberJob);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create crew member job" });
-    }
-  });
-
-  app.delete("/api/crew-member-jobs/:id", async (req, res) => {
-    try {
-      const success = await storage.deleteCrewMemberJob(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Crew member job not found" });
-      }
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete crew member job" });
-    }
-  });
+  // Crew Member Jobs - Simplified approach using primaryJobId
+  // Note: For now, we're using the primaryJobId field in crew members instead of a separate junction table
 
   // Resources
   app.get("/api/workspaces/:workspaceId/resources", async (req, res) => {
@@ -524,65 +459,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Scheduled Events
-  app.get("/api/workspaces/:workspaceId/scheduled-events", async (req, res) => {
+  // Scheduled Events - using events table instead
+  app.get("/api/workspaces/:workspaceId/events", async (req, res) => {
     try {
       const { workspaceId } = req.params;
-      const events = await storage.getScheduledEvents(workspaceId);
+      const events = await storage.getEvents(workspaceId);
       res.json(events);
     } catch (error) {
-      console.error("Error fetching scheduled events:", error);
-      res.status(500).json({ error: "Failed to fetch scheduled events" });
+      console.error("Error fetching events:", error);
+      res.status(500).json({ error: "Failed to fetch events" });
     }
   });
 
-  app.get(
-    "/api/show-templates/:templateId/scheduled-events",
-    async (req, res) => {
-      try {
-        const { templateId } = req.params;
-        const events = await storage.getScheduledEventsByTemplate(templateId);
-        res.json(events);
-      } catch (error) {
-        console.error("Error fetching template events:", error);
-        res.status(500).json({ error: "Failed to fetch template events" });
+  app.post("/api/workspaces/:workspaceId/events", async (req, res) => {
+    try {
+      const { workspaceId } = req.params;
+      const validation = insertEventSchema.safeParse({ ...req.body, workspaceId });
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Invalid event data",
+          errors: validation.error.errors,
+        });
       }
-    },
-  );
+      const event = await storage.createEvent(validation.data);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
 
-  app.post(
-    "/api/workspaces/:workspaceId/scheduled-events",
-    async (req, res) => {
-      try {
-        const { workspaceId } = req.params;
-        const eventData = { ...req.body, workspaceId };
-        const event = await storage.createScheduledEvent(eventData);
-        res.status(201).json(event);
-      } catch (error) {
-        console.error("Error creating scheduled event:", error);
-        res.status(500).json({ error: "Failed to create scheduled event" });
-      }
-    },
-  );
-
-  app.put("/api/scheduled-events/:id", async (req, res) => {
+  app.put("/api/events/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const event = await storage.updateScheduledEvent(id, req.body);
+      const validation = insertEventSchema.partial().safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Invalid event data",
+          errors: validation.error.errors,
+        });
+      }
+      const event = await storage.updateEvent(id, validation.data);
       res.json(event);
     } catch (error) {
-      console.error("Error updating scheduled event:", error);
-      res.status(500).json({ error: "Failed to update scheduled event" });
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event" });
     }
   });
 
-  app.delete("/api/scheduled-events/:id", async (req, res) => {
+  app.delete("/api/events/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      await storage.deleteScheduledEvent(id);
+      await storage.deleteEvent(id);
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting scheduled event:", error);
-      res.status(500).json({ error: "Failed to delete scheduled event" });
+      console.error("Error deleting event:", error);
+      res.status(500).json({ error: "Failed to delete event" });
     }
   });
 

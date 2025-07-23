@@ -64,22 +64,23 @@ import {
 
 // Extend the insert schema for form validation
 const formSchema = insertCrewMemberSchema.extend({
-  name: z.string().min(3, {
-    message: "Name must be at least 3 characters.",
+  firstName: z.string().min(2, {
+    message: "First name must be at least 2 characters.",
+  }),
+  lastName: z.string().min(2, {
+    message: "Last name must be at least 2 characters.",
   }),
   email: z.string().email({
     message: "Please enter a valid email address.",
-  }),
-  selectedJobs: z.array(z.string()).min(1, {
-    message: "Select at least one job.",
-  }),
+  }).optional(),
+  selectedJobs: z.array(z.string()).optional().default([]),
 });
 
 type FormValues = z.infer<typeof formSchema> & {
   selectedJobs: string[];
 };
 
-type SortField = "name" | "title";
+type SortField = "firstName" | "lastName" | "email";
 type SortDirection = "asc" | "desc";
 
 export default function CrewMembers() {
@@ -90,7 +91,7 @@ export default function CrewMembers() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CrewMember | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortField, setSortField] = useState<SortField>("firstName");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // Fetch crew members with qualified jobs
@@ -109,10 +110,10 @@ export default function CrewMembers() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       phone: "",
-      title: "",
       workspaceId: currentWorkspace?.id || "",
       selectedJobs: [],
     },
@@ -122,10 +123,10 @@ export default function CrewMembers() {
   const editForm = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       phone: "",
-      title: "",
       workspaceId: currentWorkspace?.id || "",
       selectedJobs: [],
     },
@@ -136,6 +137,11 @@ export default function CrewMembers() {
     mutationFn: async (data: FormValues) => {
       const { selectedJobs, ...crewMemberData } = data;
 
+      // For now, use the first selected job as the primary job
+      if (selectedJobs && selectedJobs.length > 0) {
+        crewMemberData.primaryJobId = selectedJobs[0];
+      }
+
       // Create crew member
       const response = await apiRequest(
         "POST",
@@ -143,17 +149,6 @@ export default function CrewMembers() {
         crewMemberData,
       );
       const crewMember = await response.json();
-
-      // Assign jobs to crew member
-      const promises = selectedJobs.map((jobId) =>
-        apiRequest("POST", "/api/crew-member-jobs", {
-          crewMemberId: crewMember.id,
-          jobId,
-          workspaceId: currentWorkspace?.id,
-        }),
-      );
-
-      await Promise.all(promises);
 
       return crewMember;
     },
@@ -227,12 +222,12 @@ export default function CrewMembers() {
   const handleEditClick = (member: any) => {
     setEditingMember(member);
     editForm.reset({
-      name: member.name,
+      firstName: member.firstName,
+      lastName: member.lastName,
       email: member.email,
       phone: member.phone || "",
-      title: member.title,
       workspaceId: member.workspaceId,
-      selectedJobs: member.qualifiedJobs?.map((job: any) => job.id) || [],
+      selectedJobs: member.primaryJobId ? [member.primaryJobId] : [],
     });
     setIsEditDialogOpen(true);
   };
@@ -330,7 +325,8 @@ export default function CrewMembers() {
 
   // Handle delete click
   const handleDeleteClick = (member: any) => {
-    if (window.confirm(`Are you sure you want to delete ${member.name}?`)) {
+    const fullName = `${member.firstName} ${member.lastName}`;
+    if (window.confirm(`Are you sure you want to delete ${fullName}?`)) {
       deleteCrewMemberMutation.mutate(member.id);
     }
   };
@@ -340,32 +336,36 @@ export default function CrewMembers() {
     .filter((member) => {
       if (!searchQuery) return true;
 
+      const fullName = `${member.firstName} ${member.lastName}`;
       return (
-        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchQuery.toLowerCase())
+        fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.email?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     })
     .sort((a, b) => {
-      const aValue = a[sortField].toLowerCase();
-      const bValue = b[sortField].toLowerCase();
+      let aValue = a[sortField];
+      let bValue = b[sortField];
+      
+      // Handle null/undefined values
+      if (!aValue) aValue = "";
+      if (!bValue) bValue = "";
+      
+      const aStr = aValue.toString().toLowerCase();
+      const bStr = bValue.toString().toLowerCase();
 
       if (sortDirection === "asc") {
-        return aValue.localeCompare(bValue);
+        return aStr.localeCompare(bStr);
       } else {
-        return bValue.localeCompare(aValue);
+        return bStr.localeCompare(aStr);
       }
     });
 
   // Get initials for avatar
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase();
   };
+
+
 
   return (
     <div className="space-y-6">
@@ -390,19 +390,35 @@ export default function CrewMembers() {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter full name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="First name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Last name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
@@ -415,7 +431,8 @@ export default function CrewMembers() {
                               <Input
                                 type="email"
                                 placeholder="Email address"
-                                {...field}
+                                value={field.value || ""}
+                                onChange={field.onChange}
                               />
                             </FormControl>
                             <FormMessage />
@@ -441,23 +458,6 @@ export default function CrewMembers() {
                         )}
                       />
                     </div>
-
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Title/Position</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="e.g. Camera Operator"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
                     <div className="space-y-2">
                       <FormLabel>Qualified Jobs</FormLabel>
@@ -544,10 +544,10 @@ export default function CrewMembers() {
                     <Button
                       variant="ghost"
                       className="h-auto p-0 font-semibold hover:bg-transparent"
-                      onClick={() => handleSort("name")}
+                      onClick={() => handleSort("firstName")}
                     >
                       Name
-                      {sortField === "name" &&
+                      {sortField === "firstName" &&
                         (sortDirection === "asc" ? (
                           <ChevronUpIcon className="ml-1 h-4 w-4" />
                         ) : (
@@ -559,10 +559,10 @@ export default function CrewMembers() {
                     <Button
                       variant="ghost"
                       className="h-auto p-0 font-semibold hover:bg-transparent"
-                      onClick={() => handleSort("title")}
+                      onClick={() => handleSort("email")}
                     >
-                      Title
-                      {sortField === "title" &&
+                      Email
+                      {sortField === "email" &&
                         (sortDirection === "asc" ? (
                           <ChevronUpIcon className="ml-1 h-4 w-4" />
                         ) : (
@@ -605,37 +605,35 @@ export default function CrewMembers() {
                       <div className="flex items-center space-x-3">
                         <Avatar>
                           <AvatarImage
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`}
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(`${member.firstName} ${member.lastName}`)}&background=random`}
                           />
                           <AvatarFallback>
-                            {getInitials(member.name)}
+                            {getInitials(member.firstName, member.lastName)}
                           </AvatarFallback>
                         </Avatar>
-                        <div>{member.name}</div>
+                        <div>
+                          <div className="font-medium">{member.firstName} {member.lastName}</div>
+                          <div className="text-sm text-gray-500">
+                            {member.primaryJobId ? jobs.find(j => j.id === member.primaryJobId)?.title : 'No role assigned'}
+                          </div>
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell>{member.title}</TableCell>
+                    <TableCell>{member.email || 'No email'}</TableCell>
                     <TableCell>
-                      <div>{member.email}</div>
                       <div className="text-gray-500 text-sm">
-                        {member.phone}
+                        {member.phone || 'No phone'}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {member.qualifiedJobs &&
-                        member.qualifiedJobs.length > 0 ? (
-                          member.qualifiedJobs.map((job: any) => (
-                            <span
-                              key={job.id}
-                              className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                            >
-                              {job.title}
-                            </span>
-                          ))
+                        {member.primaryJobId ? (
+                          <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                            {jobs.find(j => j.id === member.primaryJobId)?.title || 'Unknown job'}
+                          </span>
                         ) : (
                           <span className="text-gray-400 text-sm">
-                            No jobs assigned
+                            No job assigned
                           </span>
                         )}
                       </div>
@@ -679,19 +677,35 @@ export default function CrewMembers() {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <FormField
-                  control={editForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter full name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="First name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Last name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
@@ -731,19 +745,7 @@ export default function CrewMembers() {
                   />
                 </div>
 
-                <FormField
-                  control={editForm.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title/Position</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Camera Operator" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
 
                 <div className="space-y-2">
                   <FormLabel>Qualified Jobs</FormLabel>
