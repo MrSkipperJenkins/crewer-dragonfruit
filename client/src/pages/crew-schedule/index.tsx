@@ -500,7 +500,8 @@ export default function CrewSchedulePage() {
                               isSelected ? "text-blue-800" : "text-blue-700"
                             }`}
                           >
-                            {member.name
+                            {`${member.firstName || ''} ${member.lastName || ''}`
+                              .trim()
                               .split(" ")
                               .map((n: string) => n[0])
                               .join("")}
