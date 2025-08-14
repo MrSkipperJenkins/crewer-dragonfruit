@@ -24,6 +24,34 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// User-Workspace membership with roles
+export const workspaceMemberships = pgTable("workspace_memberships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default("member"), // owner, admin, member, viewer
+  status: text("status").notNull().default("active"), // active, inactive, pending
+  invitedBy: uuid("invited_by").references(() => users.id, { onDelete: "set null" }),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Workspace invitations
+export const workspaceInvitations = pgTable("workspace_invitations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  role: text("role").notNull().default("member"),
+  invitedBy: uuid("invited_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("pending"), // pending, accepted, declined, expired
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const notifications = pgTable("notifications", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -171,6 +199,8 @@ export const workspaceRelations = relations(workspaces, ({ many }) => ({
   resources: many(resources),
   crewMembers: many(crewMembers),
   notifications: many(notifications),
+  memberships: many(workspaceMemberships),
+  invitations: many(workspaceInvitations),
 }));
 
 export const productionRelations = relations(productions, ({ one, many }) => ({
@@ -310,6 +340,34 @@ export const eventResourceAssignmentRelations = relations(eventResourceAssignmen
 
 export const userRelations = relations(users, ({ many }) => ({
   notifications: many(notifications),
+  memberships: many(workspaceMemberships),
+  sentInvitations: many(workspaceInvitations),
+}));
+
+export const workspaceMembershipRelations = relations(workspaceMemberships, ({ one }) => ({
+  user: one(users, {
+    fields: [workspaceMemberships.userId],
+    references: [users.id],
+  }),
+  workspace: one(workspaces, {
+    fields: [workspaceMemberships.workspaceId],
+    references: [workspaces.id],
+  }),
+  inviter: one(users, {
+    fields: [workspaceMemberships.invitedBy],
+    references: [users.id],
+  }),
+}));
+
+export const workspaceInvitationRelations = relations(workspaceInvitations, ({ one }) => ({
+  workspace: one(workspaces, {
+    fields: [workspaceInvitations.workspaceId],
+    references: [workspaces.id],
+  }),
+  inviter: one(users, {
+    fields: [workspaceInvitations.invitedBy],
+    references: [users.id],
+  }),
 }));
 
 export const notificationRelations = relations(notifications, ({ one }) => ({
@@ -397,6 +455,18 @@ export const insertEventResourceAssignmentSchema = createInsertSchema(eventResou
   createdAt: true,
 });
 
+export const insertWorkspaceMembershipSchema = createInsertSchema(workspaceMemberships).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWorkspaceInvitationSchema = createInsertSchema(workspaceInvitations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // TypeScript types
 export type Workspace = typeof workspaces.$inferSelect;
 export type InsertWorkspace = z.infer<typeof insertWorkspaceSchema>;
@@ -436,3 +506,9 @@ export type InsertEventCrewAssignment = z.infer<typeof insertEventCrewAssignment
 
 export type EventResourceAssignment = typeof eventResourceAssignments.$inferSelect;
 export type InsertEventResourceAssignment = z.infer<typeof insertEventResourceAssignmentSchema>;
+
+export type WorkspaceMembership = typeof workspaceMemberships.$inferSelect;
+export type InsertWorkspaceMembership = z.infer<typeof insertWorkspaceMembershipSchema>;
+
+export type WorkspaceInvitation = typeof workspaceInvitations.$inferSelect;
+export type InsertWorkspaceInvitation = z.infer<typeof insertWorkspaceInvitationSchema>;

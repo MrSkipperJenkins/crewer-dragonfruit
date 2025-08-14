@@ -1,6 +1,8 @@
 import {
   workspaces,
   users,
+  workspaceMemberships,
+  workspaceInvitations,
   crewMembers,
   jobs,
   resources,
@@ -16,6 +18,10 @@ import {
   type InsertWorkspace,
   type User,
   type InsertUser,
+  type WorkspaceMembership,
+  type InsertWorkspaceMembership,
+  type WorkspaceInvitation,
+  type InsertWorkspaceInvitation,
   type CrewMember,
   type InsertCrewMember,
   type Job,
@@ -58,13 +64,29 @@ export interface IStorage {
   ): Promise<Workspace | undefined>;
   deleteWorkspace(id: string): Promise<boolean>;
 
-  // User CRUD
-  getUsers(workspaceId: string): Promise<User[]>;
+  // User Authentication & Management
+  getUserByEmail(email: string): Promise<User | undefined>;
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
+
+  // Workspace Membership Management
+  getUserWorkspaces(userId: string): Promise<(Workspace & { membership: WorkspaceMembership })[]>;
+  getWorkspaceMembers(workspaceId: string): Promise<(User & { membership: WorkspaceMembership })[]>;
+  getWorkspaceMembership(userId: string, workspaceId: string): Promise<WorkspaceMembership | undefined>;
+  createWorkspaceMembership(membership: InsertWorkspaceMembership): Promise<WorkspaceMembership>;
+  updateWorkspaceMembership(id: string, membership: Partial<InsertWorkspaceMembership>): Promise<WorkspaceMembership | undefined>;
+  removeWorkspaceMembership(userId: string, workspaceId: string): Promise<boolean>;
+
+  // Workspace Invitation Management
+  createWorkspaceInvitation(invitation: InsertWorkspaceInvitation): Promise<WorkspaceInvitation>;
+  getWorkspaceInvitation(token: string): Promise<WorkspaceInvitation | undefined>;
+  getWorkspaceInvitations(workspaceId: string): Promise<WorkspaceInvitation[]>;
+  acceptWorkspaceInvitation(token: string, userId: string): Promise<WorkspaceMembership | undefined>;
+  declineWorkspaceInvitation(token: string): Promise<boolean>;
+  deleteWorkspaceInvitation(id: string): Promise<boolean>;
 
   // Crew Member CRUD
   getCrewMembers(workspaceId: string): Promise<CrewMember[]>;
@@ -231,9 +253,14 @@ export class Storage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  // User operations
-  async getUsers(workspaceId: string): Promise<User[]> {
-    return await db.select().from(users);
+  // User Authentication & Management
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    return result[0];
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -273,6 +300,128 @@ export class Storage implements IStorage {
 
   async deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Workspace Membership Management
+  async getUserWorkspaces(userId: string): Promise<(Workspace & { membership: WorkspaceMembership })[]> {
+    const result = await db
+      .select({
+        workspace: workspaces,
+        membership: workspaceMemberships,
+      })
+      .from(workspaceMemberships)
+      .innerJoin(workspaces, eq(workspaceMemberships.workspaceId, workspaces.id))
+      .where(and(eq(workspaceMemberships.userId, userId), eq(workspaceMemberships.status, "active")));
+
+    return result.map(row => ({ ...row.workspace, membership: row.membership }));
+  }
+
+  async getWorkspaceMembers(workspaceId: string): Promise<(User & { membership: WorkspaceMembership })[]> {
+    const result = await db
+      .select({
+        user: users,
+        membership: workspaceMemberships,
+      })
+      .from(workspaceMemberships)
+      .innerJoin(users, eq(workspaceMemberships.userId, users.id))
+      .where(and(eq(workspaceMemberships.workspaceId, workspaceId), eq(workspaceMemberships.status, "active")));
+
+    return result.map(row => ({ ...row.user, membership: row.membership }));
+  }
+
+  async getWorkspaceMembership(userId: string, workspaceId: string): Promise<WorkspaceMembership | undefined> {
+    const result = await db
+      .select()
+      .from(workspaceMemberships)
+      .where(and(
+        eq(workspaceMemberships.userId, userId),
+        eq(workspaceMemberships.workspaceId, workspaceId)
+      ))
+      .limit(1);
+    return result[0];
+  }
+
+  async createWorkspaceMembership(membership: InsertWorkspaceMembership): Promise<WorkspaceMembership> {
+    const [result] = await db.insert(workspaceMemberships).values(membership).returning();
+    return result;
+  }
+
+  async updateWorkspaceMembership(id: string, membership: Partial<InsertWorkspaceMembership>): Promise<WorkspaceMembership | undefined> {
+    const [result] = await db
+      .update(workspaceMemberships)
+      .set(membership)
+      .where(eq(workspaceMemberships.id, id))
+      .returning();
+    return result;
+  }
+
+  async removeWorkspaceMembership(userId: string, workspaceId: string): Promise<boolean> {
+    const result = await db
+      .delete(workspaceMemberships)
+      .where(and(
+        eq(workspaceMemberships.userId, userId),
+        eq(workspaceMemberships.workspaceId, workspaceId)
+      ));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Workspace Invitation Management
+  async createWorkspaceInvitation(invitation: InsertWorkspaceInvitation): Promise<WorkspaceInvitation> {
+    const [result] = await db.insert(workspaceInvitations).values(invitation).returning();
+    return result;
+  }
+
+  async getWorkspaceInvitation(token: string): Promise<WorkspaceInvitation | undefined> {
+    const result = await db
+      .select()
+      .from(workspaceInvitations)
+      .where(eq(workspaceInvitations.token, token))
+      .limit(1);
+    return result[0];
+  }
+
+  async getWorkspaceInvitations(workspaceId: string): Promise<WorkspaceInvitation[]> {
+    return await db
+      .select()
+      .from(workspaceInvitations)
+      .where(eq(workspaceInvitations.workspaceId, workspaceId));
+  }
+
+  async acceptWorkspaceInvitation(token: string, userId: string): Promise<WorkspaceMembership | undefined> {
+    const invitation = await this.getWorkspaceInvitation(token);
+    if (!invitation || invitation.status !== "pending" || invitation.expiresAt < new Date()) {
+      return undefined;
+    }
+
+    // Update invitation status
+    await db
+      .update(workspaceInvitations)
+      .set({ status: "accepted", acceptedAt: new Date() })
+      .where(eq(workspaceInvitations.token, token));
+
+    // Create membership
+    const membership = await this.createWorkspaceMembership({
+      userId,
+      workspaceId: invitation.workspaceId,
+      role: invitation.role,
+      status: "active",
+      invitedBy: invitation.invitedBy,
+    });
+
+    return membership;
+  }
+
+  async declineWorkspaceInvitation(token: string): Promise<boolean> {
+    const result = await db
+      .update(workspaceInvitations)
+      .set({ status: "declined" })
+      .where(eq(workspaceInvitations.token, token));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async deleteWorkspaceInvitation(id: string): Promise<boolean> {
+    const result = await db.delete(workspaceInvitations).where(eq(workspaceInvitations.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 

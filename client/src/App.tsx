@@ -6,6 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { WorkspaceLayout } from "@/components/layout/workspace-layout";
 import Dashboard from "@/pages/dashboard";
+import RegisterPage from "@/pages/auth/register";
+import LoginPage from "@/pages/auth/login";
+import WorkspacesPage from "@/pages/workspaces";
 import Shows from "@/pages/shows";
 import ShowsCalendarView from "@/pages/shows/calendar-view";
 import ShowsListView from "@/pages/shows/list-view";
@@ -29,6 +32,11 @@ import { CurrentWorkspaceProvider } from "@/hooks/use-current-workspace";
 function Router() {
   return (
     <Switch>
+      {/* Authentication routes */}
+      <Route path="/register" component={RegisterPage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/workspaces" component={WorkspacesPage} />
+
       {/* Standalone routes (outside workspace layout) */}
       <Route path="/landing" component={Landing} />
       <Route path="/onboarding" component={Onboarding} />

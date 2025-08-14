@@ -2,9 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import { randomUUID } from "crypto";
 import {
   insertWorkspaceSchema,
   insertUserSchema,
+  insertWorkspaceMembershipSchema,
+  insertWorkspaceInvitationSchema,
   insertCrewMemberSchema,
   insertJobSchema,
   insertResourceSchema,
@@ -20,7 +23,162 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Workspaces
+  // User Authentication Routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const validation = insertUserSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Invalid user data",
+          errors: validation.error.errors,
+        });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(validation.data.email);
+      if (existingUser) {
+        return res.status(409).json({ message: "User already exists with this email" });
+      }
+      
+      const user = await storage.createUser(validation.data);
+      res.status(201).json(user);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error logging in user:", error);
+      res.status(500).json({ message: "Failed to login user" });
+    }
+  });
+
+  // User Workspace Management
+  app.get("/api/users/:userId/workspaces", async (req, res) => {
+    try {
+      const workspaces = await storage.getUserWorkspaces(req.params.userId);
+      res.json(workspaces);
+    } catch (error) {
+      console.error("Error fetching user workspaces:", error);
+      res.status(500).json({ message: "Failed to fetch user workspaces" });
+    }
+  });
+
+  // Workspace Membership Management
+  app.post("/api/workspaces/:workspaceId/memberships", async (req, res) => {
+    try {
+      const validation = insertWorkspaceMembershipSchema.safeParse({
+        ...req.body,
+        workspaceId: req.params.workspaceId,
+      });
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Invalid membership data",
+          errors: validation.error.errors,
+        });
+      }
+      
+      const membership = await storage.createWorkspaceMembership(validation.data);
+      res.status(201).json(membership);
+    } catch (error) {
+      console.error("Error creating workspace membership:", error);
+      res.status(500).json({ message: "Failed to create workspace membership" });
+    }
+  });
+
+  app.get("/api/workspaces/:workspaceId/members", async (req, res) => {
+    try {
+      const members = await storage.getWorkspaceMembers(req.params.workspaceId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching workspace members:", error);
+      res.status(500).json({ message: "Failed to fetch workspace members" });
+    }
+  });
+
+  // Workspace Invitation Management
+  app.post("/api/workspaces/:workspaceId/invitations", async (req, res) => {
+    try {
+      const validation = insertWorkspaceInvitationSchema.safeParse({
+        ...req.body,
+        workspaceId: req.params.workspaceId,
+        token: randomUUID(),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      });
+      
+      if (!validation.success) {
+        return res.status(400).json({
+          message: "Invalid invitation data",
+          errors: validation.error.errors,
+        });
+      }
+      
+      const invitation = await storage.createWorkspaceInvitation(validation.data);
+      res.status(201).json(invitation);
+    } catch (error) {
+      console.error("Error creating workspace invitation:", error);
+      res.status(500).json({ message: "Failed to create workspace invitation" });
+    }
+  });
+
+  app.get("/api/workspaces/:workspaceId/invitations", async (req, res) => {
+    try {
+      const invitations = await storage.getWorkspaceInvitations(req.params.workspaceId);
+      res.json(invitations);
+    } catch (error) {
+      console.error("Error fetching workspace invitations:", error);
+      res.status(500).json({ message: "Failed to fetch workspace invitations" });
+    }
+  });
+
+  app.post("/api/invitations/:token/accept", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      const membership = await storage.acceptWorkspaceInvitation(req.params.token, userId);
+      if (!membership) {
+        return res.status(400).json({ message: "Invalid or expired invitation" });
+      }
+
+      res.json(membership);
+    } catch (error) {
+      console.error("Error accepting workspace invitation:", error);
+      res.status(500).json({ message: "Failed to accept workspace invitation" });
+    }
+  });
+
+  app.post("/api/invitations/:token/decline", async (req, res) => {
+    try {
+      const success = await storage.declineWorkspaceInvitation(req.params.token);
+      if (!success) {
+        return res.status(400).json({ message: "Invalid invitation token" });
+      }
+
+      res.json({ message: "Invitation declined successfully" });
+    } catch (error) {
+      console.error("Error declining workspace invitation:", error);
+      res.status(500).json({ message: "Failed to decline workspace invitation" });
+    }
+  });
+
+  // Workspaces (updated to work with membership system)
   app.get("/api/workspaces", async (req, res) => {
     const workspaces = await storage.getWorkspaces();
     res.json(workspaces);
@@ -63,14 +221,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/workspaces", async (req, res) => {
     try {
-      const validation = insertWorkspaceSchema.safeParse(req.body);
+      const { userId, ...workspaceData } = req.body;
+      const validation = insertWorkspaceSchema.safeParse(workspaceData);
       if (!validation.success) {
         return res.status(400).json({
           message: "Invalid workspace data",
           errors: validation.error.errors,
         });
       }
+
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Create workspace
       const workspace = await storage.createWorkspace(validation.data);
+      
+      // Create owner membership for the user who created the workspace
+      await storage.createWorkspaceMembership({
+        userId,
+        workspaceId: workspace.id,
+        role: "owner",
+        status: "active",
+      });
+
       res.status(201).json(workspace);
     } catch (error) {
       res.status(500).json({ message: "Failed to create workspace" });
