@@ -133,6 +133,7 @@ export const resources = pgTable("resources", {
 export const crewMembers = pgTable("crew_members", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }), // Optional link to user account
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email"),
@@ -267,6 +268,10 @@ export const crewMemberRelations = relations(crewMembers, ({ one, many }) => ({
     fields: [crewMembers.workspaceId],
     references: [workspaces.id],
   }),
+  user: one(users, {
+    fields: [crewMembers.userId],
+    references: [users.id],
+  }),
   primaryJob: one(jobs, {
     fields: [crewMembers.primaryJobId],
     references: [jobs.id],
@@ -342,6 +347,7 @@ export const userRelations = relations(users, ({ many }) => ({
   notifications: many(notifications),
   memberships: many(workspaceMemberships),
   sentInvitations: many(workspaceInvitations),
+  crewMemberProfiles: many(crewMembers),
 }));
 
 export const workspaceMembershipRelations = relations(workspaceMemberships, ({ one }) => ({

@@ -304,11 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).end();
   });
 
-  // Users
-  app.get("/api/workspaces/:workspaceId/users", async (req, res) => {
-    const users = await storage.getUsers(req.params.workspaceId);
-    res.json(users);
-  });
+  // Users - removed getUsers as it doesn't exist in storage interface
 
   app.get("/api/users/:id", async (req, res) => {
     const user = await storage.getUser(req.params.id);
@@ -395,6 +391,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete crew member" });
+    }
+  });
+
+  // User-Crew Member Association Routes
+  app.get("/api/users/:userId/crew-members", async (req, res) => {
+    try {
+      const crewMembers = await storage.getCrewMembersByUser(req.params.userId);
+      res.json(crewMembers);
+    } catch (error) {
+      console.error("Error fetching user's crew member profiles:", error);
+      res.status(500).json({ message: "Failed to fetch crew member profiles" });
+    }
+  });
+
+  app.get("/api/crew-members/:id/with-user", async (req, res) => {
+    try {
+      const crewMember = await storage.getCrewMemberWithUser(req.params.id);
+      if (!crewMember) {
+        return res.status(404).json({ message: "Crew member not found" });
+      }
+      res.json(crewMember);
+    } catch (error) {
+      console.error("Error fetching crew member with user:", error);
+      res.status(500).json({ message: "Failed to fetch crew member details" });
+    }
+  });
+
+  app.post("/api/crew-members/:id/link-user", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      const linkedCrewMember = await storage.linkCrewMemberToUser(req.params.id, userId);
+      res.json(linkedCrewMember);
+    } catch (error) {
+      console.error("Error linking crew member to user:", error);
+      res.status(500).json({ message: "Failed to link crew member to user account" });
+    }
+  });
+
+  app.post("/api/crew-members/:id/unlink-user", async (req, res) => {
+    try {
+      const unlinkedCrewMember = await storage.unlinkCrewMemberFromUser(req.params.id);
+      res.json(unlinkedCrewMember);
+    } catch (error) {
+      console.error("Error unlinking crew member from user:", error);
+      res.status(500).json({ message: "Failed to unlink crew member from user account" });
+    }
+  });
+
+  app.get("/api/workspaces/:workspaceId/unlinked-crew-members", async (req, res) => {
+    try {
+      const { email } = req.query;
+      if (!email) {
+        return res.status(400).json({ message: "Email parameter is required" });
+      }
+
+      const crewMembers = await storage.getUnlinkedCrewMembersByEmail(
+        req.params.workspaceId, 
+        email as string
+      );
+      res.json(crewMembers);
+    } catch (error) {
+      console.error("Error fetching unlinked crew members:", error);
+      res.status(500).json({ message: "Failed to fetch unlinked crew members" });
     }
   });
 

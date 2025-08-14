@@ -47,7 +47,7 @@ import {
 } from "@shared/schema";
 import { migration } from "./migration";
 import { db } from "./db";
-import { eq, and, gte, lte, like, isNotNull, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, like, isNotNull, isNull, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Workspace CRUD
@@ -465,6 +465,64 @@ export class Storage implements IStorage {
   async deleteCrewMember(id: string): Promise<boolean> {
     const result = await db.delete(crewMembers).where(eq(crewMembers.id, id));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // User-Crew Member Association operations
+  async getCrewMembersByUser(userId: string): Promise<CrewMember[]> {
+    return await db
+      .select()
+      .from(crewMembers)
+      .where(eq(crewMembers.userId, userId));
+  }
+
+  async getCrewMemberWithUser(id: string): Promise<(CrewMember & { user?: User }) | undefined> {
+    const result = await db
+      .select({
+        crewMember: crewMembers,
+        user: users,
+      })
+      .from(crewMembers)
+      .leftJoin(users, eq(crewMembers.userId, users.id))
+      .where(eq(crewMembers.id, id))
+      .limit(1);
+    
+    if (!result[0]) return undefined;
+    
+    return {
+      ...result[0].crewMember,
+      user: result[0].user || undefined,
+    };
+  }
+
+  async linkCrewMemberToUser(crewMemberId: string, userId: string): Promise<CrewMember> {
+    const [result] = await db
+      .update(crewMembers)
+      .set({ userId, updatedAt: new Date() })
+      .where(eq(crewMembers.id, crewMemberId))
+      .returning();
+    return result;
+  }
+
+  async unlinkCrewMemberFromUser(crewMemberId: string): Promise<CrewMember> {
+    const [result] = await db
+      .update(crewMembers)
+      .set({ userId: null, updatedAt: new Date() })
+      .where(eq(crewMembers.id, crewMemberId))
+      .returning();
+    return result;
+  }
+
+  async getUnlinkedCrewMembersByEmail(workspaceId: string, email: string): Promise<CrewMember[]> {
+    return await db
+      .select()
+      .from(crewMembers)
+      .where(
+        and(
+          eq(crewMembers.workspaceId, workspaceId),
+          eq(crewMembers.email, email),
+          isNull(crewMembers.userId)
+        )
+      );
   }
 
   // Job operations
